@@ -1,0 +1,50 @@
+# Klauthed framework — Italian message catalog
+
+[authentication]
+required    = "L'autenticazione è necessaria per accedere a questa risorsa."
+expired     = "La sessione è scaduta. Effettua nuovamente l'accesso."
+invalid     = "Le credenziali fornite non sono valide."
+mfa_required = "È richiesta l'autenticazione a più fattori."
+
+[authorization]
+denied      = "Non sei autorizzato a eseguire questa azione."
+insufficient_scope = "Il token di accesso non dispone dell'ambito richiesto: {scope}."
+
+[validation]
+required    = "Il campo {field} è obbligatorio."
+min_length  = "Il campo {field} deve contenere almeno {min} caratteri."
+max_length  = "Il campo {field} non deve superare i {max} caratteri."
+invalid_format = "Il campo {field} ha un formato non valido."
+invalid_email  = "Il campo {field} deve essere un indirizzo e-mail valido."
+out_of_range   = "Il campo {field} deve essere compreso tra {min} e {max}."
+
+[request]
+body_invalid    = "Impossibile analizzare il corpo della richiesta."
+content_type    = "Il Content-Type deve essere application/json."
+idempotency_conflict = "È già in corso una richiesta con chiave di idempotenza {key}."
+
+[rate_limit]
+exceeded    = "Troppe richieste. Riprova tra {retry_after} secondi."
+
+[not_found]
+generic     = "La risorsa richiesta non è stata trovata."
+resource    = "{resource} con id {id} non trovato."
+
+[conflict]
+generic     = "L'operazione è in conflitto con lo stato attuale della risorsa."
+
+[timeout]
+generic     = "L'operazione è scaduta. Riprova."
+
+[internal]
+error       = "Si è verificato un errore imprevisto. Riprova più tardi."
+
+[tenant]
+not_found   = "Tenant non trovato."
+suspended   = "Questo account tenant è stato sospeso."
+
+[user]
+not_found       = "Utente {id} non trovato."
+email_duplicate = "Esiste già un utente con questo indirizzo e-mail."
+email_invalid   = "L'indirizzo e-mail non è valido."
+password_weak   = "La password non soddisfa i requisiti di complessità."

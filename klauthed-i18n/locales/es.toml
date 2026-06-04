@@ -1,0 +1,50 @@
+# Klauthed framework — Spanish message catalog
+
+[authentication]
+required    = "Se requiere autenticación para acceder a este recurso."
+expired     = "Su sesión ha expirado. Por favor, inicie sesión nuevamente."
+invalid     = "Las credenciales proporcionadas son inválidas."
+mfa_required = "Se requiere autenticación multifactor."
+
+[authorization]
+denied      = "No está autorizado para realizar esta acción."
+insufficient_scope = "El token de acceso no tiene el alcance requerido: {scope}."
+
+[validation]
+required    = "El campo {field} es obligatorio."
+min_length  = "El campo {field} debe tener al menos {min} caracteres."
+max_length  = "El campo {field} no debe superar los {max} caracteres."
+invalid_format = "El campo {field} tiene un formato inválido."
+invalid_email  = "El campo {field} debe ser una dirección de correo electrónico válida."
+out_of_range   = "El campo {field} debe estar entre {min} y {max}."
+
+[request]
+body_invalid    = "No se pudo analizar el cuerpo de la solicitud."
+content_type    = "El Content-Type debe ser application/json."
+idempotency_conflict = "Ya hay una solicitud en curso con la clave de idempotencia {key}."
+
+[rate_limit]
+exceeded    = "Demasiadas solicitudes. Por favor, inténtelo de nuevo después de {retry_after} segundos."
+
+[not_found]
+generic     = "El recurso solicitado no fue encontrado."
+resource    = "El {resource} con id {id} no fue encontrado."
+
+[conflict]
+generic     = "La operación entra en conflicto con el estado actual del recurso."
+
+[timeout]
+generic     = "La operación superó el tiempo de espera. Por favor, inténtelo de nuevo."
+
+[internal]
+error       = "Ocurrió un error inesperado. Por favor, inténtelo de nuevo más tarde."
+
+[tenant]
+not_found   = "Inquilino no encontrado."
+suspended   = "Esta cuenta de inquilino ha sido suspendida."
+
+[user]
+not_found       = "Usuario {id} no encontrado."
+email_duplicate = "Ya existe un usuario con esta dirección de correo electrónico."
+email_invalid   = "La dirección de correo electrónico es inválida."
+password_weak   = "La contraseña no cumple con los requisitos de complejidad."

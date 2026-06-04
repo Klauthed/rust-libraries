@@ -1,0 +1,133 @@
+# klauthed-libs workspace
+#
+# klauthed                  ← umbrella with feature-flag re-exports
+# klauthed-core             ← errors, ids, time, validation, config, cqrs, domain, context
+# klauthed-data             ← db, storage, cache, outbox, idempotency, locks, sagas, pagination, eventbus
+# klauthed-i18n             ← locales, message bundles, formatting
+# klauthed-macros           ← proc-macros (leaf)
+# klauthed-observability    ← tracing, metrics, OpenTelemetry
+# klauthed-platform         ← tenancy, audit, featureflag, metering, notifications, webhooks, jobs, messaging
+# klauthed-protocol         ← oidc, scim
+# klauthed-security         ← crypto, jwt, mfa, session, authz, vault
+# klauthed-testing          ← test utilities (dev-dep)
+# klauthed-web              ← http server, http client, health, ratelimit, resilience, cli, worker, openapi
+
+[workspace]
+resolver = "3"
+members = [
+    "klauthed",
+    "klauthed-core",
+    "klauthed-data",
+    "klauthed-i18n",
+    "klauthed-macros",
+    "klauthed-observability",
+    "klauthed-platform",
+    "klauthed-protocol",
+    "klauthed-security",
+    "klauthed-testing",
+    "klauthed-web",
+]
+
+[workspace.package]
+edition      = "2024"
+rust-version = "1.95"
+authors      = ["Klauthed Authors <klauthed@klauthed.com>", "Ömer Ekmen <omer@klauthed.com>"]
+license      = "MIT OR Apache-2.0"
+repository   = "https://github.com/klauthed/rust-libraries"
+
+[workspace.dependencies]
+# ── Proc-macro toolchain ──────────────────────────────────────────────────────
+syn          = { version = "2", features = ["full", "extra-traits"] }
+quote        = "1"
+proc-macro2  = "1"
+
+# ── Async runtime ─────────────────────────────────────────────────────────────
+tokio        = { version = "1", features = ["full"] }
+async-trait  = "0.1"
+futures      = "0.3"
+futures-util = "0.3"
+pin-project  = "1"
+
+# ── Serialization ─────────────────────────────────────────────────────────────
+serde        = { version = "1.0.228", features = ["derive"] }
+serde_json   = "1"
+toml         = "1"
+
+# ── Error handling ────────────────────────────────────────────────────────────
+thiserror    = "2"
+
+# ── Tracing / telemetry ───────────────────────────────────────────────────────
+tracing                     = "0.1"
+tracing-subscriber          = { version = "0.3", features = ["env-filter", "json", "fmt"] }
+opentelemetry               = { version = "0.32", features = ["trace"] }
+opentelemetry_sdk           = { version = "0.32", features = ["rt-tokio", "trace"] }
+opentelemetry-otlp          = { version = "0.32", features = ["trace", "http-proto", "reqwest-client"] }
+tracing-opentelemetry       = "0.33"
+metrics                     = "0.24"
+metrics-exporter-prometheus = "0.18"
+
+# ── IDs ───────────────────────────────────────────────────────────────────────
+uuid = { version = "1", features = ["v4", "v7", "serde"] }
+ulid = { version = "1", features = ["serde"] }
+
+# ── Time ──────────────────────────────────────────────────────────────────────
+chrono    = { version = "0.4", features = ["serde"] }
+chrono-tz = { version = "0.10", features = ["serde"] }
+
+# ── Config ────────────────────────────────────────────────────────────────────
+config-rs = { package = "config", version = "0.14" }
+
+# ── Security ──────────────────────────────────────────────────────────────────
+zeroize  = { version = "1", features = ["derive"] }
+secrecy  = "0.10"
+ring     = "0.17"
+argon2   = "0.5"
+
+# ── HTTP ──────────────────────────────────────────────────────────────────────
+actix-web         = "4"
+actix-web-lab     = "0.22"
+tracing-actix-web = "0.7"
+reqwest           = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlx = { version = "0.9", features = ["runtime-tokio", "tls-rustls-ring", "postgres", "uuid", "chrono", "json", "migrate"] }
+
+# ── Cache ─────────────────────────────────────────────────────────────────────
+moka  = { version = "0.12", features = ["future"] }
+redis = { version = "1", features = ["aio", "tokio-comp", "connection-manager"] }
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+parking_lot  = "0.12"
+indexmap     = { version = "2", features = ["serde"] }
+bytes        = "1"
+base64       = "0.22"
+hex          = "0.4"
+rand         = "0.9"
+once_cell    = "1"
+arc-swap     = "1"
+dashmap      = "6"
+
+# ── Workspace crates ─────────────────────────────────────────────────────────
+klauthed               = { path = "klauthed",               version = "0.1.0" }
+klauthed-core          = { path = "klauthed-core",          version = "0.1.0" }
+klauthed-data          = { path = "klauthed-data",          version = "0.1.0" }
+klauthed-i18n          = { path = "klauthed-i18n",          version = "0.1.0" }
+klauthed-macros        = { path = "klauthed-macros",        version = "0.1.0" }
+klauthed-observability = { path = "klauthed-observability", version = "0.1.0" }
+klauthed-platform      = { path = "klauthed-platform",      version = "0.1.0" }
+klauthed-protocol      = { path = "klauthed-protocol",      version = "0.1.0" }
+klauthed-security      = { path = "klauthed-security",      version = "0.1.0" }
+klauthed-testing       = { path = "klauthed-testing",       version = "0.1.0" }
+klauthed-web           = { path = "klauthed-web",           version = "0.1.0" }
+
+[profile.release]
+lto           = "thin"
+codegen-units = 1
+strip         = "symbols"
+opt-level     = 3
+
+[profile.dev]
+opt-level = 1
+
+[profile.test]
+opt-level = 1

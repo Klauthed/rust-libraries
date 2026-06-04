@@ -1,0 +1,50 @@
+# Klauthed framework — Turkish message catalog
+
+[authentication]
+required    = "Bu kaynağa erişmek için kimlik doğrulama gereklidir."
+expired     = "Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın."
+invalid     = "Sağlanan kimlik bilgileri geçersiz."
+mfa_required = "Çok faktörlü kimlik doğrulama gereklidir."
+
+[authorization]
+denied      = "Bu işlemi gerçekleştirme yetkiniz yok."
+insufficient_scope = "Erişim belirteci gerekli kapsama sahip değil: {scope}."
+
+[validation]
+required    = "{field} alanı zorunludur."
+min_length  = "{field} alanı en az {min} karakter olmalıdır."
+max_length  = "{field} alanı en fazla {max} karakter olabilir."
+invalid_format = "{field} alanının biçimi geçersiz."
+invalid_email  = "{field} alanı geçerli bir e-posta adresi olmalıdır."
+out_of_range   = "{field} alanı {min} ile {max} arasında olmalıdır."
+
+[request]
+body_invalid    = "İstek gövdesi ayrıştırılamadı."
+content_type    = "Content-Type application/json olmalıdır."
+idempotency_conflict = "{key} idempotentlik anahtarına sahip bir istek zaten işleniyor."
+
+[rate_limit]
+exceeded    = "Çok fazla istek. Lütfen {retry_after} saniye sonra tekrar deneyin."
+
+[not_found]
+generic     = "İstenen kaynak bulunamadı."
+resource    = "{id} kimliğine sahip {resource} bulunamadı."
+
+[conflict]
+generic     = "İşlem, kaynağın mevcut durumuyla çakışıyor."
+
+[timeout]
+generic     = "İşlem zaman aşımına uğradı. Lütfen tekrar deneyin."
+
+[internal]
+error       = "Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin."
+
+[tenant]
+not_found   = "Kiracı bulunamadı."
+suspended   = "Bu kiracı hesabı askıya alınmıştır."
+
+[user]
+not_found       = "{id} kimlikli kullanıcı bulunamadı."
+email_duplicate = "Bu e-posta adresiyle zaten bir kullanıcı mevcut."
+email_invalid   = "E-posta adresi geçersiz."
+password_weak   = "Parola karmaşıklık gereksinimlerini karşılamıyor."

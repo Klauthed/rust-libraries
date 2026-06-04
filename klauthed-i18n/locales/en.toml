@@ -1,0 +1,50 @@
+# Klauthed framework — English message catalog
+
+[authentication]
+required    = "Authentication is required to access this resource."
+expired     = "Your session has expired. Please sign in again."
+invalid     = "The provided credentials are invalid."
+mfa_required = "Multi-factor authentication is required."
+
+[authorization]
+denied      = "You are not authorized to perform this action."
+insufficient_scope = "The access token does not have the required scope: {scope}."
+
+[validation]
+required    = "The field {field} is required."
+min_length  = "The field {field} must be at least {min} characters long."
+max_length  = "The field {field} must not exceed {max} characters."
+invalid_format = "The field {field} has an invalid format."
+invalid_email  = "The field {field} must be a valid email address."
+out_of_range   = "The field {field} must be between {min} and {max}."
+
+[request]
+body_invalid    = "The request body could not be parsed."
+content_type    = "Content-Type must be application/json."
+idempotency_conflict = "A request with idempotency key {key} is already in progress."
+
+[rate_limit]
+exceeded    = "Too many requests. Please try again after {retry_after} seconds."
+
+[not_found]
+generic     = "The requested resource was not found."
+resource    = "The {resource} with id {id} was not found."
+
+[conflict]
+generic     = "The operation conflicts with the current state of the resource."
+
+[timeout]
+generic     = "The operation timed out. Please try again."
+
+[internal]
+error       = "An unexpected error occurred. Please try again later."
+
+[tenant]
+not_found   = "Tenant not found."
+suspended   = "This tenant account has been suspended."
+
+[user]
+not_found       = "User {id} not found."
+email_duplicate = "A user with this email address already exists."
+email_invalid   = "The email address is invalid."
+password_weak   = "The password does not meet the complexity requirements."

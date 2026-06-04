@@ -1,0 +1,50 @@
+# Klauthed framework — German message catalog
+
+[authentication]
+required    = "Für den Zugriff auf diese Ressource ist eine Authentifizierung erforderlich."
+expired     = "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
+invalid     = "Die angegebenen Anmeldedaten sind ungültig."
+mfa_required = "Multi-Faktor-Authentifizierung ist erforderlich."
+
+[authorization]
+denied      = "Sie sind nicht berechtigt, diese Aktion durchzuführen."
+insufficient_scope = "Das Zugriffstoken besitzt nicht den erforderlichen Geltungsbereich: {scope}."
+
+[validation]
+required    = "Das Feld {field} ist erforderlich."
+min_length  = "Das Feld {field} muss mindestens {min} Zeichen lang sein."
+max_length  = "Das Feld {field} darf nicht mehr als {max} Zeichen enthalten."
+invalid_format = "Das Feld {field} hat ein ungültiges Format."
+invalid_email  = "Das Feld {field} muss eine gültige E-Mail-Adresse sein."
+out_of_range   = "Das Feld {field} muss zwischen {min} und {max} liegen."
+
+[request]
+body_invalid    = "Der Anforderungstext konnte nicht geparst werden."
+content_type    = "Content-Type muss application/json sein."
+idempotency_conflict = "Eine Anforderung mit dem Idempotenzschlüssel {key} wird bereits verarbeitet."
+
+[rate_limit]
+exceeded    = "Zu viele Anfragen. Bitte versuchen Sie es nach {retry_after} Sekunden erneut."
+
+[not_found]
+generic     = "Die angeforderte Ressource wurde nicht gefunden."
+resource    = "Die {resource} mit der ID {id} wurde nicht gefunden."
+
+[conflict]
+generic     = "Der Vorgang steht im Konflikt mit dem aktuellen Zustand der Ressource."
+
+[timeout]
+generic     = "Der Vorgang hat das Zeitlimit überschritten. Bitte versuchen Sie es erneut."
+
+[internal]
+error       = "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut."
+
+[tenant]
+not_found   = "Mandant nicht gefunden."
+suspended   = "Dieses Mandantenkonto wurde gesperrt."
+
+[user]
+not_found       = "Benutzer {id} nicht gefunden."
+email_duplicate = "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits."
+email_invalid   = "Die E-Mail-Adresse ist ungültig."
+password_weak   = "Das Passwort erfüllt die Komplexitätsanforderungen nicht."

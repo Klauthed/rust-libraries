@@ -1,0 +1,50 @@
+# Klauthed framework — French message catalog
+
+[authentication]
+required    = "Une authentification est requise pour accéder à cette ressource."
+expired     = "Votre session a expiré. Veuillez vous reconnecter."
+invalid     = "Les informations d'identification fournies sont invalides."
+mfa_required = "L'authentification multi-facteurs est requise."
+
+[authorization]
+denied      = "Vous n'êtes pas autorisé à effectuer cette action."
+insufficient_scope = "Le jeton d'accès ne dispose pas de la portée requise : {scope}."
+
+[validation]
+required    = "Le champ {field} est obligatoire."
+min_length  = "Le champ {field} doit contenir au moins {min} caractères."
+max_length  = "Le champ {field} ne doit pas dépasser {max} caractères."
+invalid_format = "Le champ {field} a un format invalide."
+invalid_email  = "Le champ {field} doit être une adresse e-mail valide."
+out_of_range   = "Le champ {field} doit être compris entre {min} et {max}."
+
+[request]
+body_invalid    = "Le corps de la requête n'a pas pu être analysé."
+content_type    = "Le Content-Type doit être application/json."
+idempotency_conflict = "Une requête avec la clé d'idempotence {key} est déjà en cours."
+
+[rate_limit]
+exceeded    = "Trop de requêtes. Veuillez réessayer après {retry_after} secondes."
+
+[not_found]
+generic     = "La ressource demandée est introuvable."
+resource    = "La {resource} avec l'identifiant {id} est introuvable."
+
+[conflict]
+generic     = "L'opération est en conflit avec l'état actuel de la ressource."
+
+[timeout]
+generic     = "L'opération a expiré. Veuillez réessayer."
+
+[internal]
+error       = "Une erreur inattendue s'est produite. Veuillez réessayer ultérieurement."
+
+[tenant]
+not_found   = "Locataire introuvable."
+suspended   = "Ce compte locataire a été suspendu."
+
+[user]
+not_found       = "Utilisateur {id} introuvable."
+email_duplicate = "Un utilisateur avec cette adresse e-mail existe déjà."
+email_invalid   = "L'adresse e-mail est invalide."
+password_weak   = "Le mot de passe ne satisfait pas les critères de complexité."
