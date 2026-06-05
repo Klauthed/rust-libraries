@@ -4,4 +4,19 @@ version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 
+[features]
+default = ["oidc", "scim"]
+# OpenID Connect discovery / claim types.
+oidc = []
+# OAuth 2.0 (RFC 6749) message types and ID-token claim validation.
+# Implies `oidc`, which provides the underlying claim/grant types.
+oauth2 = ["oidc"]
+# SCIM 2.0 (RFC 7643/7644) core resource types.
+scim = []
+
 [dependencies]
+klauthed-error.workspace = true
+klauthed-macros.workspace = true
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }

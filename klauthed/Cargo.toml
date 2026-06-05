@@ -3,5 +3,59 @@ name = "klauthed"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+description = "Umbrella starter crate for the klauthed framework — re-exports the klauthed-* libraries behind feature flags."
 
 [dependencies]
+# Every member is an optional dependency, enabled by its feature below.
+klauthed-core          = { workspace = true, optional = true }
+klauthed-error         = { workspace = true, optional = true }
+klauthed-macros        = { workspace = true, optional = true }
+klauthed-data          = { workspace = true, optional = true }
+klauthed-web           = { workspace = true, optional = true }
+klauthed-observability = { workspace = true, optional = true }
+klauthed-i18n          = { workspace = true, optional = true }
+klauthed-security      = { workspace = true, optional = true }
+klauthed-platform      = { workspace = true, optional = true }
+klauthed-protocol      = { workspace = true, optional = true }
+klauthed-testing       = { workspace = true, optional = true }
+
+[features]
+default = ["core"]
+
+# ── Per-crate toggles (each re-exports `klauthed::<name>`) ─────────────────────
+error         = ["dep:klauthed-error"]
+core          = ["dep:klauthed-core", "error"]
+macros        = ["dep:klauthed-macros"]
+data          = ["dep:klauthed-data", "core"]
+web           = ["dep:klauthed-web", "core"]
+observability = ["dep:klauthed-observability", "core"]
+i18n          = ["dep:klauthed-i18n", "error"]
+security      = ["dep:klauthed-security", "core"]
+platform      = ["dep:klauthed-platform", "core"]
+protocol      = ["dep:klauthed-protocol", "error"]
+testing       = ["dep:klauthed-testing", "core"]
+
+# Everything except the dev-only testing utilities (with each crate's own defaults).
+full = [
+    "core", "error", "macros", "data", "web",
+    "observability", "i18n", "security", "platform", "protocol",
+]
+
+# ── Pass-through to sub-crate features (also enable the owning crate) ──────────
+vault         = ["core", "klauthed-core/vault"]
+task-local    = ["core", "klauthed-core/task-local"]
+context-scope = ["web", "klauthed-web/context-scope"]
+metrics       = ["observability", "klauthed-observability/metrics"]
+otel          = ["observability", "klauthed-observability/otel"]
+postgres      = ["data", "klauthed-data/postgres"]
+mysql         = ["data", "klauthed-data/mysql"]
+sqlite        = ["data", "klauthed-data/sqlite"]
+redis         = ["data", "klauthed-data/redis"]
+cache-memory  = ["data", "klauthed-data/cache-memory"]
+nats          = ["data", "klauthed-data/nats"]
+rabbitmq      = ["data", "klauthed-data/rabbitmq"]
+kafka         = ["data", "klauthed-data/kafka"]
+storage       = ["data", "klauthed-data/storage"]
+storage-s3    = ["data", "klauthed-data/storage-s3"]
+storage-gcs   = ["data", "klauthed-data/storage-gcs"]
+storage-azure = ["data", "klauthed-data/storage-azure"]

@@ -5,3 +5,37 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+klauthed-error.workspace = true
+klauthed-macros.workspace = true
+klauthed-core.workspace = true
+
+serde = { workspace = true }
+serde_json.workspace = true
+base64.workspace = true
+hex.workspace = true
+chrono.workspace = true
+ring.workspace = true
+zeroize.workspace = true
+secrecy.workspace = true
+thiserror.workspace = true
+
+# Argon2id password hashing. `std` pulls password-hash/std -> rand_core/std,
+# which makes `password_hash::rand_core::OsRng` (the OS CSPRNG) available for
+# salt generation.
+argon2 = { workspace = true, features = ["std"] }
+
+# Constant-time equality for secret/MAC comparison.
+subtle = "2.6"
+
+# JWT. Not in the workspace; pinned to the vetted standard implementation.
+jsonwebtoken = "9.3"
+
+# Async session-store trait (object-safe async methods).
+async-trait = { workspace = true }
+
+# TOTP (RFC 6238). `otpauth` enables the provisioning URI + issuer/account
+# fields; `gen_secret` enables CSPRNG secret generation.
+totp-rs = { version = "5.7", default-features = false, features = ["otpauth", "gen_secret"] }
+
+[dev-dependencies]
+tokio = { workspace = true }

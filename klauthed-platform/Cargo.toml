@@ -5,3 +5,21 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+klauthed-core.workspace = true
+klauthed-error.workspace = true
+klauthed-macros.workspace = true
+
+serde.workspace = true
+# serde_json::Value is part of the public job/webhook payload API.
+serde_json.workspace = true
+async-trait.workspace = true
+
+# Webhook HMAC signing (no hand-rolled crypto) and hex-encoding of signatures.
+ring.workspace = true
+hex.workspace = true
+
+# Job scheduling/backoff arithmetic.
+chrono.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true }

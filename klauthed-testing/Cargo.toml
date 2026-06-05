@@ -5,3 +5,14 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+klauthed-core.workspace = true
+klauthed-error.workspace = true
+klauthed-macros.workspace = true
+
+async-trait.workspace = true
+chrono.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true }

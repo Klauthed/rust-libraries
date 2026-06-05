@@ -5,8 +5,33 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+klauthed-error.workspace = true
+
 async-trait.workspace = true
+chrono.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 toml.workspace = true
+tracing.workspace = true
+ulid.workspace = true
+uuid.workspace = true
+
+# ── Optional: Vault provider (feature = "vault") ──────────────────────────────
+reqwest = { workspace = true, optional = true }
+secrecy = { workspace = true, optional = true }
+# ── Optional: ambient RequestContext (feature = "task-local") ─────────────────
+tokio = { workspace = true, optional = true }
+
+[features]
+# Vault is on by default so `Config::load()` / auto-build works in staging/prod
+# out of the box. Opt out with `default-features = false` to keep core lean
+# (drops the reqwest/secrecy dependencies) for services that never touch Vault.
+default = ["vault"]
+# Enables the HashiCorp Vault config provider (KV v2; Token/AppRole/Kubernetes auth).
+vault = ["dep:reqwest", "dep:secrecy"]
+# Enables the ambient (tokio task-local) RequestContext: current()/scope().
+task-local = ["dep:tokio"]
+
+[dev-dependencies]
+tokio = { workspace = true }

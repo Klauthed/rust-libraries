@@ -1,0 +1,37 @@
+# Sample service configuration consumed by the `config_quickstart` example.
+# In a real service this lives at `config/{profile}.toml` and secrets come from
+# Vault in staging/prod.
+
+app_name = "demo-service"
+
+[server]
+host = "127.0.0.1"
+port = 8088
+
+[database]
+system   = "postgres"
+host     = "localhost"
+database = "demo"
+username = "demo"
+password = "demo-secret"
+
+[database.pool]
+max_connections = 20
+
+[cache]
+backend = "redis"
+host    = "localhost"
+port    = 6379
+db      = 1
+
+[messaging]
+backend   = "nats"
+urls      = ["nats://localhost:4222"]
+jetstream = true
+
+[storage]
+# backend = "local"
+# root    = "./data"
+backend = "s3"
+region  = "us-east-1"
+bucket  = "demo-service"

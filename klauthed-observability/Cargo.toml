@@ -5,3 +5,33 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+klauthed-core.workspace = true
+klauthed-error.workspace = true
+klauthed-macros.workspace = true
+
+serde.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# ── Metrics (feature = "metrics") ─────────────────────────────────────────────
+metrics                     = { workspace = true, optional = true }
+metrics-exporter-prometheus = { workspace = true, optional = true }
+
+# ── OpenTelemetry tracing (feature = "otel") ──────────────────────────────────
+opentelemetry         = { workspace = true, optional = true }
+opentelemetry_sdk     = { workspace = true, optional = true }
+opentelemetry-otlp    = { workspace = true, optional = true }
+tracing-opentelemetry = { workspace = true, optional = true }
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[features]
+default = []
+metrics = ["dep:metrics", "dep:metrics-exporter-prometheus"]
+otel = [
+    "dep:opentelemetry",
+    "dep:opentelemetry_sdk",
+    "dep:opentelemetry-otlp",
+    "dep:tracing-opentelemetry",
+]

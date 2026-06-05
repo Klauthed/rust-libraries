@@ -4,4 +4,14 @@ version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 
+[lib]
+proc-macro = true
+
 [dependencies]
+syn.workspace = true
+quote.workspace = true
+proc-macro2.workspace = true
+
+[dev-dependencies]
+# The generated code references `::klauthed_error`; tests need it to compile.
+klauthed-error.workspace = true
