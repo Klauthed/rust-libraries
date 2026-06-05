@@ -32,6 +32,12 @@
 //! # }
 //! ```
 
+#[cfg(feature = "redis")]
+pub mod redis;
+
+#[cfg(feature = "mongodb")]
+pub mod mongo;
+
 use async_trait::async_trait;
 use chrono::Duration;
 use klauthed_core::id::Id;
@@ -74,7 +80,10 @@ enum LockBackend {
     InMemory(Arc<LockTable>),
     /// Redis-backed manager; release runs a compare-and-delete Lua script.
     #[cfg(feature = "redis")]
-    Redis(crate::locks_redis::RedisLockManager),
+    Redis(self::redis::RedisLockManager),
+    /// MongoDB-backed manager using compare-and-upsert with TTL.
+    #[cfg(feature = "mongodb")]
+    Mongo(self::mongo::MongoLockManager),
 }
 
 /// A held lock. Dropping it releases the lock; [`release`](LockGuard::release)
@@ -111,12 +120,27 @@ impl LockGuard {
     pub(crate) fn redis(
         key: String,
         token: LockToken,
-        manager: crate::locks_redis::RedisLockManager,
+        manager: self::redis::RedisLockManager,
     ) -> Self {
         Self {
             key,
             token,
             backend: LockBackend::Redis(manager),
+            released: false,
+        }
+    }
+
+    /// Construct a MongoDB-backed guard (used by `MongoLockManager`).
+    #[cfg(feature = "mongodb")]
+    pub(crate) fn mongo(
+        key: String,
+        token: LockToken,
+        manager: self::mongo::MongoLockManager,
+    ) -> Self {
+        Self {
+            key,
+            token,
+            backend: LockBackend::Mongo(manager),
             released: false,
         }
     }
@@ -135,8 +159,8 @@ impl LockGuard {
     /// token still owns it.
     ///
     /// # Errors
-    /// Returns a [`DataError`] only if a backend round-trip fails (Redis); the
-    /// in-memory backend never errors.
+    /// Returns a [`DataError`] only if a backend round-trip fails (Redis/MongoDB);
+    /// the in-memory backend never errors.
     pub async fn release(mut self) -> Result<(), DataError> {
         if self.released {
             return Ok(());
@@ -149,6 +173,11 @@ impl LockGuard {
             }
             #[cfg(feature = "redis")]
             LockBackend::Redis(manager) => {
+                manager.release_token(&self.key, self.token).await?;
+                Ok(())
+            }
+            #[cfg(feature = "mongodb")]
+            LockBackend::Mongo(manager) => {
                 manager.release_token(&self.key, self.token).await?;
                 Ok(())
             }
@@ -177,7 +206,7 @@ impl Drop for LockGuard {
             LockBackend::InMemory(table) => {
                 Self::release_in_memory(table, &self.key, self.token);
             }
-            // A Redis guard can't make an async call from Drop; the lock's TTL
+            // Redis/MongoDB guards can't make async calls from Drop; the lock's TTL
             // reclaims it. Callers who need prompt release should call
             // `release().await` explicitly.
             #[cfg(feature = "redis")]
@@ -185,6 +214,13 @@ impl Drop for LockGuard {
                 tracing::debug!(
                     key = %self.key,
                     "redis lock guard dropped without explicit release; relying on TTL expiry"
+                );
+            }
+            #[cfg(feature = "mongodb")]
+            LockBackend::Mongo(_) => {
+                tracing::debug!(
+                    key = %self.key,
+                    "mongodb lock guard dropped without explicit release; relying on TTL expiry"
                 );
             }
         }

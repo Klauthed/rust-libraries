@@ -21,6 +21,18 @@
 //! # }
 //! ```
 
+#[cfg(feature = "sql")]
+pub mod sql;
+
+#[cfg(feature = "mongodb")]
+pub mod mongo;
+
+#[cfg(feature = "sql")]
+pub use sql::SqlOutbox;
+
+#[cfg(feature = "mongodb")]
+pub use mongo::MongoOutbox;
+
 use async_trait::async_trait;
 use klauthed_core::domain::{DomainEvent, EventEnvelope};
 use klauthed_core::id::Id;

@@ -30,6 +30,12 @@
 //! # }
 //! ```
 
+#[cfg(feature = "redis")]
+pub mod redis;
+
+#[cfg(feature = "mongodb")]
+pub mod mongo;
+
 use async_trait::async_trait;
 use klauthed_core::time::Timestamp;
 use serde::{Deserialize, Serialize};

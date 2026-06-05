@@ -30,6 +30,13 @@ lapin      = { version = "4.10", optional = true }
 rskafka    = { version = "0.6", optional = true }
 # Unified object storage; default `fs` feature keeps local-only builds lean.
 object_store = { version = "0.13", optional = true }
+# MongoDB official driver (async, uses tokio).
+mongodb    = { version = "3", optional = true }
+# SQL Server (MSSQL) via tiberius + bb8 connection pool.
+tiberius   = { version = "0.12", optional = true, default-features = false, features = ["rustls", "chrono"] }
+tokio-util = { version = "0.7", optional = true, features = ["compat"] }
+bb8        = { version = "0.9", optional = true }
+bb8-tiberius = { version = "0.16", optional = true }
 
 [features]
 default = []
@@ -54,6 +61,10 @@ storage       = ["dep:object_store"]
 storage-s3    = ["storage", "object_store/aws"]
 storage-gcs   = ["storage", "object_store/gcp"]
 storage-azure = ["storage", "object_store/azure"]
+
+# ── NoSQL / alternative databases ────────────────────────────────────────────
+mongodb = ["dep:mongodb"]
+mssql   = ["dep:tiberius", "dep:tokio-util", "dep:bb8", "dep:bb8-tiberius"]
 
 [dev-dependencies]
 tokio = { workspace = true }

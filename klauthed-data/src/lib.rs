@@ -26,6 +26,8 @@
 //! | `storage-s3`   | `storage::connect` for S3 / S3-compatible           |
 //! | `storage-gcs`  | `storage::connect` for Google Cloud Storage         |
 //! | `storage-azure`| `storage::connect` for Azure Blob Storage           |
+//! | `mongodb`      | `db::mongo::connect` for MongoDB                    |
+//! | `mssql`        | `db::mssql::connect` for SQL Server (via tiberius)  |
 //!
 //! ```no_run
 //! # async fn run() -> Result<(), Box<dyn std::error::Error>> {
@@ -45,35 +47,32 @@ pub mod error;
 //
 // Backend-agnostic traits with in-memory implementations. These are always
 // compiled (no feature gate) since they carry no driver dependencies; real
-// Postgres/Redis backends are a future pass.
+// Postgres/Redis backends are in sub-modules gated by their own features.
 
 pub mod idempotency;
 pub mod locks;
 pub mod outbox;
 
-#[cfg(feature = "sql")]
+// The `db` module houses the relational connector (sql feature) and the
+// MongoDB + MSSQL sub-modules (mongodb / mssql features). It is compiled
+// whenever any of those features is active.
+#[cfg(any(feature = "sql", feature = "mongodb", feature = "mssql"))]
 pub mod db;
-
-/// SQL-backed [`Outbox`] over a driver-agnostic `sqlx::AnyPool`.
-#[cfg(feature = "sql")]
-pub mod outbox_sql;
 
 #[cfg(any(feature = "redis", feature = "cache-memory"))]
 pub mod cache;
-
-/// Redis-backed [`LockManager`] (`SET … NX PX` + compare-and-delete Lua).
-#[cfg(feature = "redis")]
-pub mod locks_redis;
-
-/// Redis-backed [`IdempotencyStore`] (`SET … NX PX` for atomic claim).
-#[cfg(feature = "redis")]
-pub mod idempotency_redis;
 
 #[cfg(any(feature = "nats", feature = "rabbitmq", feature = "kafka"))]
 pub mod messaging;
 
 #[cfg(feature = "storage")]
 pub mod storage;
+
+// ── Stub modules reserved for future implementation ───────────────────────────
+pub mod eventbus;
+pub mod pagination;
+pub mod saga;
+pub mod transaction;
 
 pub use error::DataError;
 
@@ -84,10 +83,19 @@ pub use locks::{InMemoryLockManager, LockGuard, LockManager, LockToken};
 pub use outbox::{InMemoryOutbox, Outbox, OutboxEntry, OutboxId};
 
 #[cfg(feature = "sql")]
-pub use outbox_sql::SqlOutbox;
+pub use outbox::SqlOutbox;
 
 #[cfg(feature = "redis")]
-pub use locks_redis::RedisLockManager;
+pub use locks::redis::RedisLockManager;
 
 #[cfg(feature = "redis")]
-pub use idempotency_redis::RedisIdempotencyStore;
+pub use idempotency::redis::RedisIdempotencyStore;
+
+#[cfg(feature = "mongodb")]
+pub use outbox::MongoOutbox;
+
+#[cfg(feature = "mongodb")]
+pub use locks::mongo::MongoLockManager;
+
+#[cfg(feature = "mongodb")]
+pub use idempotency::mongo::MongoIdempotencyStore;

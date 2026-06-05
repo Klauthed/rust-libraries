@@ -22,7 +22,7 @@
 //! ```no_run
 //! # async fn run() -> Result<(), klauthed_data::DataError> {
 //! use klauthed_data::outbox::Outbox;
-//! use klauthed_data::outbox_sql::SqlOutbox;
+//! use klauthed_data::outbox::SqlOutbox;
 //!
 //! sqlx::any::install_default_drivers();
 //! let pool = sqlx::AnyPool::connect("sqlite::memory:").await?;
