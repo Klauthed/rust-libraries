@@ -90,6 +90,7 @@ argon2   = "0.5"
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 actix-web         = "4"
 actix-web-lab     = "0.22"
+actix-cors        = "0.7"
 tracing-actix-web = "0.7"
 reqwest           = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 

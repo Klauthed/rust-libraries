@@ -118,6 +118,50 @@ impl std::fmt::Display for AcronymError {
 }
 impl std::error::Error for AcronymError {}
 
+/// Valid codes: bare suffix, fully-qualified with dot, digits, underscores.
+#[derive(Debug, DomainError)]
+#[domain(prefix = "svc")]
+enum ValidCodes {
+    #[domain(category = "not_found", code = "resource_not_found")]
+    WithUnderscore,
+    #[domain(category = "internal", code = "step2_failed")]
+    WithDigit,
+    // Bare variant — auto-converted to snake_case.
+    ConnectionTimeout,
+}
+impl std::fmt::Display for ValidCodes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+impl std::error::Error for ValidCodes {}
+
+/// Fully-qualified code with no prefix — dot is valid here.
+#[derive(Debug, DomainError)]
+#[domain(category = "unavailable", code = "infra.circuit_open")]
+struct CircuitOpen;
+impl std::fmt::Display for CircuitOpen {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("circuit open")
+    }
+}
+impl std::error::Error for CircuitOpen {}
+
+#[test]
+fn valid_codes_compile_and_produce_correct_strings() {
+    assert_eq!(
+        ValidCodes::WithUnderscore.code().as_str(),
+        "svc.resource_not_found"
+    );
+    assert_eq!(ValidCodes::WithDigit.code().as_str(), "svc.step2_failed");
+    assert_eq!(
+        ValidCodes::ConnectionTimeout.code().as_str(),
+        "svc.connection_timeout"
+    );
+    // Fully-qualified code preserves the dot.
+    assert_eq!(CircuitOpen.code().as_str(), "infra.circuit_open");
+}
+
 #[test]
 fn acronym_variants_snake_case_correctly() {
     // These would have been "h_t_t_p_not_found", "a_p_i_key_missing",

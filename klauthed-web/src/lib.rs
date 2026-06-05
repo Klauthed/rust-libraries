@@ -47,6 +47,7 @@
 
 pub mod auth;
 pub mod context;
+pub mod cors;
 pub mod error;
 pub mod extract;
 pub mod health;
@@ -54,6 +55,7 @@ pub mod ratelimit;
 pub mod server;
 
 pub use auth::{AuthenticatedUser, JwtAuth, OptionalAuthentication};
+pub use cors::{build_cors, CorsConfig};
 pub use context::{Context, RequestContextMiddleware};
 pub use error::{AppError, AppResult};
 pub use extract::{Json, Validated};

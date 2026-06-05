@@ -66,6 +66,7 @@ use actix_web::body::BoxBody;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::header::AUTHORIZATION;
 use actix_web::{Error, FromRequest, HttpMessage as _, HttpRequest, ResponseError as _, web};
+use klauthed_core::context::RequestContext;
 use futures_util::future::LocalBoxFuture;
 use klauthed_error::DomainError as _;
 use klauthed_security::{Claims, JwtVerifier, SecurityError};
@@ -194,7 +195,22 @@ where
             }
         };
 
-        // Happy path: store decoded claims for extractors and proceed.
+        // Happy path: propagate the authenticated subject into RequestContext so
+        // audit events, observability spans, and structured logs all carry the
+        // principal without the handler having to thread it through manually.
+        if let Some(sub) = claims.sub.as_deref() {
+            let updated_ctx = req
+                .extensions()
+                .get::<RequestContext>()
+                .cloned()
+                .unwrap_or_default()
+                .with_principal(sub);
+            req.extensions_mut().insert(updated_ctx);
+        }
+
+        // Store decoded claims for the AuthenticatedUser / OptionalAuthentication
+        // extractors — separate from RequestContext so both are independently
+        // accessible.
         req.extensions_mut().insert(claims);
 
         let service = Rc::clone(&self.service);
@@ -381,6 +397,36 @@ mod tests {
             )
             .await
         };
+    }
+
+    // Handler that reads RequestContext.principal() to verify propagation.
+    async fn echo_principal(ctx: crate::context::Context) -> HttpResponse {
+        HttpResponse::Ok().body(ctx.principal().unwrap_or("none").to_owned())
+    }
+
+    #[actix_web::test]
+    async fn jwt_auth_propagates_sub_into_request_context() {
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(verifier()))
+                .wrap(JwtAuth::new())
+                .wrap(crate::context::RequestContextMiddleware::new())
+                .route("/principal", web::get().to(echo_principal)),
+        )
+        .await;
+
+        let token = valid_token("alice");
+        let req = test::TestRequest::get()
+            .uri("/principal")
+            .insert_header(("Authorization", format!("Bearer {token}")))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        // RequestContext.principal() must equal the JWT sub claim.
+        let body = test::read_body(resp).await;
+        assert_eq!(&body[..], b"alice");
     }
 
     #[actix_web::test]
