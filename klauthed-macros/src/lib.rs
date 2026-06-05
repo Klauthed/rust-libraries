@@ -179,6 +179,7 @@ fn category_path(
         "unauthorized" => "Unauthorized",
         "forbidden" => "Forbidden",
         "not_found" => "NotFound",
+        "unprocessable_entity" => "UnprocessableEntity",
         "conflict" => "Conflict",
         "rate_limited" => "RateLimited",
         "timeout" => "Timeout",
@@ -189,7 +190,8 @@ fn category_path(
                 span,
                 format!(
                     "unknown category '{other}' (expected bad_request, unauthorized, forbidden, \
-                     not_found, conflict, rate_limited, timeout, unavailable, or internal)"
+                     not_found, unprocessable_entity, conflict, rate_limited, timeout, \
+                     unavailable, or internal)"
                 ),
             ));
         }

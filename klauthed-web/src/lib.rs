@@ -45,6 +45,7 @@
 //! TLS termination, distributed rate limiting, and OpenAPI generation are
 //! intentionally not handled here yet.
 
+pub mod auth;
 pub mod context;
 pub mod error;
 pub mod extract;
@@ -52,6 +53,7 @@ pub mod health;
 pub mod ratelimit;
 pub mod server;
 
+pub use auth::{AuthenticatedUser, JwtAuth, OptionalAuthentication};
 pub use context::{Context, RequestContextMiddleware};
 pub use error::{AppError, AppResult};
 pub use extract::{Json, Validated};

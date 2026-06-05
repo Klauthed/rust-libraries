@@ -81,6 +81,11 @@ impl AppError {
     pub fn not_found(message: impl Into<String>) -> Self {
         Self::new(ErrorCategory::NotFound, message)
     }
+    /// `422 Unprocessable Entity` — the request was understood but failed
+    /// semantic/business validation.
+    pub fn unprocessable_entity(message: impl Into<String>) -> Self {
+        Self::new(ErrorCategory::UnprocessableEntity, message)
+    }
     /// `409 Conflict`.
     pub fn conflict(message: impl Into<String>) -> Self {
         Self::new(ErrorCategory::Conflict, message)
@@ -112,6 +117,7 @@ fn default_code(category: ErrorCategory) -> ErrorCode {
         ErrorCategory::Unauthorized => "request.unauthorized",
         ErrorCategory::Forbidden => "request.forbidden",
         ErrorCategory::NotFound => "request.not_found",
+        ErrorCategory::UnprocessableEntity => "request.unprocessable_entity",
         ErrorCategory::Conflict => "request.conflict",
         ErrorCategory::RateLimited => "request.rate_limited",
         ErrorCategory::Timeout => "request.timeout",
@@ -124,6 +130,12 @@ fn default_code(category: ErrorCategory) -> ErrorCode {
 //
 // (No blanket `impl<E: DomainError> From<E>`, which would collide with the std
 // reflexive `From<T> for T`; concrete impls are unambiguous.)
+
+impl From<klauthed_core::validation::ValidationErrors> for AppError {
+    fn from(error: klauthed_core::validation::ValidationErrors) -> Self {
+        Self::from_domain(error)
+    }
+}
 
 impl From<klauthed_core::error::ConfigError> for AppError {
     fn from(error: klauthed_core::error::ConfigError) -> Self {
@@ -139,6 +151,12 @@ impl From<klauthed_data::DataError> for AppError {
 
 impl From<klauthed_security::SecurityError> for AppError {
     fn from(error: klauthed_security::SecurityError) -> Self {
+        Self::from_domain(error)
+    }
+}
+
+impl From<klauthed_platform::PlatformError> for AppError {
+    fn from(error: klauthed_platform::PlatformError) -> Self {
         Self::from_domain(error)
     }
 }
@@ -281,6 +299,51 @@ mod tests {
             klauthed_security::SecurityError::MalformedToken("bad jwt".into()).into();
         assert_eq!(err.code().as_str(), "security.malformed_token");
         assert_eq!(err.category(), ErrorCategory::BadRequest);
+    }
+
+    #[test]
+    fn from_platform_error_preserves_code_and_category() {
+        let err: AppError = klauthed_platform::PlatformError::TenantNotFound {
+            id_or_slug: "acme".into(),
+        }
+        .into();
+        assert_eq!(err.code().as_str(), "platform.tenant_not_found");
+        assert_eq!(err.category(), ErrorCategory::NotFound);
+        assert_eq!(err.status_code().as_u16(), 404);
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    fn from_platform_backend_is_internal() {
+        let err: AppError = klauthed_platform::PlatformError::Backend {
+            message: "db conn failed".into(),
+        }
+        .into();
+        assert_eq!(err.category(), ErrorCategory::Internal);
+    }
+
+    #[test]
+    fn unprocessable_entity_constructor_gives_422() {
+        let err = AppError::unprocessable_entity("email must be a valid address");
+        assert_eq!(err.status_code().as_u16(), 422);
+        assert_eq!(err.category(), ErrorCategory::UnprocessableEntity);
+        assert_eq!(err.code().as_str(), "request.unprocessable_entity");
+    }
+
+    #[test]
+    fn validation_errors_surface_as_422() {
+        use klauthed_core::validation::{Validate, ValidationErrors};
+        struct Bad;
+        impl Validate for Bad {
+            fn validate(&self) -> Result<(), ValidationErrors> {
+                let mut e = ValidationErrors::new();
+                e.add("name", "required", "name is required");
+                e.into_result()
+            }
+        }
+        let app_err: AppError = Bad.validate().unwrap_err().into();
+        assert_eq!(app_err.status_code().as_u16(), 422);
+        assert_eq!(app_err.code().as_str(), "validation.failed");
     }
 
     #[actix_web::test]

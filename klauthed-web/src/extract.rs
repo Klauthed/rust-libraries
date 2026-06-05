@@ -273,7 +273,8 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn validated_rejects_invalid_input_with_400() {
+    // Renamed: validation errors are 422 Unprocessable Entity, not 400 Bad Request.
+    async fn validated_rejects_invalid_input_with_422() {
         let app =
             test::init_service(App::new().route("/", web::post().to(validated_handler))).await;
         let req = test::TestRequest::post()
@@ -281,11 +282,12 @@ mod tests {
             .set_json(serde_json::json!({ "email": "nope", "age": 10 }))
             .to_request();
         let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+        // ValidationErrors → UnprocessableEntity → 422.
+        assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
         let body = test::read_body(resp).await;
         let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert_eq!(json["error"]["category"], "bad_request");
+        assert_eq!(json["error"]["category"], "unprocessable_entity");
         assert_eq!(json["error"]["code"], "validation.failed");
     }
 }

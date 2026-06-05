@@ -2524,10 +2524,12 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "async-trait",
+ "chrono",
  "futures-util",
  "klauthed-core",
  "klauthed-data",
  "klauthed-error",
+ "klauthed-platform",
  "klauthed-security",
  "serde",
  "serde_json",

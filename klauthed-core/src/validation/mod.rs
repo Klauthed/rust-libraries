@@ -163,7 +163,10 @@ impl std::error::Error for ValidationErrors {}
 
 impl DomainError for ValidationErrors {
     fn category(&self) -> ErrorCategory {
-        ErrorCategory::BadRequest
+        // 422, not 400: the request was well-formed but semantically invalid.
+        // Use UnprocessableEntity so clients (and HTTP tooling) can distinguish
+        // "your JSON was garbled" from "your value failed a business rule".
+        ErrorCategory::UnprocessableEntity
     }
 
     fn code(&self) -> ErrorCode {
@@ -232,16 +235,17 @@ mod tests {
     }
 
     #[test]
-    fn is_a_bad_request_domain_error() {
+    fn validation_errors_are_unprocessable_entity() {
         let err = SignUp {
             email: "x".into(),
             age: 5,
         }
         .validate()
         .unwrap_err();
-        assert_eq!(err.category(), ErrorCategory::BadRequest);
+        assert_eq!(err.category(), ErrorCategory::UnprocessableEntity);
         assert_eq!(err.code().as_str(), "validation.failed");
-        assert_eq!(err.http_status(), 400);
+        // 422 Unprocessable Entity, NOT 400 Bad Request.
+        assert_eq!(err.http_status(), 422);
     }
 
     #[test]

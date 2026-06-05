@@ -17,6 +17,14 @@ pub enum ErrorCategory {
     Forbidden,
     /// The target resource does not exist. `404`.
     NotFound,
+    /// The request was structurally valid but semantically unprocessable —
+    /// e.g. a field value fails a business rule, a required relationship does
+    /// not exist, or a constraint would be violated. `422`.
+    ///
+    /// Distinct from [`BadRequest`](ErrorCategory::BadRequest): the server
+    /// understood the request; it simply cannot be fulfilled as-is. Use this
+    /// for validation errors surfaced *after* successful parsing.
+    UnprocessableEntity,
     /// The request conflicts with current state. `409`.
     Conflict,
     /// The caller has been rate limited. `429`.
@@ -37,6 +45,7 @@ impl ErrorCategory {
             ErrorCategory::Unauthorized => 401,
             ErrorCategory::Forbidden => 403,
             ErrorCategory::NotFound => 404,
+            ErrorCategory::UnprocessableEntity => 422,
             ErrorCategory::Conflict => 409,
             ErrorCategory::RateLimited => 429,
             ErrorCategory::Timeout => 504,
@@ -66,6 +75,7 @@ impl ErrorCategory {
             ErrorCategory::Unauthorized => "unauthorized",
             ErrorCategory::Forbidden => "forbidden",
             ErrorCategory::NotFound => "not_found",
+            ErrorCategory::UnprocessableEntity => "unprocessable_entity",
             ErrorCategory::Conflict => "conflict",
             ErrorCategory::RateLimited => "rate_limited",
             ErrorCategory::Timeout => "timeout",
