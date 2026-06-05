@@ -55,7 +55,10 @@ pub mod ratelimit;
 pub mod server;
 
 pub use auth::{AuthenticatedUser, JwtAuth, OptionalAuthentication};
-pub use cors::{build_cors, CorsConfig};
+pub use cors::{
+    build_cors, CachedOriginRegistry, CorsConfig, CorsOriginRegistry, DynamicCors,
+    InMemoryOriginRegistry,
+};
 pub use context::{Context, RequestContextMiddleware};
 pub use error::{AppError, AppResult};
 pub use extract::{Json, Validated};
