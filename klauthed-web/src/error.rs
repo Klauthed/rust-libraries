@@ -137,6 +137,12 @@ impl From<klauthed_data::DataError> for AppError {
     }
 }
 
+impl From<klauthed_security::SecurityError> for AppError {
+    fn from(error: klauthed_security::SecurityError) -> Self {
+        Self::from_domain(error)
+    }
+}
+
 impl fmt::Debug for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AppError")
@@ -258,6 +264,23 @@ mod tests {
         assert_eq!(body["error"]["code"], "request.bad_request");
         assert_eq!(body["error"]["category"], "bad_request");
         assert_eq!(body["error"]["message"], "field 'name' is required");
+    }
+
+    #[test]
+    fn from_security_error_preserves_code_and_category() {
+        let err: AppError = klauthed_security::SecurityError::ExpiredToken.into();
+        assert_eq!(err.code().as_str(), "security.expired_token");
+        assert_eq!(err.category(), ErrorCategory::Unauthorized);
+        assert_eq!(err.status_code().as_u16(), 401);
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    fn from_security_invalid_token_is_bad_request() {
+        let err: AppError =
+            klauthed_security::SecurityError::MalformedToken("bad jwt".into()).into();
+        assert_eq!(err.code().as_str(), "security.malformed_token");
+        assert_eq!(err.category(), ErrorCategory::BadRequest);
     }
 
     #[actix_web::test]

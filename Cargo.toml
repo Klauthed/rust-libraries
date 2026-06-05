@@ -41,6 +41,9 @@ repository   = "https://github.com/klauthed/rust-libraries"
 syn          = { version = "2", features = ["full", "extra-traits"] }
 quote        = "1"
 proc-macro2  = "1"
+# heck: case-conversion used by proc-macros (correctly handles acronyms:
+# HTTPError → http_error, APIKey → api_key, etc.)
+heck         = "0.5"
 
 # ── Async runtime ─────────────────────────────────────────────────────────────
 tokio        = { version = "1", features = ["full"] }

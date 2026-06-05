@@ -97,3 +97,32 @@ fn struct_error_uses_container_attrs() {
     assert_eq!(err.code().as_str(), "upstream.down");
     assert!(err.is_retryable());
 }
+
+// Acronym variants: the old hand-rolled snake_case split every capital letter
+// individually (HTTPError → "h_t_t_p_error"). heck handles runs of uppercase
+// correctly: "HTTPError" → "http_error", "APIKey" → "api_key".
+#[derive(Debug, DomainError)]
+#[domain(prefix = "api")]
+enum AcronymError {
+    #[domain(category = "bad_request")]
+    HTTPNotFound,
+    #[domain(category = "unauthorized")]
+    APIKeyMissing,
+    #[domain(category = "internal")]
+    ParseURLFailed,
+}
+impl std::fmt::Display for AcronymError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+impl std::error::Error for AcronymError {}
+
+#[test]
+fn acronym_variants_snake_case_correctly() {
+    // These would have been "h_t_t_p_not_found", "a_p_i_key_missing",
+    // "parse_u_r_l_failed" with the old hand-rolled implementation.
+    assert_eq!(AcronymError::HTTPNotFound.code().as_str(), "api.http_not_found");
+    assert_eq!(AcronymError::APIKeyMissing.code().as_str(), "api.api_key_missing");
+    assert_eq!(AcronymError::ParseURLFailed.code().as_str(), "api.parse_url_failed");
+}

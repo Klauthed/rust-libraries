@@ -2427,6 +2427,7 @@ dependencies = [
 name = "klauthed-macros"
 version = "0.1.0"
 dependencies = [
+ "heck",
  "klauthed-error",
  "proc-macro2",
  "quote",
@@ -2527,6 +2528,7 @@ dependencies = [
  "klauthed-core",
  "klauthed-data",
  "klauthed-error",
+ "klauthed-security",
  "serde",
  "serde_json",
  "tracing",

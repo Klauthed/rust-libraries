@@ -11,6 +11,7 @@ proc-macro = true
 syn.workspace = true
 quote.workspace = true
 proc-macro2.workspace = true
+heck.workspace = true
 
 [dev-dependencies]
 # The generated code references `::klauthed_error`; tests need it to compile.

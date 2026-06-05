@@ -13,6 +13,7 @@ context-scope = ["klauthed-core/task-local"]
 klauthed-error.workspace = true
 klauthed-core.workspace = true
 klauthed-data.workspace = true
+klauthed-security.workspace = true
 
 actix-web.workspace = true
 serde.workspace = true

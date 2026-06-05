@@ -4,6 +4,7 @@
 //! `klauthed_error::DomainError` impl from `#[domain(...)]` attributes, so error
 //! types don't hand-write the `category()` / `code()` match arms.
 
+use heck::ToSnakeCase as _;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
@@ -199,10 +200,13 @@ fn category_path(
 
 /// Build the final code string: `{prefix}.{code|snake(ident)}`, or just the
 /// code/snaked-ident when no prefix is set.
+///
+/// Conversion uses [`heck::ToSnakeCase`], which correctly handles consecutive
+/// capitals (e.g. `HTTPError` → `http_error`, `APIKey` → `api_key`).
 fn build_code(prefix: Option<&str>, code: Option<&str>, ident: &Ident) -> String {
     let suffix = code
         .map(str::to_owned)
-        .unwrap_or_else(|| to_snake_case(&ident.to_string()));
+        .unwrap_or_else(|| ident.to_string().to_snake_case());
     match prefix {
         Some(prefix) => format!("{prefix}.{suffix}"),
         None => suffix,
@@ -253,17 +257,3 @@ fn transparent_field_access(fields: &Fields, span: proc_macro2::Span) -> syn::Re
     }
 }
 
-fn to_snake_case(input: &str) -> String {
-    let mut out = String::with_capacity(input.len() + 4);
-    for (i, ch) in input.char_indices() {
-        if ch.is_uppercase() {
-            if i != 0 {
-                out.push('_');
-            }
-            out.extend(ch.to_lowercase());
-        } else {
-            out.push(ch);
-        }
-    }
-    out
-}
