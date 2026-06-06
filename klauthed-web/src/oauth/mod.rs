@@ -7,6 +7,9 @@
 //! | [`config`] | [`OAuthConfig`] and its builder |
 //! | `util` (internal) | Redirect URL construction and OAuth error responses |
 //! | [`handlers`] | `/oauth/authorize` and `/oauth/token` handler functions |
+//! | [`discovery`] | `/.well-known/openid-configuration` |
+//! | [`jwks`] | `/oauth/jwks` — publishes app-registered public keys |
+//! | [`userinfo`] | `/oauth/userinfo` + the [`UserInfoProvider`](userinfo::UserInfoProvider) SPI |
 //!
 //! # Wiring
 //!
@@ -34,9 +37,12 @@
 pub mod config;
 pub mod discovery;
 pub mod handlers;
+pub mod jwks;
+pub mod userinfo;
 pub(super) mod util;
 
 pub use config::{OAuthConfig, OAuthConfigBuilder};
+pub use userinfo::UserInfoProvider;
 
 use actix_web::web;
 
