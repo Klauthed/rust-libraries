@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a defect in one of the klauthed-* crates.
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: crate
+    attributes:
+      label: Crate
+      description: Which crate is affected?
+      options:
+        - klauthed (umbrella)
+        - klauthed-core
+        - klauthed-data
+        - klauthed-error
+        - klauthed-i18n
+        - klauthed-macros
+        - klauthed-observability
+        - klauthed-platform
+        - klauthed-protocol
+        - klauthed-security
+        - klauthed-testing
+        - klauthed-web
+        - unsure / multiple
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, including what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: A minimal code snippet or steps that reproduce the issue.
+      render: rust
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Crate version(s) and `rustc --version`.
+    validations:
+      required: true
