@@ -10,7 +10,7 @@
 //! | [`manage`] | `/oauth/revoke` (RFC 7009) and `/oauth/introspect` (RFC 7662) |
 //! | [`discovery`] | `/.well-known/openid-configuration` |
 //! | [`jwks`] | `/oauth/jwks` — publishes app-registered public keys |
-//! | [`userinfo`] | `/oauth/userinfo` + the [`UserInfoProvider`](userinfo::UserInfoProvider) SPI |
+//! | [`userinfo`] | `/oauth/userinfo` + the [`UserInfoProvider`] SPI |
 //!
 //! # Wiring
 //!
