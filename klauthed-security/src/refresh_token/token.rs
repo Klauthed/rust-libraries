@@ -105,7 +105,7 @@ impl RefreshTokenBuilder {
         let now = clock.now();
         let expires_at = now
             .checked_add(ttl)
-            .ok_or_else(|| SecurityError::MfaConfig("refresh token ttl overflowed".into()))?;
+            .ok_or_else(|| SecurityError::TokenTtlOverflow("refresh token".into()))?;
 
         Ok(RefreshToken {
             token,

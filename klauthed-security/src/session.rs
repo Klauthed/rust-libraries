@@ -226,7 +226,7 @@ impl InMemorySessionStore {
         self.clock
             .now()
             .checked_add(ttl)
-            .ok_or_else(|| SecurityError::MfaConfig("session ttl overflowed".to_owned()))
+            .ok_or_else(|| SecurityError::TokenTtlOverflow("session".to_owned()))
     }
 }
 

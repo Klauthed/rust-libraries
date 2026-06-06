@@ -133,7 +133,7 @@ impl AuthCodeBuilder {
         let now = clock.now();
         let expires_at = now
             .checked_add(ttl)
-            .ok_or_else(|| SecurityError::MfaConfig("auth code ttl overflowed".into()))?;
+            .ok_or_else(|| SecurityError::TokenTtlOverflow("auth code".into()))?;
         Ok(AuthCode {
             code,
             client_id: self.client_id,

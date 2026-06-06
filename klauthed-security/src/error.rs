@@ -46,6 +46,12 @@ pub enum SecurityError {
     #[domain(category = "unauthorized", code = "expired_token")]
     ExpiredToken,
 
+    /// Computing a token's expiry overflowed the representable time range — the
+    /// configured TTL is implausibly large. The string names the token kind
+    /// (e.g. `"refresh token"`). A server misconfiguration, not caller input.
+    #[domain(category = "internal", code = "token_ttl_overflow")]
+    TokenTtlOverflow(String),
+
     /// The OS CSPRNG failed to produce random bytes.
     #[domain(category = "internal", code = "rng")]
     Rng,
@@ -99,6 +105,9 @@ impl std::fmt::Display for SecurityError {
             SecurityError::MalformedToken(msg) => write!(f, "malformed token: {msg}"),
             SecurityError::InvalidToken(msg) => write!(f, "invalid token: {msg}"),
             SecurityError::ExpiredToken => f.write_str("token has expired"),
+            SecurityError::TokenTtlOverflow(kind) => {
+                write!(f, "{kind} ttl overflowed the representable time range")
+            }
             SecurityError::Rng => f.write_str("the OS random number generator failed"),
             SecurityError::SessionNotFound => f.write_str("session not found"),
             SecurityError::SessionExpired => f.write_str("session has expired"),
