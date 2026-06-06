@@ -18,6 +18,9 @@ serde.workspace = true
 serde_json.workspace = true
 # Lock TTLs are chrono::Duration, matching klauthed_core::time's Clock API.
 chrono.workspace = true
+# base64 for cursor encoding; futures-util for BoxFuture in transact.
+base64.workspace = true
+futures-util.workspace = true
 
 # Backend drivers, each pulled in only by its feature.
 sqlx       = { workspace = true, optional = true }

@@ -38,12 +38,17 @@ use std::time::{Duration, Instant};
 use actix_web::body::EitherBody;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::header::{HeaderName, HeaderValue, RETRY_AFTER};
-use actix_web::{Error, ResponseError};
+use actix_web::{Error, HttpMessage as _, ResponseError};
 use futures_util::future::LocalBoxFuture;
+use klauthed_security::Claims;
 
 use crate::error::AppError;
 
 /// How a request is mapped to a rate-limit bucket key.
+///
+/// Choose the strategy that best models the threat you're protecting against:
+/// `PeerIp` for anonymous traffic, `Principal` for authenticated abuse,
+/// `OAuthClient` for per-client API quotas.
 #[derive(Debug, Clone)]
 pub enum KeyBy {
     /// Key by the connection peer IP address. Requests without a resolvable
@@ -52,6 +57,17 @@ pub enum KeyBy {
     /// Key by the value of the named request header. Requests missing the
     /// header share the `"anonymous"` bucket.
     Header(HeaderName),
+    /// Key by the authenticated user's `sub` claim (JWT).
+    ///
+    /// Requires [`JwtAuth`](crate::auth::JwtAuth) to run first so the claims
+    /// are in the request extensions. Falls back to peer IP for unauthenticated
+    /// requests.
+    Principal,
+    /// Key by the `client_id` claim embedded in the JWT by the token endpoint.
+    ///
+    /// Useful for per-OAuth-client API quotas. Falls back to peer IP when the
+    /// claim is absent.
+    OAuthClient,
 }
 
 impl KeyBy {
@@ -67,19 +83,35 @@ impl KeyBy {
     /// Resolve the bucket key for a request.
     fn key_for(&self, req: &ServiceRequest) -> String {
         match self {
-            KeyBy::PeerIp => req
-                .connection_info()
-                .realip_remote_addr()
-                .map(|s| s.to_owned())
-                .unwrap_or_else(|| "unknown".to_owned()),
+            KeyBy::PeerIp => peer_ip(req),
             KeyBy::Header(name) => req
                 .headers()
                 .get(name)
                 .and_then(|v| v.to_str().ok())
                 .map(|s| s.to_owned())
                 .unwrap_or_else(|| "anonymous".to_owned()),
+            KeyBy::Principal => req
+                .extensions()
+                .get::<Claims>()
+                .and_then(|c| c.sub.clone())
+                .unwrap_or_else(|| peer_ip(req)),
+            KeyBy::OAuthClient => req
+                .extensions()
+                .get::<Claims>()
+                .and_then(|c| c.custom.get("client_id"))
+                .and_then(|v| v.as_str())
+                .map(str::to_owned)
+                .unwrap_or_else(|| peer_ip(req)),
         }
     }
+}
+
+/// Extract the real peer IP, falling back to `"unknown"`.
+fn peer_ip(req: &ServiceRequest) -> String {
+    req.connection_info()
+        .realip_remote_addr()
+        .map(str::to_owned)
+        .unwrap_or_else(|| "unknown".to_owned())
 }
 
 /// One client's counter within the current window.
@@ -341,5 +373,54 @@ mod tests {
 
         assert_eq!(test::call_service(&app, req_a).await.status(), StatusCode::OK);
         assert_eq!(test::call_service(&app, req_b).await.status(), StatusCode::OK);
+    }
+
+    #[actix_web::test]
+    async fn principal_key_uses_jwt_sub_when_present() {
+        use klauthed_security::{jwt::JwtSigner, JwtVerifier};
+        use crate::auth::JwtAuth;
+
+        const SECRET: &[u8] = b"ratelimit-test-secret";
+
+        // Mint a token for "alice".
+        let token = JwtSigner::hs256(SECRET)
+            .encode(
+                &klauthed_security::Claims::builder(
+                    "alice",
+                    &klauthed_core::time::SystemClock,
+                    chrono::Duration::hours(1),
+                )
+                .build(),
+            )
+            .unwrap();
+
+        // 1 request allowed per user; alice and bob have independent budgets.
+        let limiter = RateLimit::new(1, Duration::from_secs(60))
+            .key_by(KeyBy::Principal);
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(JwtVerifier::hs256(SECRET)))
+                .wrap(limiter)
+                .wrap(JwtAuth::new())
+                .route("/", web::get().to(ok)),
+        )
+        .await;
+
+        // First request as alice: allowed.
+        let req1 = test::TestRequest::get()
+            .uri("/")
+            .insert_header(("Authorization", format!("Bearer {token}")))
+            .to_request();
+        assert_eq!(test::call_service(&app, req1).await.status(), StatusCode::OK);
+
+        // Second request as alice: rate-limited.
+        let req2 = test::TestRequest::get()
+            .uri("/")
+            .insert_header(("Authorization", format!("Bearer {token}")))
+            .to_request();
+        assert_eq!(
+            test::call_service(&app, req2).await.status(),
+            StatusCode::TOO_MANY_REQUESTS
+        );
     }
 }

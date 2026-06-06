@@ -39,7 +39,25 @@
 //!   [`verify_api_key`] for high-entropy bearer credentials (SHA-256 verifier,
 //!   constant-time compare).
 //!
+//! # OAuth 2.0 building blocks
+//!
+//! Primitives for an OAuth 2.0 / OIDC authorization server (the HTTP endpoints
+//! live in `klauthed-web`):
+//!
+//! * **Authorization codes** ([`authz_code`]) — single-use [`AuthCode`]s behind
+//!   an [`AuthCodeStore`], with [PKCE] ([`PkceMethod`] / [`verify_pkce`],
+//!   `plain` + `S256`).
+//! * **Client registry** ([`oauth2_client`]) — [`OAuth2Client`] records
+//!   ([`ClientType`], allowed [`ClientGrantType`]s, redirect URIs,
+//!   [`TokenEndpointAuthMethod`]) behind a [`ClientStore`].
+//! * **Refresh tokens** ([`refresh_token`]) — rotating [`RefreshToken`]s behind
+//!   a [`RefreshTokenStore`] with family-based replay detection
+//!   ([`ConsumeResult`]).
+//! * **Revocation** ([`revocation`]) — a [`TokenDenylist`] of JWT `jti` values
+//!   for logout / compromise handling.
+//!
 //! [RFC 6238]: https://datatracker.ietf.org/doc/html/rfc6238
+//! [PKCE]: https://datatracker.ietf.org/doc/html/rfc7636
 //!
 //! All fallible operations return [`SecurityError`], which implements
 //! [`klauthed_error::DomainError`] so it slots into the shared error handling
@@ -47,20 +65,24 @@
 //!
 //! # Not (yet) included
 //!
-//! WebAuthn/passkeys, OAuth/OIDC, ABAC / a general policy engine, persistent
-//! (DB/Redis-backed) session stores, the Vault client, envelope encryption /
-//! KMS, and asymmetric encryption are intentionally out of scope for this pass
-//! and may land later or in dedicated crates.
+//! WebAuthn/passkeys, ABAC / a general policy engine, persistent
+//! (DB/Redis-backed) session and OAuth stores, the Vault client, envelope
+//! encryption / KMS, and asymmetric encryption are intentionally out of scope
+//! for this pass and may land later or in dedicated crates.
 
 pub mod aead;
 pub mod apikey;
 pub mod authz;
+pub mod authz_code;    // folder: authz_code/{code,store,pkce}.rs
 pub mod compare;
 pub mod error;
 pub mod jwt;
 pub mod kdf;
 pub mod mfa;
+pub mod oauth2_client; // folder: oauth2_client/{client,store}.rs
 pub mod password;
+pub mod refresh_token; // folder: refresh_token/{token,store}.rs
+pub mod revocation;
 pub mod session;
 pub mod token;
 
@@ -69,11 +91,23 @@ pub use aead::{
 };
 pub use apikey::{generate_api_key, verify_api_key};
 pub use authz::{Authorizer, Permission, Role, RoleRegistry};
+pub use authz_code::{
+    verify_pkce, AuthCode, AuthCodeBuilder, AuthCodeStore, InMemoryAuthCodeStore, PkceMethod,
+};
 pub use compare::constant_time_eq;
 pub use error::SecurityError;
 pub use jwt::{Claims, ClaimsBuilder, JwtSigner, JwtVerifier};
 pub use kdf::{derive_key, derive_key_32};
 pub use mfa::{Totp, TotpSecret};
+pub use oauth2_client::{
+    ClientGrantType, ClientStore, ClientType, InMemoryClientStore, OAuth2Client,
+    TokenEndpointAuthMethod,
+};
 pub use password::{hash_password, verify_password};
+pub use refresh_token::{
+    ConsumeResult, InMemoryRefreshTokenStore, RefreshToken, RefreshTokenBuilder,
+    RefreshTokenStore,
+};
+pub use revocation::{InMemoryTokenDenylist, TokenDenylist};
 pub use session::{InMemorySessionStore, Session, SessionId, SessionStore};
 pub use token::{random_bytes, random_token};

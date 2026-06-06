@@ -413,10 +413,10 @@ impl<R: CorsOriginRegistry> CorsOriginRegistry for CachedOriginRegistry<R> {
         // Fast path: cache hit inside a scoped lock (released before the await).
         {
             let cache = self.cache.lock().expect("cache lock poisoned");
-            if let Some(&(allowed, cached_at)) = cache.get(origin) {
-                if cached_at.elapsed() < self.ttl {
-                    return allowed;
-                }
+            if let Some(&(allowed, cached_at)) = cache.get(origin)
+                && cached_at.elapsed() < self.ttl
+            {
+                return allowed;
             }
         }
 
@@ -610,10 +610,10 @@ fn set_cors_headers(headers: &mut HeaderMap, origin: &str, config: &CorsConfig, 
         );
     }
 
-    if !config.expose_headers.is_empty() {
-        if let Ok(v) = HeaderValue::from_str(&config.expose_headers.join(", ")) {
-            headers.insert(ACCESS_CONTROL_EXPOSE_HEADERS, v);
-        }
+    if !config.expose_headers.is_empty()
+        && let Ok(v) = HeaderValue::from_str(&config.expose_headers.join(", "))
+    {
+        headers.insert(ACCESS_CONTROL_EXPOSE_HEADERS, v);
     }
 
     // Preflight-only: method + header negotiation and cache lifetime.
@@ -624,10 +624,10 @@ fn set_cors_headers(headers: &mut HeaderMap, origin: &str, config: &CorsConfig, 
         if let Ok(v) = HeaderValue::from_str(&config.allowed_headers.join(", ")) {
             headers.insert(ACCESS_CONTROL_ALLOW_HEADERS, v);
         }
-        if let Some(secs) = config.max_age_secs {
-            if let Ok(v) = HeaderValue::from_str(&secs.to_string()) {
-                headers.insert(ACCESS_CONTROL_MAX_AGE, v);
-            }
+        if let Some(secs) = config.max_age_secs
+            && let Ok(v) = HeaderValue::from_str(&secs.to_string())
+        {
+            headers.insert(ACCESS_CONTROL_MAX_AGE, v);
         }
     }
 }

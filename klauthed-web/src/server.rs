@@ -40,6 +40,7 @@ use actix_web::dev::{Server, ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::{web, App, Error, HttpServer};
 use klauthed_core::config::ServerConfig;
 
+use crate::app::Components;
 use crate::context::RequestContextMiddleware;
 use crate::health;
 
@@ -91,6 +92,49 @@ where
         App::new()
             .wrap(RequestContextMiddleware::new())
             .configure(health::configure)
+            .configure(user)
+    })
+}
+
+/// Like [`serve_with_defaults`], but additionally wires every component from
+/// `components` as [`web::Data`] and registers their health checks into the
+/// readiness probe — without any manual [`HealthRegistry`] or
+/// `SqlHealthCheck` boilerplate.
+///
+/// This is the entry point for the Spring Boot Actuator-style zero-config
+/// health experience: add infra to [`Components`], supply your routes, ship.
+///
+/// [`HealthRegistry`]: crate::health::HealthRegistry
+///
+/// ```no_run
+/// use klauthed_web::{app::Components, server};
+/// use klauthed_core::config::ServerConfig;
+///
+/// # async fn run() -> std::io::Result<()> {
+/// let config = ServerConfig::default();
+/// let components = Components::new(); // .pool("db", pool) etc.
+///
+/// server::serve_with_components(&config, components, |cfg| {
+///     // actix_web::web::ServiceConfig — your routes only
+/// })?
+/// .await
+/// # }
+/// ```
+pub fn serve_with_components<F>(
+    config: &ServerConfig,
+    components: Components,
+    factory: F,
+) -> std::io::Result<Server>
+where
+    F: Fn(&mut web::ServiceConfig) + Send + Clone + 'static,
+{
+    serve(config, move || {
+        let comps = components.clone();
+        let user = factory.clone();
+        App::new()
+            .wrap(RequestContextMiddleware::new())
+            .configure(health::configure)
+            .configure(move |cfg| comps.configure(cfg))
             .configure(user)
     })
 }

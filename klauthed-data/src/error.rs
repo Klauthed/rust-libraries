@@ -65,6 +65,12 @@ pub enum DataError {
     #[cfg(feature = "storage")]
     #[error("storage error: {0}")]
     Storage(#[from] object_store::Error),
+
+    #[error("invalid pagination request: {0}")]
+    InvalidPage(String),
+
+    #[error("invalid or corrupted cursor: {0}")]
+    InvalidCursor(String),
 }
 
 impl DataError {
@@ -103,6 +109,12 @@ impl DataError {
             DataError::Kafka(_) => (ErrorCategory::Unavailable, ErrorCode::new("data.kafka")),
             #[cfg(feature = "storage")]
             DataError::Storage(_) => (Internal, ErrorCode::new("data.storage")),
+            DataError::InvalidPage(_) => {
+                (ErrorCategory::BadRequest, ErrorCode::new("data.invalid_page"))
+            }
+            DataError::InvalidCursor(_) => {
+                (ErrorCategory::BadRequest, ErrorCode::new("data.invalid_cursor"))
+            }
         }
     }
 }

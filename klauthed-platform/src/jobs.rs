@@ -180,6 +180,18 @@ pub trait JobQueue: Send + Sync {
     /// it transitions to [`Failed`](JobStatus::Failed). `reason` is stored as the
     /// job's [`last_error`](EnqueuedJob::last_error).
     async fn mark_failed(&self, id: JobId, reason: String) -> Result<(), PlatformError>;
+
+    /// Re-queue jobs that have been in the [`Running`](JobStatus::Running) state
+    /// for longer than `stall_after`. Returns the re-queued jobs (now `Queued`
+    /// with a fresh `run_at`).
+    ///
+    /// A job is considered stalled when `now - run_at > stall_after` AND its
+    /// status is `Running`. Re-queued jobs get `run_at = now` (immediately due)
+    /// so they are picked up by the next `dequeue_due` call.
+    ///
+    /// Calling this periodically (e.g. from a health-check loop or a cron) is
+    /// the recommended pattern for detecting and recovering from crashed workers.
+    async fn dequeue_stalled(&self, stall_after: Duration) -> Vec<EnqueuedJob>;
 }
 
 /// Exponential backoff for the `n`-th attempt (1-based): `base * 2^(n-1)`,
@@ -332,6 +344,25 @@ impl JobQueue for InMemoryJobQueue {
         }
         Ok(())
     }
+
+    async fn dequeue_stalled(&self, stall_after: Duration) -> Vec<EnqueuedJob> {
+        let now = self.clock.now();
+        let mut guard = self.jobs.lock().expect("jobs lock poisoned");
+
+        let mut recovered = Vec::new();
+        for job in guard.values_mut() {
+            if job.status != JobStatus::Running {
+                continue;
+            }
+            // Stalled when now - run_at > stall_after.
+            if now.duration_since(job.run_at) > stall_after {
+                job.status = JobStatus::Queued;
+                job.run_at = now;
+                recovered.push(job.clone());
+            }
+        }
+        recovered
+    }
 }
 
 #[cfg(test)]
@@ -465,6 +496,83 @@ mod tests {
         let (_clock, q) = queue(5);
         let err = q.mark_succeeded(JobId::new()).await.unwrap_err();
         assert!(matches!(err, PlatformError::JobNotFound { .. }));
+    }
+
+    // ── dequeue_stalled tests ─────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn fresh_queued_job_never_stalls() {
+        let (_clock, q) = queue(5);
+        q.enqueue("k".into(), serde_json::json!(null)).await;
+        // Still Queued — not Running — so it must not appear in stall recovery.
+        let recovered = q.dequeue_stalled(Duration::zero()).await;
+        assert!(recovered.is_empty());
+    }
+
+    #[tokio::test]
+    async fn running_job_within_stall_window_is_not_recovered() {
+        let (clock, q) = queue(5);
+        let job = q.enqueue("k".into(), serde_json::json!(null)).await;
+        // Dequeue: status -> Running, run_at stays at t=0.
+        q.dequeue_due(None).await;
+
+        // Advance by exactly stall_after (not *strictly* greater).
+        let stall_after = Duration::seconds(30);
+        clock.advance(stall_after);
+
+        let recovered = q.dequeue_stalled(stall_after).await;
+        assert!(recovered.is_empty(), "job still within window must not be recovered");
+        assert_eq!(q.get(job.id()).unwrap().status(), JobStatus::Running);
+    }
+
+    #[tokio::test]
+    async fn running_job_past_stall_window_is_recovered_to_queued() {
+        let (clock, q) = queue(5);
+        let job = q.enqueue("k".into(), serde_json::json!(null)).await;
+        // run_at = t=0; after dequeue the job is Running at run_at=t=0.
+        q.dequeue_due(None).await;
+
+        let stall_after = Duration::seconds(30);
+        // Advance past the stall window.
+        clock.advance(Duration::seconds(31));
+
+        let recovered = q.dequeue_stalled(stall_after).await;
+        assert_eq!(recovered.len(), 1);
+        assert_eq!(recovered[0].id(), job.id());
+        assert_eq!(recovered[0].status(), JobStatus::Queued);
+        // run_at is reset to now (immediately due).
+        assert_eq!(recovered[0].run_at(), clock.now());
+    }
+
+    #[tokio::test]
+    async fn recovered_jobs_appear_in_next_dequeue_due() {
+        let (clock, q) = queue(5);
+        let job = q.enqueue("k".into(), serde_json::json!(null)).await;
+        q.dequeue_due(None).await;
+        // Simulate a stall.
+        clock.advance(Duration::seconds(61));
+        let recovered = q.dequeue_stalled(Duration::seconds(60)).await;
+        assert_eq!(recovered.len(), 1);
+        assert_eq!(recovered[0].id(), job.id());
+
+        // The recovered job must now be picked up by dequeue_due.
+        let due = q.dequeue_due(None).await;
+        assert_eq!(due.len(), 1);
+        assert_eq!(due[0].id(), job.id());
+        assert_eq!(due[0].status(), JobStatus::Running);
+    }
+
+    #[tokio::test]
+    async fn succeeded_job_is_not_recovered_by_dequeue_stalled() {
+        let (clock, q) = queue(5);
+        let job = q.enqueue("k".into(), serde_json::json!(null)).await;
+        q.dequeue_due(None).await;
+        q.mark_succeeded(job.id()).await.unwrap();
+
+        // Even past the stall window, Succeeded jobs must be ignored.
+        clock.advance(Duration::seconds(999));
+        let recovered = q.dequeue_stalled(Duration::zero()).await;
+        assert!(recovered.is_empty());
     }
 
     #[test]

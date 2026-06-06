@@ -366,6 +366,100 @@ impl WebhookSender for RecordingWebhookSender {
     }
 }
 
+/// A [`WebhookSender`] that delivers events over HTTPS using `reqwest`.
+///
+/// Signs each delivery with HMAC-SHA256 (same as [`RecordingWebhookSender`])
+/// and sets the signature in the `X-Klauthed-Signature` header. Retries are
+/// left to the caller (e.g. via the job queue); this sender makes exactly one
+/// HTTP attempt per call.
+///
+/// The request body is the JSON-serialised [`WebhookEvent`]. The endpoint URL
+/// and secret come from the [`WebhookEndpoint`].
+#[cfg(feature = "webhook-http")]
+pub struct HttpWebhookSender {
+    client: reqwest::Client,
+    /// Header name used for the HMAC signature. Default: `"X-Klauthed-Signature"`.
+    signature_header: &'static str,
+    /// Request timeout per delivery attempt.
+    timeout: std::time::Duration,
+}
+
+#[cfg(feature = "webhook-http")]
+impl HttpWebhookSender {
+    /// Build with default settings (30s timeout, `X-Klauthed-Signature` header).
+    pub fn new() -> Result<Self, PlatformError> {
+        let timeout = std::time::Duration::from_secs(30);
+        let client = reqwest::Client::builder()
+            .timeout(timeout)
+            .build()
+            .map_err(|e| PlatformError::WebhookDelivery {
+                message: format!("build reqwest client: {e}"),
+            })?;
+        Ok(Self {
+            client,
+            signature_header: "X-Klauthed-Signature",
+            timeout,
+        })
+    }
+
+    /// Override the request timeout.
+    pub fn with_timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = timeout;
+        self
+    }
+
+    /// Override the signature header name.
+    pub fn with_signature_header(mut self, header: &'static str) -> Self {
+        self.signature_header = header;
+        self
+    }
+}
+
+#[cfg(feature = "webhook-http")]
+#[async_trait]
+impl WebhookSender for HttpWebhookSender {
+    async fn deliver(
+        &self,
+        endpoint: &WebhookEndpoint,
+        event: &WebhookEvent,
+    ) -> Result<(), PlatformError> {
+        // 1. Serialise event to JSON bytes.
+        let body_bytes = serde_json::to_vec(event).map_err(|e| PlatformError::WebhookSigning {
+            message: format!("serialize event: {e}"),
+        })?;
+
+        // 2. Compute HMAC-SHA256 signature.
+        let timestamp_secs = event.occurred_at().into_datetime().timestamp();
+        let signature = sign_payload(endpoint.secret().as_bytes(), timestamp_secs, &body_bytes);
+
+        // 3. POST with Content-Type and signature header.
+        let response = self
+            .client
+            .post(endpoint.url())
+            .header("Content-Type", "application/json")
+            .header(self.signature_header, &signature)
+            .body(body_bytes)
+            .send()
+            .await
+            .map_err(|e| PlatformError::WebhookDelivery {
+                message: format!("HTTP request to '{}': {e}", endpoint.url()),
+            })?;
+
+        // 4. Non-2xx → error.
+        if !response.status().is_success() {
+            return Err(PlatformError::WebhookDelivery {
+                message: format!(
+                    "endpoint '{}' returned HTTP {}",
+                    endpoint.url(),
+                    response.status()
+                ),
+            });
+        }
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

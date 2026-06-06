@@ -21,5 +21,17 @@ hex.workspace = true
 # Job scheduling/backoff arithmetic.
 chrono.workspace = true
 
+# For OutboxAuditSink: writes audit events to the SQL outbox.
+klauthed-data = { path = "../klauthed-data", optional = true, default-features = false, features = ["sql", "sqlite"] }
+
+# For HttpWebhookSender: real HTTP delivery of webhook events.
+reqwest = { version = "0.12", optional = true, default-features = false, features = ["json", "rustls-tls"] }
+
+[features]
+audit-outbox  = ["dep:klauthed-data"]
+webhook-http  = ["dep:reqwest"]
+
 [dev-dependencies]
 tokio = { workspace = true }
+# Required only by the `audit-outbox` SQLite integration tests; harmless otherwise.
+sqlx = { workspace = true, features = ["sqlite"] }

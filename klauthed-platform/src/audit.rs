@@ -292,6 +292,58 @@ impl AuditSink for InMemoryAuditSink {
     }
 }
 
+/// An [`AuditSink`] that writes audit events to the SQL outbox via
+/// [`klauthed_data::outbox::sql::SqlOutbox`].
+///
+/// Events are serialised as JSON into `OutboxEntry::payload`, with
+/// `aggregate_type = "audit"` and `event_type = audit_event.action()`.
+/// A relay process (or the existing outbox poller) delivers them from there.
+///
+/// Wrap in an `Arc` to share across async tasks.
+#[cfg(feature = "audit-outbox")]
+pub struct OutboxAuditSink {
+    outbox: klauthed_data::outbox::sql::SqlOutbox,
+}
+
+#[cfg(feature = "audit-outbox")]
+impl OutboxAuditSink {
+    /// Wrap an existing [`SqlOutbox`](klauthed_data::outbox::sql::SqlOutbox).
+    pub fn new(outbox: klauthed_data::outbox::sql::SqlOutbox) -> Self {
+        Self { outbox }
+    }
+}
+
+#[cfg(feature = "audit-outbox")]
+#[async_trait]
+impl AuditSink for OutboxAuditSink {
+    async fn record(&self, event: AuditEvent) -> Result<(), PlatformError> {
+        use klauthed_data::outbox::{Outbox, OutboxEntry, OutboxId};
+
+        let payload = serde_json::to_value(&event).map_err(|e| PlatformError::Backend {
+            message: format!("serialize audit event: {e}"),
+        })?;
+
+        let entry = OutboxEntry {
+            id: OutboxId::new(),
+            aggregate_type: "audit".to_owned(),
+            aggregate_id: event.actor().unwrap_or("system").to_owned(),
+            event_type: event.action().to_owned(),
+            sequence: 0,
+            payload,
+            occurred_at: event.occurred_at(),
+            published: false,
+            published_at: None,
+        };
+
+        self.outbox
+            .enqueue(vec![entry])
+            .await
+            .map_err(|e| PlatformError::Backend {
+                message: format!("outbox enqueue: {e}"),
+            })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -360,5 +412,82 @@ mod tests {
         assert_eq!(sink.len(), 2);
         assert_eq!(events[0].action(), "a");
         assert_eq!(events[1].action(), "b");
+    }
+
+    // ── OutboxAuditSink tests (require `audit-outbox` feature + SQLite) ───────
+
+    #[cfg(feature = "audit-outbox")]
+    mod outbox_sink_tests {
+        use super::*;
+        use klauthed_data::outbox::{Outbox, OutboxEntry};
+        use klauthed_data::outbox::sql::SqlOutbox;
+
+        async fn memory_outbox() -> SqlOutbox {
+            sqlx::any::install_default_drivers();
+            let pool = sqlx::pool::PoolOptions::new()
+                .max_connections(1)
+                .connect("sqlite::memory:")
+                .await
+                .expect("connect in-memory sqlite");
+            let outbox = SqlOutbox::new(pool);
+            outbox.ensure_schema().await.expect("ensure schema");
+            outbox
+        }
+
+        #[tokio::test]
+        async fn record_inserts_one_entry_into_outbox() {
+            let outbox = memory_outbox().await;
+            let sink = OutboxAuditSink::new(outbox.clone());
+
+            let event = AuditEvent::builder("tenant.suspend")
+                .actor("admin-1")
+                .tenant("acme")
+                .outcome(AuditOutcome::Success)
+                .build();
+
+            sink.record(event).await.unwrap();
+
+            let entries: Vec<OutboxEntry> = outbox.fetch_unpublished(10).await.unwrap();
+            assert_eq!(entries.len(), 1);
+        }
+
+        #[tokio::test]
+        async fn record_payload_round_trips_as_audit_event() {
+            let outbox = memory_outbox().await;
+            let sink = OutboxAuditSink::new(outbox.clone());
+
+            let original = AuditEvent::builder("user.login")
+                .actor("u-99")
+                .tenant("beta")
+                .metadata("ip", "10.0.0.1")
+                .build();
+
+            sink.record(original.clone()).await.unwrap();
+
+            let entries: Vec<OutboxEntry> = outbox.fetch_unpublished(10).await.unwrap();
+            assert_eq!(entries.len(), 1);
+
+            let recovered: AuditEvent =
+                serde_json::from_value(entries[0].payload.clone()).unwrap();
+            assert_eq!(recovered, original);
+        }
+
+        #[tokio::test]
+        async fn record_sets_aggregate_type_and_event_type() {
+            let outbox = memory_outbox().await;
+            let sink = OutboxAuditSink::new(outbox.clone());
+
+            let event = AuditEvent::builder("invoice.paid")
+                .actor("svc-billing")
+                .build();
+            let action = event.action().to_owned();
+
+            sink.record(event).await.unwrap();
+
+            let entries: Vec<OutboxEntry> = outbox.fetch_unpublished(10).await.unwrap();
+            assert_eq!(entries.len(), 1);
+            assert_eq!(entries[0].aggregate_type, "audit");
+            assert_eq!(entries[0].event_type, action);
+        }
     }
 }

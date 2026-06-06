@@ -62,6 +62,8 @@ use std::ops::Deref;
 use std::rc::Rc;
 use std::task::{Context as TaskContext, Poll};
 
+use std::sync::Arc;
+
 use actix_web::body::BoxBody;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::header::AUTHORIZATION;
@@ -69,9 +71,30 @@ use actix_web::{Error, FromRequest, HttpMessage as _, HttpRequest, ResponseError
 use klauthed_core::context::RequestContext;
 use futures_util::future::LocalBoxFuture;
 use klauthed_error::DomainError as _;
-use klauthed_security::{Claims, JwtVerifier, SecurityError};
+use klauthed_security::{Claims, JwtVerifier, SecurityError, TokenDenylist};
 
 use crate::error::AppError;
+
+// ── TokenRevocationCheck ──────────────────────────────────────────────────────
+
+/// A concrete wrapper around `Arc<dyn TokenDenylist>` for actix app data.
+///
+/// Register this with `App::app_data(web::Data::new(TokenRevocationCheck(denylist)))`.
+/// When present, [`JwtAuth`] will check every token's `jti` against the
+/// denylist before admitting the request.
+///
+/// ```no_run
+/// use std::sync::Arc;
+/// use actix_web::{web, App};
+/// use klauthed_security::InMemoryTokenDenylist;
+/// use klauthed_web::auth::{JwtAuth, TokenRevocationCheck};
+///
+/// let denylist = Arc::new(InMemoryTokenDenylist::new());
+/// let _app = App::new()
+///     .app_data(web::Data::new(TokenRevocationCheck(denylist)))
+///     .wrap(JwtAuth::new());
+/// ```
+pub struct TokenRevocationCheck(pub Arc<dyn TokenDenylist>);
 
 /// `"Bearer "` — the mandatory prefix for the `Authorization` header value.
 const BEARER_PREFIX: &str = "Bearer ";
@@ -208,13 +231,39 @@ where
             req.extensions_mut().insert(updated_ctx);
         }
 
+        // Extract jti before moving claims into extensions (needed for revocation
+        // check inside the async block).
+        let jti = claims.jti.clone();
+
         // Store decoded claims for the AuthenticatedUser / OptionalAuthentication
         // extractors — separate from RequestContext so both are independently
         // accessible.
         req.extensions_mut().insert(claims);
 
+        // Optional: check jti against a registered TokenDenylist.
+        // If web::Data<TokenRevocationCheck> is present AND the token carries
+        // a jti, we check whether it has been revoked.
+        let denylist = req
+            .app_data::<web::Data<TokenRevocationCheck>>()
+            .map(|d| Arc::clone(&d.0));
+
         let service = Rc::clone(&self.service);
         Box::pin(async move {
+            if let (Some(ref dl), Some(ref jti)) = (denylist, jti) {
+                match dl.is_revoked(jti).await {
+                    Ok(true) => {
+                        return Ok(reject(req, AppError::unauthorized("token has been revoked")));
+                    }
+                    Ok(false) => {}
+                    Err(e) => {
+                        tracing::error!(error = %e, "token denylist check failed");
+                        return Ok(reject(
+                            req,
+                            AppError::internal("authentication check failed"),
+                        ));
+                    }
+                }
+            }
             service
                 .call(req)
                 .await
@@ -260,6 +309,64 @@ impl AuthenticatedUser {
     /// The token's `sub` claim (the authenticated principal's id), if present.
     pub fn sub(&self) -> Option<&str> {
         self.0.sub.as_deref()
+    }
+}
+
+impl AuthenticatedUser {
+    /// Parse and return the scopes from the `scope` claim (space-separated).
+    ///
+    /// Returns an empty `Vec` if the claim is absent or is not a string. The
+    /// `scope` claim follows [RFC 6749 §3.3] convention: a space-delimited list
+    /// of case-sensitive strings.
+    ///
+    /// [RFC 6749 §3.3]: https://www.rfc-editor.org/rfc/rfc6749#section-3.3
+    pub fn scopes(&self) -> Vec<&str> {
+        self.0
+            .custom
+            .get("scope")
+            .and_then(|v| v.as_str())
+            .map(|s| s.split_whitespace().collect())
+            .unwrap_or_default()
+    }
+
+    /// Return `true` if **all** `required` scopes are present in the token's
+    /// `scope` claim.
+    pub fn has_scopes(&self, required: &[&str]) -> bool {
+        let token_scopes = self.scopes();
+        required.iter().all(|r| token_scopes.contains(r))
+    }
+
+    /// Return `true` if the single `scope` is present in the token's
+    /// `scope` claim.
+    pub fn has_scope(&self, scope: &str) -> bool {
+        self.has_scopes(&[scope])
+    }
+
+    /// Require `scope` to be present, or return `AppError::forbidden(...)`.
+    ///
+    /// Ergonomic inline scope enforcement inside handlers:
+    ///
+    /// ```ignore
+    /// async fn handler(user: AuthenticatedUser) -> AppResult<HttpResponse> {
+    ///     user.require_scope("admin:write")?;
+    ///     Ok(HttpResponse::Ok().finish())
+    /// }
+    /// ```
+    pub fn require_scope(&self, scope: &str) -> crate::error::AppResult<()> {
+        self.require_scopes(&[scope])
+    }
+
+    /// Require **all** `required` scopes to be present, or return
+    /// `AppError::forbidden(...)`.
+    pub fn require_scopes(&self, required: &[&str]) -> crate::error::AppResult<()> {
+        if self.has_scopes(required) {
+            Ok(())
+        } else {
+            Err(crate::error::AppError::forbidden(format!(
+                "token is missing required scope(s): {}",
+                required.join(", ")
+            )))
+        }
     }
 }
 
@@ -342,7 +449,8 @@ impl FromRequest for OptionalAuthentication {
 mod tests {
     use super::*;
     use actix_web::http::StatusCode;
-    use actix_web::{test, web, App, HttpResponse};
+    use actix_web::test as http_test;
+    use actix_web::{web, App, HttpResponse};
     use klauthed_core::time::SystemClock;
     use klauthed_security::jwt::{Claims, JwtSigner};
     use klauthed_security::JwtVerifier;
@@ -388,7 +496,7 @@ mod tests {
 
     macro_rules! auth_app {
         () => {
-            test::init_service(
+            http_test::init_service(
                 App::new()
                     .app_data(web::Data::new(verifier()))
                     .wrap(JwtAuth::new())
@@ -406,7 +514,7 @@ mod tests {
 
     #[actix_web::test]
     async fn jwt_auth_propagates_sub_into_request_context() {
-        let app = test::init_service(
+        let app = http_test::init_service(
             App::new()
                 .app_data(web::Data::new(verifier()))
                 .wrap(JwtAuth::new())
@@ -416,16 +524,16 @@ mod tests {
         .await;
 
         let token = valid_token("alice");
-        let req = test::TestRequest::get()
+        let req = http_test::TestRequest::get()
             .uri("/principal")
             .insert_header(("Authorization", format!("Bearer {token}")))
             .to_request();
 
-        let resp = test::call_service(&app, req).await;
+        let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::OK);
 
         // RequestContext.principal() must equal the JWT sub claim.
-        let body = test::read_body(resp).await;
+        let body = http_test::read_body(resp).await;
         assert_eq!(&body[..], b"alice");
     }
 
@@ -433,32 +541,32 @@ mod tests {
     async fn valid_token_reaches_handler_with_claims() {
         let app = auth_app!();
         let token = valid_token("alice");
-        let req = test::TestRequest::get()
+        let req = http_test::TestRequest::get()
             .uri("/protected")
             .insert_header(("Authorization", format!("Bearer {token}")))
             .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::OK);
-        let body = test::read_body(resp).await;
+        let body = http_test::read_body(resp).await;
         assert_eq!(&body[..], b"alice");
     }
 
     #[actix_web::test]
     async fn missing_authorization_header_returns_401() {
         let app = auth_app!();
-        let req = test::TestRequest::get().uri("/protected").to_request();
-        let resp = test::call_service(&app, req).await;
+        let req = http_test::TestRequest::get().uri("/protected").to_request();
+        let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
     }
 
     #[actix_web::test]
     async fn non_bearer_scheme_returns_401() {
         let app = auth_app!();
-        let req = test::TestRequest::get()
+        let req = http_test::TestRequest::get()
             .uri("/protected")
             .insert_header(("Authorization", "Basic dXNlcjpwYXNz"))
             .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
     }
 
@@ -466,13 +574,13 @@ mod tests {
     async fn expired_token_returns_401() {
         let app = auth_app!();
         let token = expired_token();
-        let req = test::TestRequest::get()
+        let req = http_test::TestRequest::get()
             .uri("/protected")
             .insert_header(("Authorization", format!("Bearer {token}")))
             .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
-        let body = test::read_body(resp).await;
+        let body = http_test::read_body(resp).await;
         let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
         assert_eq!(json["error"]["code"], "security.expired_token");
     }
@@ -485,13 +593,13 @@ mod tests {
                 &Claims::builder("eve", &SystemClock, chrono::Duration::hours(1)).build(),
             )
             .unwrap();
-        let req = test::TestRequest::get()
+        let req = http_test::TestRequest::get()
             .uri("/protected")
             .insert_header(("Authorization", format!("Bearer {token}")))
             .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
-        let body = test::read_body(resp).await;
+        let body = http_test::read_body(resp).await;
         let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
         assert_eq!(json["error"]["code"], "security.invalid_token");
     }
@@ -499,11 +607,11 @@ mod tests {
     #[actix_web::test]
     async fn malformed_token_returns_400() {
         let app = auth_app!();
-        let req = test::TestRequest::get()
+        let req = http_test::TestRequest::get()
             .uri("/protected")
             .insert_header(("Authorization", "Bearer not.a.jwt"))
             .to_request();
-        let resp = test::call_service(&app, req).await;
+        let resp = http_test::call_service(&app, req).await;
         // MalformedToken → BadRequest (400).
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
@@ -513,31 +621,31 @@ mod tests {
         // JwtAuth wraps the whole app, so a missing token is rejected before
         // the OptionalAuthentication extractor even runs.
         let app = auth_app!();
-        let req = test::TestRequest::get().uri("/optional").to_request();
-        let resp = test::call_service(&app, req).await;
+        let req = http_test::TestRequest::get().uri("/optional").to_request();
+        let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
     }
 
     /// Test the OptionalAuthentication extractor in isolation (without JwtAuth).
     #[actix_web::test]
     async fn optional_extractor_without_middleware_returns_none() {
-        let app = test::init_service(
+        let app = http_test::init_service(
             App::new().route("/optional", web::get().to(echo_optional)),
         )
         .await;
 
-        let req = test::TestRequest::get().uri("/optional").to_request();
-        let resp = test::call_service(&app, req).await;
+        let req = http_test::TestRequest::get().uri("/optional").to_request();
+        let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::OK);
 
-        let body = test::read_body(resp).await;
+        let body = http_test::read_body(resp).await;
         assert_eq!(&body[..], b"anonymous");
     }
 
     /// Test the OptionalAuthentication extractor when JwtAuth ran successfully.
     #[actix_web::test]
     async fn optional_extractor_with_middleware_returns_some() {
-        let app = test::init_service(
+        let app = http_test::init_service(
             App::new()
                 .app_data(web::Data::new(verifier()))
                 .wrap(JwtAuth::new())
@@ -546,48 +654,123 @@ mod tests {
         .await;
 
         let token = valid_token("bob");
-        let req = test::TestRequest::get()
+        let req = http_test::TestRequest::get()
             .uri("/optional")
             .insert_header(("Authorization", format!("Bearer {token}")))
             .to_request();
 
-        let resp = test::call_service(&app, req).await;
+        let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::OK);
 
-        let body = test::read_body(resp).await;
+        let body = http_test::read_body(resp).await;
         assert_eq!(&body[..], b"bob");
     }
 
     #[actix_web::test]
     async fn missing_verifier_returns_500() {
         // No web::Data<JwtVerifier> registered → configuration error → 500.
-        let app = test::init_service(
+        let app = http_test::init_service(
             App::new()
                 .wrap(JwtAuth::new())
                 .route("/", web::get().to(|| async { HttpResponse::Ok().finish() })),
         )
         .await;
 
-        let req = test::TestRequest::get()
+        let req = http_test::TestRequest::get()
             .uri("/")
             .insert_header(("Authorization", format!("Bearer {}", valid_token("u"))))
             .to_request();
 
-        let resp = test::call_service(&app, req).await;
+        let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     #[actix_web::test]
     async fn authenticated_user_extractor_fails_without_claims_in_extensions() {
         // No JwtAuth middleware → no claims in extensions → extractor returns Err.
-        let app = test::init_service(
+        let app = http_test::init_service(
             App::new().route("/", web::get().to(echo_sub)),
         )
         .await;
 
-        let req = test::TestRequest::get().uri("/").to_request();
-        let resp = test::call_service(&app, req).await;
+        let req = http_test::TestRequest::get().uri("/").to_request();
+        let resp = http_test::call_service(&app, req).await;
         // Handler requires AuthenticatedUser; no claims → 401.
         assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[actix_web::test]
+    async fn revoked_token_jti_returns_401() {
+        use std::sync::Arc;
+        use klauthed_security::{InMemoryTokenDenylist, TokenDenylist as _};
+
+        let denylist = Arc::new(InMemoryTokenDenylist::new());
+
+        let jti = "unique-jti-abc123";
+        let token = JwtSigner::hs256(SECRET)
+            .encode(
+                &Claims::builder("alice", &SystemClock, chrono::Duration::hours(1))
+                    .jwt_id(jti)
+                    .build(),
+            )
+            .unwrap();
+
+        // Use a concrete far-future timestamp that's within chrono's valid range
+        // (i64::MAX / 2 overflows chrono and falls back to now, immediately evicting
+        // the entry). Year 2099 ≈ 4102444800000 ms, well within range.
+        let far_future = klauthed_core::time::Timestamp::now()
+            .checked_add(chrono::Duration::days(365 * 10))
+            .unwrap();
+        denylist.revoke(jti.into(), far_future).await.unwrap();
+
+        let app = http_test::init_service(
+            App::new()
+                .app_data(web::Data::new(verifier()))
+                .app_data(web::Data::new(TokenRevocationCheck(
+                    denylist as Arc<dyn klauthed_security::TokenDenylist>,
+                )))
+                .wrap(JwtAuth::new())
+                .route("/", web::get().to(echo_sub)),
+        )
+        .await;
+
+        let req = http_test::TestRequest::get()
+            .uri("/")
+            .insert_header(("Authorization", format!("Bearer {token}")))
+            .to_request();
+        let resp = http_test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[actix_web::test]
+    async fn non_revoked_token_passes_denylist_check() {
+        use std::sync::Arc;
+        use klauthed_security::InMemoryTokenDenylist;
+
+        let token = JwtSigner::hs256(SECRET)
+            .encode(
+                &Claims::builder("alice", &SystemClock, chrono::Duration::hours(1))
+                    .jwt_id("not-revoked")
+                    .build(),
+            )
+            .unwrap();
+
+        let app = http_test::init_service(
+            App::new()
+                .app_data(web::Data::new(verifier()))
+                .app_data(web::Data::new(TokenRevocationCheck(
+                    Arc::new(InMemoryTokenDenylist::new()),
+                )))
+                .wrap(JwtAuth::new())
+                .route("/", web::get().to(echo_sub)),
+        )
+        .await;
+
+        let req = http_test::TestRequest::get()
+            .uri("/")
+            .insert_header(("Authorization", format!("Bearer {token}")))
+            .to_request();
+        let resp = http_test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::OK);
     }
 }
