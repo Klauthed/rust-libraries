@@ -160,12 +160,7 @@ impl IdempotencyStore for InMemoryIdempotencyStore {
     }
 
     async fn get(&self, key: &str) -> Result<Option<IdempotencyRecord>, DataError> {
-        Ok(self
-            .records
-            .lock()
-            .expect("idempotency mutex poisoned")
-            .get(key)
-            .cloned())
+        Ok(self.records.lock().expect("idempotency mutex poisoned").get(key).cloned())
     }
 }
 
@@ -201,10 +196,7 @@ mod tests {
     #[tokio::test]
     async fn complete_unknown_key_errors() {
         let store = InMemoryIdempotencyStore::new();
-        let err = store
-            .complete("missing", serde_json::Value::Null)
-            .await
-            .unwrap_err();
+        let err = store.complete("missing", serde_json::Value::Null).await.unwrap_err();
         assert!(matches!(err, DataError::Idempotency(_)));
     }
 

@@ -24,10 +24,7 @@ pub struct ConfigBuilder {
 impl ConfigBuilder {
     /// Start an empty builder for `profile`.
     pub fn new(profile: Profile) -> Self {
-        Self {
-            profile,
-            providers: Vec::new(),
-        }
+        Self { profile, providers: Vec::new() }
     }
 
     /// The profile this builder targets.
@@ -92,11 +89,7 @@ impl ConfigBuilder {
             return Ok(());
         }
 
-        if let Some(file) = self
-            .providers
-            .iter()
-            .find(|p| p.kind().is_file_secret_source())
-        {
+        if let Some(file) = self.providers.iter().find(|p| p.kind().is_file_secret_source()) {
             return Err(ConfigError::InvalidProviderChain {
                 profile: self.profile.to_string(),
                 message: format!(
@@ -107,10 +100,7 @@ impl ConfigBuilder {
             });
         }
 
-        let has_vault = self
-            .providers
-            .iter()
-            .any(|p| p.kind() == ProviderKind::Vault);
+        let has_vault = self.providers.iter().any(|p| p.kind() == ProviderKind::Vault);
         if !has_vault {
             return Err(ConfigError::InvalidProviderChain {
                 profile: self.profile.to_string(),

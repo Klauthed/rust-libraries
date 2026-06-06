@@ -167,20 +167,12 @@ impl Totp {
         code: &str,
         clock: &C,
     ) -> Result<(), SecurityError> {
-        if self.verify(code, clock) {
-            Ok(())
-        } else {
-            Err(SecurityError::InvalidMfaCode)
-        }
+        if self.verify(code, clock) { Ok(()) } else { Err(SecurityError::InvalidMfaCode) }
     }
 
     /// Whole seconds since the Unix epoch for `clock`'s current instant.
     fn unix_secs<C: Clock + ?Sized>(&self, clock: &C) -> u64 {
-        clock
-            .now()
-            .unix_seconds()
-            .max(0)
-            .unsigned_abs()
+        clock.now().unix_seconds().max(0).unsigned_abs()
     }
 }
 
@@ -242,8 +234,7 @@ mod tests {
         let code = t.generate(&base);
 
         // One step (30s) earlier and later are still accepted (skew = 1).
-        let earlier =
-            FixedClock::new(Timestamp::from_unix_millis(1_700_000_000_000 - 30_000));
+        let earlier = FixedClock::new(Timestamp::from_unix_millis(1_700_000_000_000 - 30_000));
         let later = FixedClock::new(Timestamp::from_unix_millis(1_700_000_000_000 + 30_000));
         assert!(t.verify(&code, &earlier));
         assert!(t.verify(&code, &later));
@@ -280,8 +271,7 @@ mod tests {
     fn invalid_base32_secret_is_mfa_config_error() {
         // '1', '8', '0' are not in the RFC 4648 base32 alphabet, but the secret
         // must also be long enough; use clearly invalid chars.
-        let err = Totp::new(TotpSecret::from_base32("not valid base32!!!"), "k", "a")
-            .unwrap_err();
+        let err = Totp::new(TotpSecret::from_base32("not valid base32!!!"), "k", "a").unwrap_err();
         assert!(matches!(err, SecurityError::MfaConfig(_)));
         assert_eq!(err.category(), ErrorCategory::Internal);
     }

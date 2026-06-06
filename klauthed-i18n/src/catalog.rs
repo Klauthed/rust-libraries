@@ -20,9 +20,8 @@ impl Catalog {
     /// Parse a catalog from TOML text. `[section]` tables become `section.key`
     /// entries; nested tables nest further. Non-string leaves are ignored.
     pub fn from_toml_str(locale: &str, toml_str: &str) -> Result<Self, I18nError> {
-        let table: toml::Table = toml_str.parse().map_err(|e: toml::de::Error| I18nError::Parse {
-            locale: locale.to_owned(),
-            message: e.to_string(),
+        let table: toml::Table = toml_str.parse().map_err(|e: toml::de::Error| {
+            I18nError::Parse { locale: locale.to_owned(), message: e.to_string() }
         })?;
         let mut messages = BTreeMap::new();
         flatten(&table, "", &mut messages);
@@ -54,11 +53,7 @@ impl Catalog {
 /// Recursively flatten a TOML table into dotted string keys.
 fn flatten(table: &toml::Table, prefix: &str, out: &mut BTreeMap<String, String>) {
     for (key, value) in table {
-        let full = if prefix.is_empty() {
-            key.clone()
-        } else {
-            format!("{prefix}.{key}")
-        };
+        let full = if prefix.is_empty() { key.clone() } else { format!("{prefix}.{key}") };
         match value {
             toml::Value::String(text) => {
                 out.insert(full, text.clone());
@@ -88,23 +83,26 @@ mod tests {
         .unwrap();
 
         assert_eq!(catalog.len(), 2);
-        assert_eq!(
-            catalog.get("validation.required"),
-            Some("The field {field} is required.")
-        );
+        assert_eq!(catalog.get("validation.required"), Some("The field {field} is required."));
         assert_eq!(catalog.get("user.not_found"), Some("User {id} not found."));
         assert_eq!(catalog.get("missing.key"), None);
     }
 
     #[test]
     fn merge_overrides_existing_keys() {
-        let mut base = Catalog::from_toml_str("en", r#"[a]
+        let mut base = Catalog::from_toml_str(
+            "en",
+            r#"[a]
         b = "base"
-        c = "keep""#)
-            .unwrap();
-        let over = Catalog::from_toml_str("en", r#"[a]
-        b = "override""#)
-            .unwrap();
+        c = "keep""#,
+        )
+        .unwrap();
+        let over = Catalog::from_toml_str(
+            "en",
+            r#"[a]
+        b = "override""#,
+        )
+        .unwrap();
         base.merge(over);
         assert_eq!(base.get("a.b"), Some("override"));
         assert_eq!(base.get("a.c"), Some("keep"));

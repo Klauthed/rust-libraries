@@ -37,18 +37,12 @@ pub struct FileProvider {
 impl FileProvider {
     /// A required file. Loading fails if the file is missing.
     pub fn new(path: impl Into<PathBuf>) -> Self {
-        Self {
-            path: path.into(),
-            optional: false,
-        }
+        Self { path: path.into(), optional: false }
     }
 
     /// An optional file. A missing file contributes an empty map.
     pub fn optional(path: impl Into<PathBuf>) -> Self {
-        Self {
-            path: path.into(),
-            optional: true,
-        }
+        Self { path: path.into(), optional: true }
     }
 
     fn parse(&self, text: &str, format: Format) -> Result<ConfigMap, ConfigError> {
@@ -127,9 +121,8 @@ mod tests {
     #[test]
     fn parses_json_into_nested_tree() {
         let provider = FileProvider::new("x.json");
-        let out = provider
-            .parse(r#"{ "debug": true, "cache": { "ttl": 30 } }"#, Format::Json)
-            .unwrap();
+        let out =
+            provider.parse(r#"{ "debug": true, "cache": { "ttl": 30 } }"#, Format::Json).unwrap();
 
         assert_eq!(out.get("debug"), Some(&json!(true)));
         assert_eq!(out.get("cache"), Some(&json!({ "ttl": 30 })));

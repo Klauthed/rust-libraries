@@ -144,9 +144,7 @@ mod tests {
     #[test]
     fn rotation_preserves_family_id() {
         let clock = SystemClock;
-        let first = RefreshTokenBuilder::new("c", "u")
-            .build(&clock, Duration::days(30))
-            .unwrap();
+        let first = RefreshTokenBuilder::new("c", "u").build(&clock, Duration::days(30)).unwrap();
         let rotated = RefreshTokenBuilder::new("c", "u")
             .family_id(&first.family_id)
             .build(&clock, Duration::days(30))
@@ -159,12 +157,8 @@ mod tests {
     #[test]
     fn tokens_are_unique() {
         let clock = SystemClock;
-        let a = RefreshTokenBuilder::new("c", "u")
-            .build(&clock, Duration::days(30))
-            .unwrap();
-        let b = RefreshTokenBuilder::new("c", "u")
-            .build(&clock, Duration::days(30))
-            .unwrap();
+        let a = RefreshTokenBuilder::new("c", "u").build(&clock, Duration::days(30)).unwrap();
+        let b = RefreshTokenBuilder::new("c", "u").build(&clock, Duration::days(30)).unwrap();
         assert_ne!(a.token, b.token);
         assert_ne!(a.family_id, b.family_id);
     }
@@ -172,9 +166,7 @@ mod tests {
     #[test]
     fn is_expired_checks_expiry() {
         let clock = FixedClock::at_unix_millis(0);
-        let token = RefreshTokenBuilder::new("c", "u")
-            .build(&clock, Duration::days(1))
-            .unwrap();
+        let token = RefreshTokenBuilder::new("c", "u").build(&clock, Duration::days(1)).unwrap();
 
         let before = Timestamp::from_unix_millis(1_000);
         let after = Timestamp::from_unix_millis(24 * 60 * 60 * 1000 + 1);

@@ -35,7 +35,7 @@
 //!     .configure(configure_userinfo);
 //! ```
 
-use actix_web::{web, HttpResponse, ResponseError as _};
+use actix_web::{HttpResponse, ResponseError as _, web};
 use async_trait::async_trait;
 use klauthed_protocol::oidc::StandardClaims;
 
@@ -58,11 +58,8 @@ pub trait UserInfoProvider: Send + Sync + 'static {
     ///
     /// Return `Ok(None)` when the subject no longer exists (yields `404`);
     /// return `Err` for backend failures (yields the mapped error status).
-    async fn userinfo(
-        &self,
-        subject: &str,
-        scopes: &[String],
-    ) -> AppResult<Option<StandardClaims>>;
+    async fn userinfo(&self, subject: &str, scopes: &[String])
+    -> AppResult<Option<StandardClaims>>;
 }
 
 /// `GET`/`POST` `/oauth/userinfo`
@@ -115,10 +112,10 @@ mod tests {
 
     use actix_web::http::StatusCode;
     use actix_web::test as http_test;
-    use actix_web::{web, App};
+    use actix_web::{App, web};
     use klauthed_core::time::{Duration, SystemClock};
-    use klauthed_security::jwt::{Claims, JwtSigner};
     use klauthed_security::JwtVerifier;
+    use klauthed_security::jwt::{Claims, JwtSigner};
 
     use crate::auth::JwtAuth;
 
@@ -133,10 +130,7 @@ mod tests {
             subject: &str,
             scopes: &[String],
         ) -> AppResult<Option<StandardClaims>> {
-            let email = scopes
-                .iter()
-                .any(|s| s == "email")
-                .then(|| "alice@example.com".to_owned());
+            let email = scopes.iter().any(|s| s == "email").then(|| "alice@example.com".to_owned());
             Ok(Some(StandardClaims {
                 sub: Some(subject.to_owned()),
                 name: Some("Alice".into()),
@@ -221,9 +215,7 @@ mod tests {
     #[actix_web::test]
     async fn rejects_missing_token() {
         let app = userinfo_app!();
-        let req = http_test::TestRequest::get()
-            .uri("/oauth/userinfo")
-            .to_request();
+        let req = http_test::TestRequest::get().uri("/oauth/userinfo").to_request();
         let resp = http_test::call_service(&app, req).await;
         // JwtAuth rejects before the handler runs.
         assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);

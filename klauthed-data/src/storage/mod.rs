@@ -65,10 +65,7 @@ pub async fn connect(config: &StorageConfig) -> Result<Arc<dyn ObjectStore>, Dat
             }
         }
 
-        StorageConfig::Gcs {
-            bucket,
-            credentials_path,
-        } => {
+        StorageConfig::Gcs { bucket, credentials_path } => {
             #[cfg(feature = "storage-gcs")]
             {
                 let mut builder = object_store::gcp::GoogleCloudStorageBuilder::new()
@@ -87,11 +84,7 @@ pub async fn connect(config: &StorageConfig) -> Result<Arc<dyn ObjectStore>, Dat
             }
         }
 
-        StorageConfig::Azure {
-            account,
-            container,
-            access_key,
-        } => {
+        StorageConfig::Azure { account, container, access_key } => {
             #[cfg(feature = "storage-azure")]
             {
                 let mut builder = object_store::azure::MicrosoftAzureBuilder::new()

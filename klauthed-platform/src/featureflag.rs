@@ -118,20 +118,12 @@ impl InMemoryFeatureFlags {
         flag: &FeatureFlag,
         enabled: bool,
     ) -> Self {
-        self.rules
-            .entry(flag.clone())
-            .or_default()
-            .tenant_enabled
-            .insert(tenant.into(), enabled);
+        self.rules.entry(flag.clone()).or_default().tenant_enabled.insert(tenant.into(), enabled);
         self
     }
 
     /// Set the global multivariate value for `flag` (builder form).
-    pub fn with_global_variant(
-        mut self,
-        flag: &FeatureFlag,
-        variant: impl Into<String>,
-    ) -> Self {
+    pub fn with_global_variant(mut self, flag: &FeatureFlag, variant: impl Into<String>) -> Self {
         self.rules.entry(flag.clone()).or_default().global_variant = Some(variant.into());
         self
     }
@@ -224,10 +216,7 @@ mod tests {
             .with_global_variant(&theme, "light")
             .with_tenant_variant("acme", &theme, "dark");
 
-        assert_eq!(
-            flags.variant(&theme, &RequestContext::new()),
-            Some("light".into())
-        );
+        assert_eq!(flags.variant(&theme, &RequestContext::new()), Some("light".into()));
         assert_eq!(
             flags.variant(&theme, &RequestContext::new().with_tenant("acme")),
             Some("dark".into())

@@ -61,9 +61,7 @@ fn default_s3_region() -> String {
 
 impl Default for StorageConfig {
     fn default() -> Self {
-        StorageConfig::Local {
-            root: default_local_root(),
-        }
+        StorageConfig::Local { root: default_local_root() }
     }
 }
 

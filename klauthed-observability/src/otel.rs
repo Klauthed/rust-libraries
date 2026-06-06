@@ -25,11 +25,8 @@ pub(crate) fn trace_layer(
 ) -> Result<(BoxedLayer, SdkTracerProvider), ObservabilityError> {
     // OTLP/HTTP expects the traces signal path; derive it from the base endpoint.
     let base = config.otel.endpoint.trim_end_matches('/');
-    let endpoint = if base.ends_with("/v1/traces") {
-        base.to_owned()
-    } else {
-        format!("{base}/v1/traces")
-    };
+    let endpoint =
+        if base.ends_with("/v1/traces") { base.to_owned() } else { format!("{base}/v1/traces") };
 
     let exporter = SpanExporter::builder()
         .with_http()
@@ -46,9 +43,7 @@ pub(crate) fn trace_layer(
         Sampler::TraceIdRatioBased(config.otel.sample_ratio)
     };
 
-    let resource = Resource::builder()
-        .with_service_name(config.service_name.clone())
-        .build();
+    let resource = Resource::builder().with_service_name(config.service_name.clone()).build();
 
     let provider = SdkTracerProvider::builder()
         .with_batch_exporter(exporter)

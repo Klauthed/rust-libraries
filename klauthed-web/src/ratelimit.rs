@@ -29,7 +29,7 @@
 //! budgets are intentionally not handled here yet.
 
 use std::collections::HashMap;
-use std::future::{ready, Ready};
+use std::future::{Ready, ready};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::task::{Context as TaskContext, Poll};
@@ -141,10 +141,7 @@ impl State {
     /// Record a request for `key`, returning whether it is allowed.
     fn check(&self, key: &str, max: u32, window: Duration, now: Instant) -> Decision {
         let mut windows = self.windows.lock().expect("rate-limit mutex poisoned");
-        let entry = windows.entry(key.to_owned()).or_insert(Window {
-            started: now,
-            count: 0,
-        });
+        let entry = windows.entry(key.to_owned()).or_insert(Window { started: now, count: 0 });
 
         // Reset the window if it has elapsed.
         if now.duration_since(entry.started) >= window {
@@ -253,9 +250,7 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let key = self.key_by.key_for(&req);
-        let decision = self
-            .state
-            .check(&key, self.max_requests, self.window, Instant::now());
+        let decision = self.state.check(&key, self.max_requests, self.window, Instant::now());
 
         match decision {
             Decision::Allowed => {
@@ -284,7 +279,7 @@ where
 mod tests {
     use super::*;
     use actix_web::http::StatusCode;
-    use actix_web::{test, web, App, HttpResponse};
+    use actix_web::{App, HttpResponse, test, web};
 
     #[std::prelude::v1::test]
     fn fixed_window_allows_then_limits_then_resets() {
@@ -295,10 +290,7 @@ mod tests {
         // First two allowed, third limited.
         assert!(matches!(state.check("k", 2, window, t0), Decision::Allowed));
         assert!(matches!(state.check("k", 2, window, t0), Decision::Allowed));
-        assert!(matches!(
-            state.check("k", 2, window, t0),
-            Decision::Limited { .. }
-        ));
+        assert!(matches!(state.check("k", 2, window, t0), Decision::Limited { .. }));
 
         // After the window elapses, the budget refreshes.
         let t1 = t0 + window;
@@ -311,10 +303,7 @@ mod tests {
         let window = Duration::from_secs(10);
         let now = Instant::now();
         assert!(matches!(state.check("a", 1, window, now), Decision::Allowed));
-        assert!(matches!(
-            state.check("a", 1, window, now),
-            Decision::Limited { .. }
-        ));
+        assert!(matches!(state.check("a", 1, window, now), Decision::Limited { .. }));
         // A different key has its own fresh budget.
         assert!(matches!(state.check("b", 1, window, now), Decision::Allowed));
     }
@@ -325,18 +314,11 @@ mod tests {
 
     #[actix_web::test]
     async fn middleware_allows_n_then_429_with_retry_after() {
-        let limiter = RateLimit::new(2, Duration::from_secs(60))
-            .key_by(KeyBy::header("x-api-key"));
-        let app = test::init_service(
-            App::new().wrap(limiter).route("/", web::get().to(ok)),
-        )
-        .await;
+        let limiter = RateLimit::new(2, Duration::from_secs(60)).key_by(KeyBy::header("x-api-key"));
+        let app = test::init_service(App::new().wrap(limiter).route("/", web::get().to(ok))).await;
 
         let make = || {
-            test::TestRequest::get()
-                .uri("/")
-                .insert_header(("x-api-key", "client-1"))
-                .to_request()
+            test::TestRequest::get().uri("/").insert_header(("x-api-key", "client-1")).to_request()
         };
 
         assert_eq!(test::call_service(&app, make()).await.status(), StatusCode::OK);
@@ -344,32 +326,20 @@ mod tests {
 
         let resp = test::call_service(&app, make()).await;
         assert_eq!(resp.status(), StatusCode::TOO_MANY_REQUESTS);
-        let retry = resp
-            .headers()
-            .get(RETRY_AFTER)
-            .expect("Retry-After header present")
-            .to_str()
-            .unwrap();
+        let retry =
+            resp.headers().get(RETRY_AFTER).expect("Retry-After header present").to_str().unwrap();
         assert!(retry.parse::<u64>().unwrap() >= 1);
     }
 
     #[actix_web::test]
     async fn distinct_clients_have_separate_budgets() {
-        let limiter = RateLimit::new(1, Duration::from_secs(60))
-            .key_by(KeyBy::header("x-api-key"));
-        let app = test::init_service(
-            App::new().wrap(limiter).route("/", web::get().to(ok)),
-        )
-        .await;
+        let limiter = RateLimit::new(1, Duration::from_secs(60)).key_by(KeyBy::header("x-api-key"));
+        let app = test::init_service(App::new().wrap(limiter).route("/", web::get().to(ok))).await;
 
-        let req_a = test::TestRequest::get()
-            .uri("/")
-            .insert_header(("x-api-key", "a"))
-            .to_request();
-        let req_b = test::TestRequest::get()
-            .uri("/")
-            .insert_header(("x-api-key", "b"))
-            .to_request();
+        let req_a =
+            test::TestRequest::get().uri("/").insert_header(("x-api-key", "a")).to_request();
+        let req_b =
+            test::TestRequest::get().uri("/").insert_header(("x-api-key", "b")).to_request();
 
         assert_eq!(test::call_service(&app, req_a).await.status(), StatusCode::OK);
         assert_eq!(test::call_service(&app, req_b).await.status(), StatusCode::OK);
@@ -377,8 +347,8 @@ mod tests {
 
     #[actix_web::test]
     async fn principal_key_uses_jwt_sub_when_present() {
-        use klauthed_security::{jwt::JwtSigner, JwtVerifier};
         use crate::auth::JwtAuth;
+        use klauthed_security::{JwtVerifier, jwt::JwtSigner};
 
         const SECRET: &[u8] = b"ratelimit-test-secret";
 
@@ -395,8 +365,7 @@ mod tests {
             .unwrap();
 
         // 1 request allowed per user; alice and bob have independent budgets.
-        let limiter = RateLimit::new(1, Duration::from_secs(60))
-            .key_by(KeyBy::Principal);
+        let limiter = RateLimit::new(1, Duration::from_secs(60)).key_by(KeyBy::Principal);
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(JwtVerifier::hs256(SECRET)))
@@ -418,9 +387,6 @@ mod tests {
             .uri("/")
             .insert_header(("Authorization", format!("Bearer {token}")))
             .to_request();
-        assert_eq!(
-            test::call_service(&app, req2).await.status(),
-            StatusCode::TOO_MANY_REQUESTS
-        );
+        assert_eq!(test::call_service(&app, req2).await.status(), StatusCode::TOO_MANY_REQUESTS);
     }
 }

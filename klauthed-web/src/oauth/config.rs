@@ -4,8 +4,8 @@ use std::sync::Arc;
 
 use klauthed_core::time::{Clock, Duration, SystemClock};
 use klauthed_security::{
-    authz_code::AuthCodeStore, oauth2_client::ClientStore, refresh_token::RefreshTokenStore,
-    JwtSigner, JwtVerifier, TokenDenylist,
+    JwtSigner, JwtVerifier, TokenDenylist, authz_code::AuthCodeStore, oauth2_client::ClientStore,
+    refresh_token::RefreshTokenStore,
 };
 
 // ── OAuthConfig ───────────────────────────────────────────────────────────────
@@ -172,9 +172,7 @@ impl OAuthConfigBuilder {
             issuer: self.issuer.expect("OAuthConfig: issuer is required"),
             access_token_ttl: self.access_token_ttl.unwrap_or_else(|| Duration::hours(1)),
             code_ttl: self.code_ttl.unwrap_or_else(|| Duration::minutes(5)),
-            refresh_token_ttl: self
-                .refresh_token_ttl
-                .unwrap_or_else(|| Duration::days(30)),
+            refresh_token_ttl: self.refresh_token_ttl.unwrap_or_else(|| Duration::days(30)),
             clock: self.clock.unwrap_or_else(|| Arc::new(SystemClock)),
         }
     }

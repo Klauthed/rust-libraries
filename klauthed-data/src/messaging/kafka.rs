@@ -47,9 +47,7 @@ fn sasl_config(sasl: &KafkaSasl) -> Result<SaslConfig, DataError> {
         "PLAIN" => Ok(SaslConfig::Plain(credentials)),
         "SCRAM-SHA-256" => Ok(SaslConfig::ScramSha256(credentials)),
         "SCRAM-SHA-512" => Ok(SaslConfig::ScramSha512(credentials)),
-        other => Err(DataError::Messaging(format!(
-            "unsupported Kafka SASL mechanism: {other}"
-        ))),
+        other => Err(DataError::Messaging(format!("unsupported Kafka SASL mechanism: {other}"))),
     }
 }
 
@@ -67,10 +65,7 @@ mod tests {
 
     #[tokio::test]
     async fn rejects_tls_until_supported() {
-        let config = MessagingConfig::Kafka(KafkaConfig {
-            tls: true,
-            ..Default::default()
-        });
+        let config = MessagingConfig::Kafka(KafkaConfig { tls: true, ..Default::default() });
         let err = connect_kafka(&config).await.unwrap_err();
         assert!(matches!(err, DataError::Messaging(_)));
     }
@@ -84,11 +79,8 @@ mod tests {
         };
         assert!(matches!(sasl_config(&sasl), Ok(SaslConfig::ScramSha256(_))));
 
-        let bad = KafkaSasl {
-            mechanism: "kerberos".into(),
-            username: "u".into(),
-            password: "p".into(),
-        };
+        let bad =
+            KafkaSasl { mechanism: "kerberos".into(), username: "u".into(), password: "p".into() };
         assert!(matches!(sasl_config(&bad), Err(DataError::Messaging(_))));
     }
 }

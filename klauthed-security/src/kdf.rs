@@ -43,7 +43,7 @@
 //! assert_eq!(&key32[..], &a[..]);
 //! ```
 
-use ring::hkdf::{KeyType, Salt, HKDF_SHA256};
+use ring::hkdf::{HKDF_SHA256, KeyType, Salt};
 
 use crate::error::SecurityError;
 
@@ -73,9 +73,7 @@ pub fn derive_key(
 ) -> Result<Vec<u8>, SecurityError> {
     let prk = Salt::new(HKDF_SHA256, salt).extract(ikm);
     let info = [info];
-    let okm = prk
-        .expand(&info, OutLen(out_len))
-        .map_err(|_| SecurityError::KeyDerivation)?;
+    let okm = prk.expand(&info, OutLen(out_len)).map_err(|_| SecurityError::KeyDerivation)?;
     let mut out = vec![0u8; out_len];
     okm.fill(&mut out).map_err(|_| SecurityError::KeyDerivation)?;
     Ok(out)

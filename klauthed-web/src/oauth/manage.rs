@@ -15,7 +15,7 @@
 //! endpoint (with `verifier`/`token_denylist` set to enable access-token
 //! handling).
 
-use actix_web::{web, HttpResponse};
+use actix_web::{HttpResponse, web};
 use klauthed_core::time::Timestamp;
 use klauthed_protocol::oauth2::{
     IntrospectionRequest, IntrospectionResponse, OAuth2ErrorCode, RevocationRequest, TokenType,
@@ -78,7 +78,8 @@ async fn revoke_token(token: &str, hint: Option<TokenTypeHint>, config: &OAuthCo
     // its whole rotation family so any sibling tokens are invalidated too.
     if !matches!(hint, Some(TokenTypeHint::AccessToken))
         && let Some(store) = &config.refresh_token_store
-        && let Ok(ConsumeResult::Valid(rt) | ConsumeResult::Expired(rt)) = store.consume(token).await
+        && let Ok(ConsumeResult::Valid(rt) | ConsumeResult::Expired(rt)) =
+            store.consume(token).await
     {
         let _ = store.revoke_family(&rt.family_id).await;
         return;
@@ -115,16 +116,8 @@ async fn introspect_token(token: &str, config: &OAuthConfig) -> IntrospectionRes
 
     IntrospectionResponse {
         active: true,
-        scope: claims
-            .custom
-            .get("scope")
-            .and_then(|v| v.as_str())
-            .map(str::to_owned),
-        client_id: claims
-            .custom
-            .get("client_id")
-            .and_then(|v| v.as_str())
-            .map(str::to_owned),
+        scope: claims.custom.get("scope").and_then(|v| v.as_str()).map(str::to_owned),
+        client_id: claims.custom.get("client_id").and_then(|v| v.as_str()).map(str::to_owned),
         sub: claims.sub,
         token_type: Some(TokenType::default()),
         exp: claims.exp,
@@ -149,14 +142,16 @@ mod tests {
 
     use actix_web::http::StatusCode;
     use actix_web::test as http_test;
-    use actix_web::{web, App};
+    use actix_web::{App, web};
     use klauthed_core::time::{Clock, Duration, FixedClock, SystemClock, Timestamp};
     use klauthed_security::jwt::{Claims, JwtSigner};
     use klauthed_security::oauth2_client::{
         ClientGrantType, ClientType, InMemoryClientStore, OAuth2Client, TokenEndpointAuthMethod,
     };
     use klauthed_security::refresh_token::{InMemoryRefreshTokenStore, RefreshTokenBuilder};
-    use klauthed_security::{InMemoryAuthCodeStore, InMemoryTokenDenylist, JwtVerifier, TokenDenylist};
+    use klauthed_security::{
+        InMemoryAuthCodeStore, InMemoryTokenDenylist, JwtVerifier, TokenDenylist,
+    };
 
     const SECRET: &[u8] = b"manage-test-secret";
 
@@ -166,9 +161,12 @@ mod tests {
             client_type: ClientType::Public,
             client_secret_hash: None,
             redirect_uris: vec!["https://app.example.com/cb".into()],
-            allowed_grant_types: [ClientGrantType::AuthorizationCode, ClientGrantType::RefreshToken]
-                .into_iter()
-                .collect(),
+            allowed_grant_types: [
+                ClientGrantType::AuthorizationCode,
+                ClientGrantType::RefreshToken,
+            ]
+            .into_iter()
+            .collect(),
             allowed_scopes: ["openid", "email"].iter().map(|s| s.to_string()).collect(),
             token_endpoint_auth_method: TokenEndpointAuthMethod::None,
             client_name: None,
@@ -215,9 +213,7 @@ mod tests {
     macro_rules! app_with {
         ($config:expr) => {
             http_test::init_service(
-                App::new()
-                    .app_data(web::Data::new($config))
-                    .configure(configure),
+                App::new().app_data(web::Data::new($config)).configure(configure),
             )
             .await
         };
@@ -338,10 +334,7 @@ mod tests {
         assert_eq!(http_test::call_service(&app, req).await.status(), StatusCode::OK);
 
         // The refresh token is no longer usable.
-        assert!(!matches!(
-            store.consume(&rt_str).await.unwrap(),
-            ConsumeResult::Valid(_)
-        ));
+        assert!(!matches!(store.consume(&rt_str).await.unwrap(), ConsumeResult::Valid(_)));
     }
 
     #[actix_web::test]

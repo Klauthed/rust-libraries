@@ -35,8 +35,7 @@ pub mod schema {
     pub const SERVICE_PROVIDER_CONFIG: &str =
         "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig";
     /// The Enterprise User extension schema URN.
-    pub const ENTERPRISE_USER: &str =
-        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User";
+    pub const ENTERPRISE_USER: &str = "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User";
     /// The `ListResponse` message schema URN (RFC 7644).
     pub const LIST_RESPONSE: &str = "urn:ietf:params:scim:api:messages:2.0:ListResponse";
     /// The `PatchOp` message schema URN (RFC 7644).
@@ -366,10 +365,7 @@ pub struct PatchOp {
 impl PatchOp {
     /// Build a PATCH body carrying the [`schema::PATCH_OP`] URN.
     pub fn new(operations: Vec<PatchOperation>) -> Self {
-        PatchOp {
-            schemas: vec![schema::PATCH_OP.to_owned()],
-            operations,
-        }
+        PatchOp { schemas: vec![schema::PATCH_OP.to_owned()], operations }
     }
 }
 

@@ -29,9 +29,9 @@ use async_trait::async_trait;
 use klauthed_core::time::Duration;
 use klauthed_core::time::Timestamp;
 use mongodb::Collection;
+use mongodb::Database;
 use mongodb::bson::{Document, doc};
 use mongodb::options::{FindOneAndUpdateOptions, ReturnDocument};
-use mongodb::Database;
 
 use crate::error::DataError;
 use crate::locks::{LockGuard, LockManager, LockToken};
@@ -55,9 +55,7 @@ impl MongoLockManager {
 
     /// Wrap an existing database, using `collection_name` as the target.
     pub fn with_collection(db: &Database, collection_name: &str) -> Self {
-        Self {
-            collection: db.collection(collection_name),
-        }
+        Self { collection: db.collection(collection_name) }
     }
 
     /// Release `key` only if `token` still owns it.
@@ -80,11 +78,7 @@ impl MongoLockManager {
 
 #[async_trait]
 impl LockManager for MongoLockManager {
-    async fn acquire(
-        &self,
-        key: &str,
-        ttl: Duration,
-    ) -> Result<Option<LockGuard>, DataError> {
+    async fn acquire(&self, key: &str, ttl: Duration) -> Result<Option<LockGuard>, DataError> {
         let now = Timestamp::now();
         let expires_at = now
             .checked_add(ttl)
@@ -111,11 +105,8 @@ impl LockManager for MongoLockManager {
             .return_document(Some(ReturnDocument::After))
             .build();
 
-        let result = self
-            .collection
-            .find_one_and_update(filter, update)
-            .with_options(options)
-            .await;
+        let result =
+            self.collection.find_one_and_update(filter, update).with_options(options).await;
 
         match result {
             Ok(Some(doc)) => {
@@ -149,11 +140,9 @@ mod tests {
     use klauthed_core::id::Id;
 
     async fn live_manager() -> MongoLockManager {
-        let url = std::env::var("MONGODB_URL")
-            .unwrap_or_else(|_| "mongodb://127.0.0.1:27017".to_owned());
-        let client = mongodb::Client::with_uri_str(&url)
-            .await
-            .expect("connect mongodb");
+        let url =
+            std::env::var("MONGODB_URL").unwrap_or_else(|_| "mongodb://127.0.0.1:27017".to_owned());
+        let client = mongodb::Client::with_uri_str(&url).await.expect("connect mongodb");
         let db_name = format!("klauthed_test_{}", Id::<()>::new());
         MongoLockManager::new(&client.database(&db_name))
     }
@@ -164,24 +153,13 @@ mod tests {
         let locks = live_manager().await;
         let key = format!("klauthed:test:lock:{}", LockToken::new());
 
-        let guard = locks
-            .acquire(&key, Duration::seconds(30))
-            .await
-            .unwrap()
-            .expect("first acquire wins");
+        let guard =
+            locks.acquire(&key, Duration::seconds(30)).await.unwrap().expect("first acquire wins");
 
-        assert!(locks
-            .acquire(&key, Duration::seconds(30))
-            .await
-            .unwrap()
-            .is_none());
+        assert!(locks.acquire(&key, Duration::seconds(30)).await.unwrap().is_none());
 
         guard.release().await.unwrap();
 
-        assert!(locks
-            .acquire(&key, Duration::seconds(30))
-            .await
-            .unwrap()
-            .is_some());
+        assert!(locks.acquire(&key, Duration::seconds(30)).await.unwrap().is_some());
     }
 }

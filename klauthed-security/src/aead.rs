@@ -44,9 +44,9 @@
 //! Envelope encryption / KMS integration (wrapping these data keys under a
 //! root key) and asymmetric encryption are intentionally out of scope.
 
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
-use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, AES_256_GCM, NONCE_LEN};
+use base64::engine::general_purpose::STANDARD as BASE64;
+use ring::aead::{AES_256_GCM, Aad, LessSafeKey, NONCE_LEN, Nonce, UnboundKey};
 use ring::rand::{SecureRandom, SystemRandom};
 use zeroize::Zeroize;
 
@@ -86,9 +86,7 @@ impl EncryptionKey {
     /// Returns [`SecurityError::Rng`] if the OS CSPRNG fails.
     pub fn generate() -> Result<Self, SecurityError> {
         let mut bytes = [0u8; KEY_LEN];
-        SystemRandom::new()
-            .fill(&mut bytes)
-            .map_err(|_| SecurityError::Rng)?;
+        SystemRandom::new().fill(&mut bytes).map_err(|_| SecurityError::Rng)?;
         Ok(Self { bytes })
     }
 
@@ -134,13 +132,15 @@ impl std::fmt::Debug for EncryptionKey {
 ///
 /// Returns [`SecurityError::Rng`] if the nonce cannot be generated, or
 /// [`SecurityError::Encryption`] if sealing fails.
-pub fn encrypt(key: &EncryptionKey, plaintext: &[u8], aad: &[u8]) -> Result<Vec<u8>, SecurityError> {
+pub fn encrypt(
+    key: &EncryptionKey,
+    plaintext: &[u8],
+    aad: &[u8],
+) -> Result<Vec<u8>, SecurityError> {
     let sealing = key.less_safe_key()?;
 
     let mut nonce_bytes = [0u8; NONCE_LEN];
-    SystemRandom::new()
-        .fill(&mut nonce_bytes)
-        .map_err(|_| SecurityError::Rng)?;
+    SystemRandom::new().fill(&mut nonce_bytes).map_err(|_| SecurityError::Rng)?;
     let nonce = Nonce::assume_unique_for_key(nonce_bytes);
 
     // ring seals in place and appends the tag, so start the buffer with the
@@ -176,8 +176,8 @@ pub fn decrypt(
         return Err(SecurityError::Decryption);
     }
     let (nonce_bytes, sealed) = ciphertext.split_at(NONCE_LEN);
-    let nonce = Nonce::try_assume_unique_for_key(nonce_bytes)
-        .map_err(|_| SecurityError::Decryption)?;
+    let nonce =
+        Nonce::try_assume_unique_for_key(nonce_bytes).map_err(|_| SecurityError::Decryption)?;
 
     let opening = key.less_safe_key()?;
     let mut in_out = sealed.to_vec();
@@ -214,9 +214,7 @@ pub fn decrypt_from_base64(
     ciphertext_b64: &str,
     aad: &[u8],
 ) -> Result<Vec<u8>, SecurityError> {
-    let raw = BASE64
-        .decode(ciphertext_b64)
-        .map_err(|_| SecurityError::Decryption)?;
+    let raw = BASE64.decode(ciphertext_b64).map_err(|_| SecurityError::Decryption)?;
     decrypt(key, &raw, aad)
 }
 
@@ -269,10 +267,7 @@ mod tests {
         // Flip a bit in the ciphertext body (past the nonce).
         let i = NONCE_LEN + 1;
         ct[i] ^= 0x01;
-        assert!(matches!(
-            decrypt(&key, &ct, b"aad").unwrap_err(),
-            SecurityError::Decryption
-        ));
+        assert!(matches!(decrypt(&key, &ct, b"aad").unwrap_err(), SecurityError::Decryption));
     }
 
     #[test]
@@ -281,20 +276,14 @@ mod tests {
         let mut ct = encrypt(&key, b"secret", b"aad").unwrap();
         let last = ct.len() - 1;
         ct[last] ^= 0x80;
-        assert!(matches!(
-            decrypt(&key, &ct, b"aad").unwrap_err(),
-            SecurityError::Decryption
-        ));
+        assert!(matches!(decrypt(&key, &ct, b"aad").unwrap_err(), SecurityError::Decryption));
     }
 
     #[test]
     fn wrong_aad_fails() {
         let key = EncryptionKey::generate().unwrap();
         let ct = encrypt(&key, b"secret", b"record:1").unwrap();
-        assert!(matches!(
-            decrypt(&key, &ct, b"record:2").unwrap_err(),
-            SecurityError::Decryption
-        ));
+        assert!(matches!(decrypt(&key, &ct, b"record:2").unwrap_err(), SecurityError::Decryption));
     }
 
     #[test]
@@ -304,10 +293,7 @@ mod tests {
             decrypt(&key, &[0u8; NONCE_LEN], b"").unwrap_err(),
             SecurityError::Decryption
         ));
-        assert!(matches!(
-            decrypt(&key, b"short", b"").unwrap_err(),
-            SecurityError::Decryption
-        ));
+        assert!(matches!(decrypt(&key, b"short", b"").unwrap_err(), SecurityError::Decryption));
     }
 
     #[test]

@@ -182,9 +182,7 @@ impl Default for InMemorySessionStore {
 impl std::fmt::Debug for InMemorySessionStore {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let len = self.sessions.lock().map(|m| m.len()).unwrap_or(0);
-        f.debug_struct("InMemorySessionStore")
-            .field("sessions", &len)
-            .finish_non_exhaustive()
+        f.debug_struct("InMemorySessionStore").field("sessions", &len).finish_non_exhaustive()
     }
 }
 
@@ -199,10 +197,7 @@ impl InMemorySessionStore {
     /// [`FixedClock`](klauthed_core::time::FixedClock) in tests).
     #[must_use]
     pub fn with_clock(clock: Arc<dyn Clock>) -> Self {
-        Self {
-            sessions: Arc::new(Mutex::new(HashMap::new())),
-            clock,
-        }
+        Self { sessions: Arc::new(Mutex::new(HashMap::new())), clock }
     }
 
     /// Number of stored sessions (including any not-yet-evicted expired ones).
@@ -302,10 +297,7 @@ mod tests {
     #[tokio::test]
     async fn create_then_get_returns_session() {
         let (_clock, store) = store_at(0);
-        let s = store
-            .create("alice", Duration::minutes(30), None)
-            .await
-            .unwrap();
+        let s = store.create("alice", Duration::minutes(30), None).await.unwrap();
         let got = store.get(&s.id).await.unwrap().unwrap();
         assert_eq!(got.subject, "alice");
         assert_eq!(got.id, s.id);
@@ -314,10 +306,7 @@ mod tests {
     #[tokio::test]
     async fn get_returns_none_after_expiry() {
         let (clock, store) = store_at(0);
-        let s = store
-            .create("bob", Duration::seconds(30), None)
-            .await
-            .unwrap();
+        let s = store.create("bob", Duration::seconds(30), None).await.unwrap();
         assert!(store.get(&s.id).await.unwrap().is_some());
 
         clock.advance(Duration::seconds(31));
@@ -329,16 +318,10 @@ mod tests {
     #[tokio::test]
     async fn touch_extends_expiry() {
         let (clock, store) = store_at(0);
-        let s = store
-            .create("carol", Duration::seconds(30), None)
-            .await
-            .unwrap();
+        let s = store.create("carol", Duration::seconds(30), None).await.unwrap();
 
         clock.advance(Duration::seconds(20));
-        let extended = store
-            .touch(&s.id, Duration::seconds(30))
-            .await
-            .unwrap();
+        let extended = store.touch(&s.id, Duration::seconds(30)).await.unwrap();
         assert!(extended.expires_at > s.expires_at);
 
         // 25s after the original 30s deadline, but touch reset it.
@@ -349,15 +332,9 @@ mod tests {
     #[tokio::test]
     async fn touch_expired_session_errors() {
         let (clock, store) = store_at(0);
-        let s = store
-            .create("dave", Duration::seconds(10), None)
-            .await
-            .unwrap();
+        let s = store.create("dave", Duration::seconds(10), None).await.unwrap();
         clock.advance(Duration::seconds(11));
-        let err = store
-            .touch(&s.id, Duration::seconds(30))
-            .await
-            .unwrap_err();
+        let err = store.touch(&s.id, Duration::seconds(30)).await.unwrap_err();
         assert!(matches!(err, SecurityError::SessionExpired));
         assert_eq!(err.category(), ErrorCategory::Unauthorized);
         assert_eq!(err.code().as_str(), "security.session_expired");
@@ -366,10 +343,7 @@ mod tests {
     #[tokio::test]
     async fn delete_is_idempotent_and_removes() {
         let (_clock, store) = store_at(0);
-        let s = store
-            .create("erin", Duration::minutes(5), None)
-            .await
-            .unwrap();
+        let s = store.create("erin", Duration::minutes(5), None).await.unwrap();
         store.delete(&s.id).await.unwrap();
         assert!(store.get(&s.id).await.unwrap().is_none());
         // Deleting again is fine.
@@ -380,10 +354,7 @@ mod tests {
     async fn touch_missing_session_is_not_found() {
         let (_clock, store) = store_at(0);
         let missing = SessionId::from_token("does-not-exist");
-        let err = store
-            .touch(&missing, Duration::seconds(30))
-            .await
-            .unwrap_err();
+        let err = store.touch(&missing, Duration::seconds(30)).await.unwrap_err();
         assert!(matches!(err, SecurityError::SessionNotFound));
         assert_eq!(err.category(), ErrorCategory::NotFound);
     }
@@ -393,10 +364,7 @@ mod tests {
         let (_clock, store) = store_at(0);
         let mut meta = HashMap::new();
         meta.insert("device".to_owned(), "cli".to_owned());
-        let s = store
-            .create("frank", Duration::minutes(5), Some(meta))
-            .await
-            .unwrap();
+        let s = store.create("frank", Duration::minutes(5), Some(meta)).await.unwrap();
         let got = store.get(&s.id).await.unwrap().unwrap();
         assert_eq!(got.metadata.get("device").map(String::as_str), Some("cli"));
     }
@@ -406,9 +374,6 @@ mod tests {
         let a = SessionId::generate().unwrap();
         let b = SessionId::generate().unwrap();
         assert_ne!(a, b);
-        assert!(a
-            .as_str()
-            .bytes()
-            .all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_'));
+        assert!(a.as_str().bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_'));
     }
 }

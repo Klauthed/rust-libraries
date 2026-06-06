@@ -87,11 +87,7 @@ struct StoreState {
 
 impl StoreState {
     fn new() -> Self {
-        Self {
-            active: HashMap::new(),
-            consumed: HashMap::new(),
-            revoked_families: HashSet::new(),
-        }
+        Self { active: HashMap::new(), consumed: HashMap::new(), revoked_families: HashSet::new() }
     }
 
     fn evict_expired_consumed(&mut self, now: Timestamp) {
@@ -136,10 +132,7 @@ impl InMemoryRefreshTokenStore {
     /// A store driven by a custom `clock`.
     #[must_use]
     pub fn with_clock(clock: Arc<dyn Clock>) -> Self {
-        Self {
-            state: Arc::new(Mutex::new(StoreState::new())),
-            clock,
-        }
+        Self { state: Arc::new(Mutex::new(StoreState::new())), clock }
     }
 
     /// Number of active (live, unconsumed) tokens.
@@ -174,8 +167,7 @@ impl RefreshTokenStore for InMemoryRefreshTokenStore {
         // ── 2. Token is in the active set ─────────────────────────────────────
         if let Some(rt) = s.active.remove(token) {
             // Record as consumed so a replay within the original window is detected.
-            s.consumed
-                .insert(token.to_owned(), (rt.family_id.clone(), rt.expires_at));
+            s.consumed.insert(token.to_owned(), (rt.family_id.clone(), rt.expires_at));
 
             if rt.is_expired(now) {
                 return Ok(ConsumeResult::Expired(rt));
@@ -268,9 +260,8 @@ mod tests {
     #[tokio::test]
     async fn expired_token_returns_expired() {
         let (clock, store) = store_at(0);
-        let rt = RefreshTokenBuilder::new("c", "carol")
-            .build(&*clock, Duration::seconds(10))
-            .unwrap();
+        let rt =
+            RefreshTokenBuilder::new("c", "carol").build(&*clock, Duration::seconds(10)).unwrap();
         let token_str = rt.token.clone();
         store.store(rt).await.unwrap();
 
@@ -327,19 +318,13 @@ mod tests {
 
         store.revoke_family(&family_id).await.unwrap();
         assert_eq!(store.active_count(), 0);
-        assert!(matches!(
-            store.consume(&token2_str).await.unwrap(),
-            ConsumeResult::NotFound
-        ));
+        assert!(matches!(store.consume(&token2_str).await.unwrap(), ConsumeResult::NotFound));
     }
 
     #[tokio::test]
     async fn consume_unknown_token_returns_not_found() {
         let (_clock, store) = store_at(0);
-        assert!(matches!(
-            store.consume("does-not-exist").await.unwrap(),
-            ConsumeResult::NotFound
-        ));
+        assert!(matches!(store.consume("does-not-exist").await.unwrap(), ConsumeResult::NotFound));
     }
 
     #[tokio::test]

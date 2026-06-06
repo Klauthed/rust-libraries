@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::DataError;
 
-use super::{SortKey, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE};
+use super::{DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, SortKey};
 
 /// A request for a single page of results using classic `LIMIT … OFFSET …`.
 ///
@@ -25,9 +25,7 @@ impl OffsetPageRequest {
     /// `per_page` at [`MAX_PAGE_SIZE`].
     pub fn new(page: u32, per_page: u32) -> Result<Self, DataError> {
         if page < 1 {
-            return Err(DataError::InvalidPage(
-                "page must be >= 1 (pages are 1-indexed)".into(),
-            ));
+            return Err(DataError::InvalidPage("page must be >= 1 (pages are 1-indexed)".into()));
         }
         let per_page = per_page.clamp(1, MAX_PAGE_SIZE);
         Ok(OffsetPageRequest { page, per_page, sort: Vec::new() })
@@ -51,11 +49,7 @@ impl OffsetPageRequest {
 
 impl Default for OffsetPageRequest {
     fn default() -> Self {
-        OffsetPageRequest {
-            page: 1,
-            per_page: DEFAULT_PAGE_SIZE,
-            sort: Vec::new(),
-        }
+        OffsetPageRequest { page: 1, per_page: DEFAULT_PAGE_SIZE, sort: Vec::new() }
     }
 }
 
@@ -83,11 +77,7 @@ impl<T> Page<T> {
     /// original `request`. All derived fields are computed automatically.
     pub fn new(items: Vec<T>, total_items: u64, req: &OffsetPageRequest) -> Self {
         let per_page = req.per_page as u64;
-        let total_pages = if per_page == 0 {
-            0
-        } else {
-            total_items.div_ceil(per_page)
-        };
+        let total_pages = if per_page == 0 { 0 } else { total_items.div_ceil(per_page) };
         let page = req.page;
         let has_prev = page > 1;
         let has_next = (page as u64) < total_pages;

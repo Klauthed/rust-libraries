@@ -40,10 +40,10 @@ pub mod registry;
 pub mod routes;
 pub mod status;
 
-#[cfg(feature = "data-sql")]
-pub use checks::SqlHealthCheck;
 #[cfg(feature = "data-redis")]
 pub use checks::RedisHealthCheck;
+#[cfg(feature = "data-sql")]
+pub use checks::SqlHealthCheck;
 pub use registry::{CheckResult, HealthCheck, HealthRegistry, ReadinessReport};
 pub use routes::configure;
 pub use status::HealthStatus;

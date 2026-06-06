@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::error::DataError;
 
-use super::{SortKey, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE};
+use super::{DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, SortKey};
 
 /// An opaque, URL-safe, base64-encoded position token used by cursor pagination.
 ///
@@ -22,8 +22,8 @@ pub struct Cursor(String);
 impl Cursor {
     /// Serialize `value` to JSON and base64-url-safe-encode it (no padding).
     pub fn encode<T: Serialize>(value: &T) -> Result<Cursor, DataError> {
-        let json = serde_json::to_string(value)
-            .map_err(|e| DataError::InvalidCursor(e.to_string()))?;
+        let json =
+            serde_json::to_string(value).map_err(|e| DataError::InvalidCursor(e.to_string()))?;
         Ok(Cursor(URL_SAFE_NO_PAD.encode(json.as_bytes())))
     }
 
@@ -101,12 +101,7 @@ impl CursorPageRequest {
 
 impl Default for CursorPageRequest {
     fn default() -> Self {
-        CursorPageRequest {
-            after: None,
-            before: None,
-            limit: DEFAULT_PAGE_SIZE,
-            sort: Vec::new(),
-        }
+        CursorPageRequest { after: None, before: None, limit: DEFAULT_PAGE_SIZE, sort: Vec::new() }
     }
 }
 
@@ -140,14 +135,8 @@ impl<T> CursorPage<T> {
         F: Fn(&T) -> C,
         C: Serialize,
     {
-        let start_cursor = items
-            .first()
-            .map(|item| Cursor::encode(&encode(item)))
-            .transpose()?;
-        let end_cursor = items
-            .last()
-            .map(|item| Cursor::encode(&encode(item)))
-            .transpose()?;
+        let start_cursor = items.first().map(|item| Cursor::encode(&encode(item))).transpose()?;
+        let end_cursor = items.last().map(|item| Cursor::encode(&encode(item))).transpose()?;
         Ok(CursorPage {
             items,
             start_cursor,
@@ -239,8 +228,7 @@ mod tests {
 
     #[test]
     fn cursor_page_empty_has_no_cursors() {
-        let page: CursorPage<u32> =
-            CursorPage::from_items(vec![], |x| *x, false, false).unwrap();
+        let page: CursorPage<u32> = CursorPage::from_items(vec![], |x| *x, false, false).unwrap();
         assert!(page.start_cursor.is_none());
         assert!(page.end_cursor.is_none());
     }

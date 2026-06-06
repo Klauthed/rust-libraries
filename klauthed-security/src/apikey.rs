@@ -36,7 +36,7 @@
 //! SHA-256 is appropriate *because* the key is high-entropy. Never store a
 //! user-chosen password this way — use [`crate::password`] (Argon2id) instead.
 
-use ring::digest::{digest, SHA256};
+use ring::digest::{SHA256, digest};
 
 use crate::compare::constant_time_eq;
 use crate::error::SecurityError;

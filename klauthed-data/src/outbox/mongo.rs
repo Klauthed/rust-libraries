@@ -55,9 +55,7 @@ impl MongoOutbox {
 
     /// Wrap an existing database, using `collection_name` as the target collection.
     pub fn with_collection(db: &Database, collection_name: &str) -> Self {
-        Self {
-            collection: db.collection(collection_name),
-        }
+        Self { collection: db.collection(collection_name) }
     }
 
     /// Create the indexes required for efficient relay queries.
@@ -68,11 +66,7 @@ impl MongoOutbox {
         // Compound index for the relay poll: unpublished entries sorted by sequence.
         let relay_index = IndexModel::builder()
             .keys(doc! { "published": 1, "sequence": 1 })
-            .options(
-                IndexOptions::builder()
-                    .name(Some("published_sequence".to_owned()))
-                    .build(),
-            )
+            .options(IndexOptions::builder().name(Some("published_sequence".to_owned())).build())
             .build();
 
         // Sparse index for per-aggregate look-ups.
@@ -135,9 +129,7 @@ fn entry_to_doc(entry: &OutboxEntry) -> Result<Document, DataError> {
 
 /// Deserialize a BSON `Document` back into an [`OutboxEntry`].
 fn doc_to_entry(doc: &Document) -> Result<OutboxEntry, DataError> {
-    let id_str = doc
-        .get_str("_id")
-        .map_err(|e| DataError::Outbox(format!("missing _id: {e}")))?;
+    let id_str = doc.get_str("_id").map_err(|e| DataError::Outbox(format!("missing _id: {e}")))?;
     let id: OutboxId = id_str
         .parse()
         .map_err(|e| DataError::Outbox(format!("invalid outbox id '{id_str}': {e}")))?;
@@ -152,15 +144,13 @@ fn doc_to_entry(doc: &Document) -> Result<OutboxEntry, DataError> {
         _ => None,
     };
 
-    let payload_bson = doc
-        .get("payload")
-        .ok_or_else(|| DataError::Outbox("missing payload field".to_owned()))?;
+    let payload_bson =
+        doc.get("payload").ok_or_else(|| DataError::Outbox("missing payload field".to_owned()))?;
     let payload: serde_json::Value = mongodb::bson::from_bson(payload_bson.clone())
         .map_err(|e| DataError::Outbox(format!("bson payload to json failed: {e}")))?;
 
-    let sequence = doc
-        .get_i64("sequence")
-        .map_err(|e| DataError::Outbox(format!("missing sequence: {e}")))?;
+    let sequence =
+        doc.get_i64("sequence").map_err(|e| DataError::Outbox(format!("missing sequence: {e}")))?;
 
     let published = doc
         .get_bool("published")
@@ -200,10 +190,7 @@ impl Outbox for MongoOutbox {
             return Ok(());
         }
 
-        let docs: Vec<Document> = entries
-            .iter()
-            .map(entry_to_doc)
-            .collect::<Result<_, _>>()?;
+        let docs: Vec<Document> = entries.iter().map(entry_to_doc).collect::<Result<_, _>>()?;
 
         self.collection
             .insert_many(docs)
@@ -215,10 +202,8 @@ impl Outbox for MongoOutbox {
 
     async fn fetch_unpublished(&self, limit: usize) -> Result<Vec<OutboxEntry>, DataError> {
         let filter = doc! { "published": false };
-        let options = FindOptions::builder()
-            .sort(doc! { "sequence": 1 })
-            .limit(Some(limit as i64))
-            .build();
+        let options =
+            FindOptions::builder().sort(doc! { "sequence": 1 }).limit(Some(limit as i64)).build();
 
         let mut cursor = self
             .collection
@@ -247,10 +232,7 @@ impl Outbox for MongoOutbox {
             return Ok(());
         }
 
-        let id_strings: Vec<Bson> = ids
-            .iter()
-            .map(|id| Bson::String(id.to_string()))
-            .collect();
+        let id_strings: Vec<Bson> = ids.iter().map(|id| Bson::String(id.to_string())).collect();
 
         let now = Timestamp::now().to_rfc3339();
         let filter = doc! { "_id": { "$in": id_strings } };
@@ -297,19 +279,15 @@ mod tests {
             aggregate_type: Cow::Borrowed("account"),
             sequence: seq,
             occurred_at: Timestamp::from_unix_millis(1_000 + seq as i64),
-            payload: Opened {
-                owner: format!("owner-{seq}"),
-            },
+            payload: Opened { owner: format!("owner-{seq}") },
         };
         OutboxEntry::from_envelope(&envelope).unwrap()
     }
 
     async fn live_outbox() -> MongoOutbox {
-        let url = std::env::var("MONGODB_URL")
-            .unwrap_or_else(|_| "mongodb://127.0.0.1:27017".to_owned());
-        let client = mongodb::Client::with_uri_str(&url)
-            .await
-            .expect("connect mongodb");
+        let url =
+            std::env::var("MONGODB_URL").unwrap_or_else(|_| "mongodb://127.0.0.1:27017".to_owned());
+        let client = mongodb::Client::with_uri_str(&url).await.expect("connect mongodb");
         let db_name = format!("klauthed_test_{}", Id::<()>::new());
         let db = client.database(&db_name);
         let outbox = MongoOutbox::new(&db);

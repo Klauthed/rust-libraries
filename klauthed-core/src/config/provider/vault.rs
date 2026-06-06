@@ -105,10 +105,7 @@ impl VaultProvider {
 
     /// Mount the KV data at `path` under config `key` (dotted keys nest).
     pub fn with_secret(mut self, key: impl Into<String>, path: impl Into<String>) -> Self {
-        self.secrets.push(SecretMapping {
-            key: key.into(),
-            path: path.into(),
-        });
+        self.secrets.push(SecretMapping { key: key.into(), path: path.into() });
         self
     }
 
@@ -131,8 +128,8 @@ impl VaultProvider {
     ///   * `VAULT_K8S_ROLE` → Kubernetes (JWT from `VAULT_K8S_JWT_PATH`, default the
     ///     standard service-account token path; `VAULT_K8S_MOUNT`, default `kubernetes`)
     pub fn from_env() -> Result<Self, ConfigError> {
-        let address =
-            std::env::var("VAULT_ADDR").map_err(|_| ConfigError::MissingEnv("VAULT_ADDR".into()))?;
+        let address = std::env::var("VAULT_ADDR")
+            .map_err(|_| ConfigError::MissingEnv("VAULT_ADDR".into()))?;
 
         let auth = Self::auth_from_env()?;
         let mut provider = Self::new(address, auth);
@@ -168,9 +165,8 @@ impl VaultProvider {
         }
 
         if let Ok(role) = std::env::var("VAULT_K8S_ROLE") {
-            let jwt_path = std::env::var("VAULT_K8S_JWT_PATH").unwrap_or_else(|_| {
-                "/var/run/secrets/kubernetes.io/serviceaccount/token".into()
-            });
+            let jwt_path = std::env::var("VAULT_K8S_JWT_PATH")
+                .unwrap_or_else(|_| "/var/run/secrets/kubernetes.io/serviceaccount/token".into());
             let jwt = std::fs::read_to_string(&jwt_path).map_err(|e| ConfigError::VaultAuth {
                 method: "kubernetes".into(),
                 message: format!("could not read service-account JWT at '{jwt_path}': {e}"),
@@ -190,7 +186,12 @@ impl VaultProvider {
         })
     }
 
-    fn request(&self, method: reqwest::Method, url: &str, token: Option<&str>) -> reqwest::RequestBuilder {
+    fn request(
+        &self,
+        method: reqwest::Method,
+        url: &str,
+        token: Option<&str>,
+    ) -> reqwest::RequestBuilder {
         let mut req = self.client.request(method, url);
         if let Some(token) = token {
             req = req.header("X-Vault-Token", token);
@@ -206,11 +207,7 @@ impl VaultProvider {
         match &self.auth {
             VaultAuth::Token(token) => Ok(token.clone()),
 
-            VaultAuth::AppRole {
-                role_id,
-                secret_id,
-                mount,
-            } => {
+            VaultAuth::AppRole { role_id, secret_id, mount } => {
                 let url = format!("{}/v1/auth/{}/login", self.address, mount);
                 let body = serde_json::json!({
                     "role_id": role_id,
@@ -232,11 +229,7 @@ impl VaultProvider {
 
     async fn login_request(&self, url: &str, body: &Value) -> Result<SecretString, ConfigError> {
         let method = self.auth.method_name();
-        let resp = self
-            .request(reqwest::Method::POST, url, None)
-            .json(body)
-            .send()
-            .await?;
+        let resp = self.request(reqwest::Method::POST, url, None).json(body).send().await?;
 
         if !resp.status().is_success() {
             let status = resp.status();
@@ -252,12 +245,13 @@ impl VaultProvider {
     }
 
     /// Read a single KV v2 secret's data object.
-    async fn read_secret(&self, token: &str, path: &str) -> Result<Map<String, Value>, ConfigError> {
+    async fn read_secret(
+        &self,
+        token: &str,
+        path: &str,
+    ) -> Result<Map<String, Value>, ConfigError> {
         let url = format!("{}/v1/{}/data/{}", self.address, self.kv_mount, path);
-        let resp = self
-            .request(reqwest::Method::GET, &url, Some(token))
-            .send()
-            .await?;
+        let resp = self.request(reqwest::Method::GET, &url, Some(token)).send().await?;
 
         if resp.status() == reqwest::StatusCode::NOT_FOUND {
             return Err(ConfigError::VaultSecretNotFound(path.to_owned()));
@@ -299,7 +293,8 @@ impl VaultProvider {
 
             let parsed: ListResponse = resp.json().await?;
             for entry in parsed.data.keys {
-                let child = format!("{}/{}", prefix.trim_end_matches('/'), entry.trim_end_matches('/'));
+                let child =
+                    format!("{}/{}", prefix.trim_end_matches('/'), entry.trim_end_matches('/'));
                 if entry.ends_with('/') {
                     stack.push(child);
                 } else {
@@ -314,10 +309,7 @@ impl VaultProvider {
     /// Turn an absolute leaf path into a config key relative to `base_path`,
     /// with slashes mapped to dots (`myapp/db/primary` → `db.primary`).
     fn key_for(base_path: &str, leaf: &str) -> String {
-        leaf.strip_prefix(base_path)
-            .unwrap_or(leaf)
-            .trim_matches('/')
-            .replace('/', ".")
+        leaf.strip_prefix(base_path).unwrap_or(leaf).trim_matches('/').replace('/', ".")
     }
 }
 
@@ -402,10 +394,7 @@ mod tests {
     #[test]
     fn key_for_strips_base_and_dots_slashes() {
         assert_eq!(VaultProvider::key_for("myapp", "myapp/database"), "database");
-        assert_eq!(
-            VaultProvider::key_for("myapp", "myapp/db/primary"),
-            "db.primary"
-        );
+        assert_eq!(VaultProvider::key_for("myapp", "myapp/db/primary"), "db.primary");
     }
 
     #[test]

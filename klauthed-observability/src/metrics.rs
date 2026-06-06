@@ -106,10 +106,8 @@ pub fn record_http_request(method: &str, path: &str, status: u16, latency: std::
 /// inc_counter("widgets_created_total", 1, &[("kind", "gadget")]);
 /// ```
 pub fn inc_counter(name: &'static str, value: u64, labels: &[(&'static str, &str)]) {
-    let labels: Vec<metrics::Label> = labels
-        .iter()
-        .map(|(k, v)| metrics::Label::new(*k, v.to_string()))
-        .collect();
+    let labels: Vec<metrics::Label> =
+        labels.iter().map(|(k, v)| metrics::Label::new(*k, v.to_string())).collect();
     metrics::counter!(name, labels).increment(value);
 }
 
@@ -124,10 +122,8 @@ pub fn inc_counter(name: &'static str, value: u64, labels: &[(&'static str, &str
 /// observe("payload_bytes", 2048.0, &[("route", "/upload")]);
 /// ```
 pub fn observe(name: &'static str, value: f64, labels: &[(&'static str, &str)]) {
-    let labels: Vec<metrics::Label> = labels
-        .iter()
-        .map(|(k, v)| metrics::Label::new(*k, v.to_string()))
-        .collect();
+    let labels: Vec<metrics::Label> =
+        labels.iter().map(|(k, v)| metrics::Label::new(*k, v.to_string())).collect();
     metrics::histogram!(name, labels).record(value);
 }
 

@@ -63,18 +63,19 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
     use actix_web::http::StatusCode;
     use actix_web::test as http_test;
-    use actix_web::{web, App};
+    use actix_web::{App, web};
+    use klauthed_core::time::Clock;
     use klauthed_core::time::{Duration, FixedClock, Timestamp};
     use klauthed_security::{
-        authz_code::{AuthCodeBuilder, PkceMethod},
-        oauth2_client::{ClientGrantType, ClientType, InMemoryClientStore, OAuth2Client,
-            TokenEndpointAuthMethod},
         InMemoryAuthCodeStore, JwtSigner, JwtVerifier,
+        authz_code::{AuthCodeBuilder, PkceMethod},
+        oauth2_client::{
+            ClientGrantType, ClientType, InMemoryClientStore, OAuth2Client, TokenEndpointAuthMethod,
+        },
     };
-    use klauthed_core::time::Clock;
+    use std::sync::Arc;
 
     use crate::auth::JwtAuth;
 
@@ -142,9 +143,11 @@ mod tests {
         .await;
 
         let req = http_test::TestRequest::get()
-            .uri("/oauth/authorize?response_type=code&client_id=c1\
+            .uri(
+                "/oauth/authorize?response_type=code&client_id=c1\
                   &redirect_uri=https%3A%2F%2Fapp.example.com%2Fcb\
-                  &scope=openid%20email&state=xyz")
+                  &scope=openid%20email&state=xyz",
+            )
             .insert_header(("Authorization", format!("Bearer {}", user_token("alice"))))
             .to_request();
 
@@ -170,8 +173,10 @@ mod tests {
         .await;
 
         let req = http_test::TestRequest::get()
-            .uri("/oauth/authorize?response_type=code&client_id=UNKNOWN\
-                  &redirect_uri=https%3A%2F%2Fapp.example.com%2Fcb")
+            .uri(
+                "/oauth/authorize?response_type=code&client_id=UNKNOWN\
+                  &redirect_uri=https%3A%2F%2Fapp.example.com%2Fcb",
+            )
             .insert_header(("Authorization", format!("Bearer {}", user_token("alice"))))
             .to_request();
 
@@ -195,8 +200,10 @@ mod tests {
         .await;
 
         let req = http_test::TestRequest::get()
-            .uri("/oauth/authorize?response_type=code&client_id=c1\
-                  &redirect_uri=https%3A%2F%2Fevil.example.com%2Fcb")
+            .uri(
+                "/oauth/authorize?response_type=code&client_id=c1\
+                  &redirect_uri=https%3A%2F%2Fevil.example.com%2Fcb",
+            )
             .insert_header(("Authorization", format!("Bearer {}", user_token("alice"))))
             .to_request();
 
@@ -220,9 +227,11 @@ mod tests {
         .await;
 
         let req = http_test::TestRequest::get()
-            .uri("/oauth/authorize?response_type=code&client_id=c1\
+            .uri(
+                "/oauth/authorize?response_type=code&client_id=c1\
                   &redirect_uri=https%3A%2F%2Fapp.example.com%2Fcb\
-                  &scope=openid%20admin")
+                  &scope=openid%20admin",
+            )
             .insert_header(("Authorization", format!("Bearer {}", user_token("alice"))))
             .to_request();
 
@@ -329,10 +338,7 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.sub.as_deref(), Some("bob"));
         assert_eq!(decoded.aud.as_deref(), Some("c-oidc"));
-        assert_eq!(
-            decoded.custom.get("nonce").and_then(|v| v.as_str()),
-            Some("n-123")
-        );
+        assert_eq!(decoded.custom.get("nonce").and_then(|v| v.as_str()), Some("n-123"));
     }
 
     #[actix_web::test]

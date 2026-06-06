@@ -71,14 +71,11 @@ impl RedisLockManager {
 #[async_trait]
 impl LockManager for RedisLockManager {
     async fn acquire(&self, key: &str, ttl: Duration) -> Result<Option<LockGuard>, DataError> {
-        let ttl_ms: u64 = ttl
-            .whole_milliseconds()
-            .try_into()
-            .map_err(|_| DataError::LockHeld(format!("invalid (non-positive) TTL for lock '{key}'")))?;
+        let ttl_ms: u64 = ttl.whole_milliseconds().try_into().map_err(|_| {
+            DataError::LockHeld(format!("invalid (non-positive) TTL for lock '{key}'"))
+        })?;
         if ttl_ms == 0 {
-            return Err(DataError::LockHeld(format!(
-                "invalid (zero) TTL for lock '{key}'"
-            )));
+            return Err(DataError::LockHeld(format!("invalid (zero) TTL for lock '{key}'")));
         }
 
         let token = LockToken::new();
@@ -97,11 +94,7 @@ impl LockManager for RedisLockManager {
             .await?;
 
         match outcome {
-            Some(_) => Ok(Some(LockGuard::redis(
-                key.to_owned(),
-                token,
-                self.clone(),
-            ))),
+            Some(_) => Ok(Some(LockGuard::redis(key.to_owned(), token, self.clone()))),
             None => Ok(None),
         }
     }
@@ -116,9 +109,7 @@ mod tests {
     async fn live_manager() -> RedisLockManager {
         let url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1/".to_owned());
         let client = redis::Client::open(url).expect("open redis client");
-        let conn = ConnectionManager::new(client)
-            .await
-            .expect("connect redis");
+        let conn = ConnectionManager::new(client).await.expect("connect redis");
         RedisLockManager::new(conn)
     }
 
@@ -128,27 +119,16 @@ mod tests {
         let locks = live_manager().await;
         let key = format!("klauthed:test:lock:{}", LockToken::new());
 
-        let guard = locks
-            .acquire(&key, Duration::seconds(30))
-            .await
-            .unwrap()
-            .expect("first acquire wins");
+        let guard =
+            locks.acquire(&key, Duration::seconds(30)).await.unwrap().expect("first acquire wins");
 
         // Second acquire while held returns None.
-        assert!(locks
-            .acquire(&key, Duration::seconds(30))
-            .await
-            .unwrap()
-            .is_none());
+        assert!(locks.acquire(&key, Duration::seconds(30)).await.unwrap().is_none());
 
         guard.release().await.unwrap();
 
         // Now it is free again.
-        assert!(locks
-            .acquire(&key, Duration::seconds(30))
-            .await
-            .unwrap()
-            .is_some());
+        assert!(locks.acquire(&key, Duration::seconds(30)).await.unwrap().is_some());
     }
 
     #[tokio::test]
@@ -157,11 +137,7 @@ mod tests {
         let locks = live_manager().await;
         let key = format!("klauthed:test:lock:{}", LockToken::new());
 
-        let stale = locks
-            .acquire(&key, Duration::milliseconds(50))
-            .await
-            .unwrap()
-            .unwrap();
+        let stale = locks.acquire(&key, Duration::milliseconds(50)).await.unwrap().unwrap();
         let stale_token = stale.token();
         // Let the TTL lapse so a new holder can take the key.
         tokio::time::sleep(std::time::Duration::from_millis(120)).await;

@@ -47,10 +47,7 @@ pub struct Id<T: ?Sized> {
 impl<T: ?Sized> Id<T> {
     /// Wrap an existing [`Uuid`].
     pub const fn from_uuid(value: Uuid) -> Self {
-        Self {
-            value,
-            _marker: PhantomData,
-        }
+        Self { value, _marker: PhantomData }
     }
 
     /// The nil (all-zero) id, useful as a sentinel.
@@ -193,9 +190,7 @@ pub struct ParseIdError {
 
 impl ParseIdError {
     fn new(input: &str) -> Self {
-        Self {
-            input: input.to_owned(),
-        }
+        Self { input: input.to_owned() }
     }
 }
 

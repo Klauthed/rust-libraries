@@ -131,8 +131,7 @@ impl WebhookEndpoint {
     /// either have no explicit subscriptions (receive-all) or list `event_type`.
     pub fn accepts(&self, event_type: &str) -> bool {
         self.active
-            && (self.event_types.is_empty()
-                || self.event_types.iter().any(|t| t == event_type))
+            && (self.event_types.is_empty() || self.event_types.iter().any(|t| t == event_type))
     }
 }
 
@@ -164,12 +163,7 @@ impl WebhookEvent {
         occurred_at: Timestamp,
         data: serde_json::Value,
     ) -> Self {
-        Self {
-            id: WebhookEventId::new(),
-            event_type: event_type.into(),
-            occurred_at,
-            data,
-        }
+        Self { id: WebhookEventId::new(), event_type: event_type.into(), occurred_at, data }
     }
 
     /// Override the event id (builder style).
@@ -200,9 +194,8 @@ impl WebhookEvent {
 
     /// The canonical JSON body that gets signed and delivered.
     pub fn to_body(&self) -> Result<String, PlatformError> {
-        serde_json::to_string(self).map_err(|e| PlatformError::WebhookSigning {
-            message: format!("serialize event: {e}"),
-        })
+        serde_json::to_string(self)
+            .map_err(|e| PlatformError::WebhookSigning { message: format!("serialize event: {e}") })
     }
 }
 
@@ -223,10 +216,7 @@ fn signing_input(timestamp_secs: i64, body: &[u8]) -> Vec<u8> {
 pub fn sign_payload(secret: &[u8], timestamp_secs: i64, body: &[u8]) -> String {
     let key = hmac::Key::new(hmac::HMAC_SHA256, secret);
     let tag = hmac::sign(&key, &signing_input(timestamp_secs, body));
-    format!(
-        "t={timestamp_secs},{SIGNATURE_VERSION}={}",
-        hex::encode(tag.as_ref())
-    )
+    format!("t={timestamp_secs},{SIGNATURE_VERSION}={}", hex::encode(tag.as_ref()))
 }
 
 /// Parse a `t=<secs>,v1=<hex>` header into its timestamp and the `v1` hex MAC.
@@ -250,15 +240,10 @@ fn parse_signature_header(header: &str) -> Option<(i64, String)> {
 /// MAC in **constant time** (via [`ring::hmac::verify`]). Returns
 /// [`PlatformError::WebhookSigning`] on a malformed header and
 /// [`PlatformError::WebhookDelivery`] on a signature mismatch.
-pub fn verify_signature(
-    secret: &[u8],
-    header: &str,
-    body: &[u8],
-) -> Result<(), PlatformError> {
-    let (timestamp, v1_hex) =
-        parse_signature_header(header).ok_or_else(|| PlatformError::WebhookSigning {
-            message: "malformed signature header".to_owned(),
-        })?;
+pub fn verify_signature(secret: &[u8], header: &str, body: &[u8]) -> Result<(), PlatformError> {
+    let (timestamp, v1_hex) = parse_signature_header(header).ok_or_else(|| {
+        PlatformError::WebhookSigning { message: "malformed signature header".to_owned() }
+    })?;
 
     let provided = hex::decode(&v1_hex).map_err(|_| PlatformError::WebhookSigning {
         message: "signature is not valid hex".to_owned(),
@@ -266,9 +251,7 @@ pub fn verify_signature(
 
     let key = hmac::Key::new(hmac::HMAC_SHA256, secret);
     hmac::verify(&key, &signing_input(timestamp, body), &provided).map_err(|_| {
-        PlatformError::WebhookDelivery {
-            message: "webhook signature mismatch".to_owned(),
-        }
+        PlatformError::WebhookDelivery { message: "webhook signature mismatch".to_owned() }
     })
 }
 
@@ -352,16 +335,13 @@ impl WebhookSender for RecordingWebhookSender {
         let timestamp_secs = event.occurred_at().unix_millis() / 1_000;
         let signature = sign_payload(endpoint.secret().as_bytes(), timestamp_secs, body.as_bytes());
 
-        self.deliveries
-            .lock()
-            .expect("webhook lock poisoned")
-            .push(WebhookDelivery {
-                endpoint_id: endpoint.id(),
-                url: endpoint.url().to_owned(),
-                event: event.clone(),
-                body,
-                signature,
-            });
+        self.deliveries.lock().expect("webhook lock poisoned").push(WebhookDelivery {
+            endpoint_id: endpoint.id(),
+            url: endpoint.url().to_owned(),
+            event: event.clone(),
+            body,
+            signature,
+        });
         Ok(())
     }
 }
@@ -389,17 +369,10 @@ impl HttpWebhookSender {
     /// Build with default settings (30s timeout, `X-Klauthed-Signature` header).
     pub fn new() -> Result<Self, PlatformError> {
         let timeout = std::time::Duration::from_secs(30);
-        let client = reqwest::Client::builder()
-            .timeout(timeout)
-            .build()
-            .map_err(|e| PlatformError::WebhookDelivery {
-                message: format!("build reqwest client: {e}"),
-            })?;
-        Ok(Self {
-            client,
-            signature_header: "X-Klauthed-Signature",
-            timeout,
-        })
+        let client = reqwest::Client::builder().timeout(timeout).build().map_err(|e| {
+            PlatformError::WebhookDelivery { message: format!("build reqwest client: {e}") }
+        })?;
+        Ok(Self { client, signature_header: "X-Klauthed-Signature", timeout })
     }
 
     /// Override the request timeout.

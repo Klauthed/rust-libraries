@@ -89,26 +89,17 @@ impl InMemoryOriginRegistry {
 
     /// Add an origin at runtime (e.g. from an admin endpoint).
     pub fn insert(&self, origin: impl Into<String>) {
-        self.origins
-            .write()
-            .expect("InMemoryOriginRegistry lock poisoned")
-            .insert(origin.into());
+        self.origins.write().expect("InMemoryOriginRegistry lock poisoned").insert(origin.into());
     }
 
     /// Remove an origin at runtime.
     pub fn remove(&self, origin: &str) -> bool {
-        self.origins
-            .write()
-            .expect("InMemoryOriginRegistry lock poisoned")
-            .remove(origin)
+        self.origins.write().expect("InMemoryOriginRegistry lock poisoned").remove(origin)
     }
 
     /// How many origins are currently allowed.
     pub fn len(&self) -> usize {
-        self.origins
-            .read()
-            .expect("InMemoryOriginRegistry lock poisoned")
-            .len()
+        self.origins.read().expect("InMemoryOriginRegistry lock poisoned").len()
     }
 
     /// Whether no origins are allowed.
@@ -120,10 +111,7 @@ impl InMemoryOriginRegistry {
 #[async_trait]
 impl CorsOriginRegistry for InMemoryOriginRegistry {
     async fn is_allowed(&self, origin: &str) -> bool {
-        self.origins
-            .read()
-            .expect("InMemoryOriginRegistry lock poisoned")
-            .contains(origin)
+        self.origins.read().expect("InMemoryOriginRegistry lock poisoned").contains(origin)
     }
 }
 
@@ -155,27 +143,17 @@ pub struct CachedOriginRegistry<R> {
 impl<R: CorsOriginRegistry> CachedOriginRegistry<R> {
     /// Wrap `inner` with a cache whose entries live for `ttl`.
     pub fn new(inner: R, ttl: Duration) -> Self {
-        Self {
-            inner,
-            cache: Mutex::new(HashMap::new()),
-            ttl,
-        }
+        Self { inner, cache: Mutex::new(HashMap::new()), ttl }
     }
 
     /// Clear the entire cache (useful after bulk origin updates).
     pub fn invalidate_all(&self) {
-        self.cache
-            .lock()
-            .expect("CachedOriginRegistry lock poisoned")
-            .clear();
+        self.cache.lock().expect("CachedOriginRegistry lock poisoned").clear();
     }
 
     /// Remove a single origin from the cache so the next request re-checks.
     pub fn invalidate(&self, origin: &str) {
-        self.cache
-            .lock()
-            .expect("CachedOriginRegistry lock poisoned")
-            .remove(origin);
+        self.cache.lock().expect("CachedOriginRegistry lock poisoned").remove(origin);
     }
 }
 

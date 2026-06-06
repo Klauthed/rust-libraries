@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::DataError;
 
-use super::{Cursor, SortKey, MAX_PAGE_SIZE};
+use super::{Cursor, MAX_PAGE_SIZE, SortKey};
 
 /// The sort-column values at a page boundary, used in the keyset WHERE clause.
 ///
@@ -49,10 +49,7 @@ impl KeysetPageRequest {
 
     /// Decode the `after` cursor to a [`KeysetPosition`], if present.
     pub fn decoded_after(&self) -> Result<Option<KeysetPosition>, DataError> {
-        self.after
-            .as_ref()
-            .map(|c| c.decode::<KeysetPosition>())
-            .transpose()
+        self.after.as_ref().map(|c| c.decode::<KeysetPosition>()).transpose()
     }
 }
 

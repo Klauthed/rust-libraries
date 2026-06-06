@@ -49,10 +49,7 @@ pub struct RedisIdempotencyStore {
 impl RedisIdempotencyStore {
     /// Wrap a managed Redis connection with the default 24-hour TTL.
     pub fn new(conn: ConnectionManager) -> Self {
-        Self {
-            conn,
-            ttl_ms: DEFAULT_TTL_MS,
-        }
+        Self { conn, ttl_ms: DEFAULT_TTL_MS }
     }
 
     /// Wrap a managed Redis connection with a custom TTL in milliseconds.
@@ -89,22 +86,15 @@ impl IdempotencyStore for RedisIdempotencyStore {
 
         let mut conn = self.conn.clone();
         // `SET … NX` returns `Some("OK")` on success, `None` when the key exists.
-        let claimed: Option<String> = redis::cmd("SET")
-            .arg(key)
-            .arg(&initial)
-            .arg(&options)
-            .query_async(&mut conn)
-            .await?;
+        let claimed: Option<String> =
+            redis::cmd("SET").arg(key).arg(&initial).arg(&options).query_async(&mut conn).await?;
 
         if claimed.is_some() {
             return Ok(Outcome::New);
         }
 
         // Key already exists — inspect its current state.
-        let raw: Option<String> = redis::cmd("GET")
-            .arg(key)
-            .query_async(&mut conn)
-            .await?;
+        let raw: Option<String> = redis::cmd("GET").arg(key).query_async(&mut conn).await?;
 
         match raw {
             // Key expired between our NX attempt and GET — treat as new claim.
@@ -115,9 +105,9 @@ impl IdempotencyStore for RedisIdempotencyStore {
                 })?;
                 match record.status {
                     IdempotencyStatus::InProgress => Ok(Outcome::InProgress),
-                    IdempotencyStatus::Completed => Ok(Outcome::Completed(
-                        record.response.unwrap_or(serde_json::Value::Null),
-                    )),
+                    IdempotencyStatus::Completed => {
+                        Ok(Outcome::Completed(record.response.unwrap_or(serde_json::Value::Null)))
+                    }
                 }
             }
         }
@@ -128,10 +118,7 @@ impl IdempotencyStore for RedisIdempotencyStore {
         let mut conn = self.conn.clone();
 
         // Read the current record to preserve `created_at`.
-        let raw: Option<String> = redis::cmd("GET")
-            .arg(key)
-            .query_async(&mut conn)
-            .await?;
+        let raw: Option<String> = redis::cmd("GET").arg(key).query_async(&mut conn).await?;
 
         let created_at = match raw {
             None => {
@@ -139,9 +126,9 @@ impl IdempotencyStore for RedisIdempotencyStore {
                     "cannot complete unknown idempotency key '{key}'"
                 )));
             }
-            Some(s) => serde_json::from_str::<StoredRecord>(&s)
-                .map(|r| r.created_at)
-                .unwrap_or(now),
+            Some(s) => {
+                serde_json::from_str::<StoredRecord>(&s).map(|r| r.created_at).unwrap_or(now)
+            }
         };
 
         let completed = serde_json::to_string(&StoredRecord {
@@ -167,10 +154,7 @@ impl IdempotencyStore for RedisIdempotencyStore {
 
     async fn get(&self, key: &str) -> Result<Option<IdempotencyRecord>, DataError> {
         let mut conn = self.conn.clone();
-        let raw: Option<String> = redis::cmd("GET")
-            .arg(key)
-            .query_async(&mut conn)
-            .await?;
+        let raw: Option<String> = redis::cmd("GET").arg(key).query_async(&mut conn).await?;
 
         match raw {
             None => Ok(None),
@@ -215,10 +199,7 @@ mod tests {
         let response = serde_json::json!({"charged": true, "amount": 100});
         store.complete(&key, response.clone()).await.unwrap();
 
-        assert_eq!(
-            store.begin(&key).await.unwrap(),
-            Outcome::Completed(response)
-        );
+        assert_eq!(store.begin(&key).await.unwrap(), Outcome::Completed(response));
     }
 
     #[tokio::test]
@@ -227,10 +208,7 @@ mod tests {
         let store = live_store().await;
         let key = format!("klauthed:test:idem:{}:missing", LockToken::new());
 
-        let err = store
-            .complete(&key, serde_json::Value::Null)
-            .await
-            .unwrap_err();
+        let err = store.complete(&key, serde_json::Value::Null).await.unwrap_err();
         assert!(matches!(err, DataError::Idempotency(_)));
     }
 

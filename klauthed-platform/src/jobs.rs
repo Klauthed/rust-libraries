@@ -42,8 +42,8 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
-use klauthed_core::time::Duration;
 use klauthed_core::id::Id;
+use klauthed_core::time::Duration;
 use klauthed_core::time::{Clock, Timestamp};
 use serde::{Deserialize, Serialize};
 
@@ -233,11 +233,7 @@ impl InMemoryJobQueue {
 
     /// A snapshot of the job with `id`, if present.
     pub fn get(&self, id: JobId) -> Option<EnqueuedJob> {
-        self.jobs
-            .lock()
-            .expect("jobs lock poisoned")
-            .get(&id)
-            .cloned()
+        self.jobs.lock().expect("jobs lock poisoned").get(&id).cloned()
     }
 
     /// The number of jobs currently held (in any state).
@@ -264,10 +260,7 @@ impl InMemoryJobQueue {
             created_at: now,
             last_error: None,
         };
-        self.jobs
-            .lock()
-            .expect("jobs lock poisoned")
-            .insert(id, job.clone());
+        self.jobs.lock().expect("jobs lock poisoned").insert(id, job.clone());
         job
     }
 }
@@ -317,9 +310,8 @@ impl JobQueue for InMemoryJobQueue {
 
     async fn mark_succeeded(&self, id: JobId) -> Result<(), PlatformError> {
         let mut guard = self.jobs.lock().expect("jobs lock poisoned");
-        let job = guard
-            .get_mut(&id)
-            .ok_or_else(|| PlatformError::JobNotFound { id: id.to_string() })?;
+        let job =
+            guard.get_mut(&id).ok_or_else(|| PlatformError::JobNotFound { id: id.to_string() })?;
         job.status = JobStatus::Succeeded;
         job.last_error = None;
         Ok(())
@@ -328,9 +320,8 @@ impl JobQueue for InMemoryJobQueue {
     async fn mark_failed(&self, id: JobId, reason: String) -> Result<(), PlatformError> {
         let now = self.clock.now();
         let mut guard = self.jobs.lock().expect("jobs lock poisoned");
-        let job = guard
-            .get_mut(&id)
-            .ok_or_else(|| PlatformError::JobNotFound { id: id.to_string() })?;
+        let job =
+            guard.get_mut(&id).ok_or_else(|| PlatformError::JobNotFound { id: id.to_string() })?;
 
         job.last_error = Some(reason);
 
@@ -419,10 +410,18 @@ mod tests {
         clock.set(base.checked_add(Duration::seconds(100)).unwrap());
         let a = q.schedule("k".into(), serde_json::json!("a"), base).await;
         let b = q
-            .schedule("k".into(), serde_json::json!("b"), base.checked_add(Duration::seconds(1)).unwrap())
+            .schedule(
+                "k".into(),
+                serde_json::json!("b"),
+                base.checked_add(Duration::seconds(1)).unwrap(),
+            )
             .await;
         let _c = q
-            .schedule("k".into(), serde_json::json!("c"), base.checked_add(Duration::seconds(2)).unwrap())
+            .schedule(
+                "k".into(),
+                serde_json::json!("c"),
+                base.checked_add(Duration::seconds(2)).unwrap(),
+            )
             .await;
 
         let due = q.dequeue_due(Some(2)).await;
@@ -444,10 +443,7 @@ mod tests {
         assert_eq!(after1.status(), JobStatus::Queued);
         assert_eq!(after1.last_error(), Some("boom-1"));
         // Backoff after 1 attempt = 1s.
-        assert_eq!(
-            after1.run_at().duration_since(clock.now()).whole_seconds(),
-            1
-        );
+        assert_eq!(after1.run_at().duration_since(clock.now()).whole_seconds(), 1);
 
         // Advance and run attempt 2.
         clock.advance(Duration::seconds(2));
@@ -458,10 +454,7 @@ mod tests {
         let after2 = q.get(job.id()).unwrap();
         assert_eq!(after2.status(), JobStatus::Queued);
         // Backoff after 2 attempts = 2s.
-        assert_eq!(
-            after2.run_at().duration_since(clock.now()).whole_seconds(),
-            2
-        );
+        assert_eq!(after2.run_at().duration_since(clock.now()).whole_seconds(), 2);
 
         // Advance and run attempt 3 (== max_attempts).
         clock.advance(Duration::seconds(3));

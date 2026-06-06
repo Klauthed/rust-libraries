@@ -31,9 +31,7 @@
 //! assert_eq!(decoded.sub.as_deref(), Some("user-123"));
 //! ```
 
-use jsonwebtoken::{
-    decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation,
-};
+use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 
 use klauthed_core::time::{Clock, Duration};
@@ -160,10 +158,7 @@ impl JwtSigner {
     /// An HS256 signer using `secret` as the shared HMAC key.
     #[must_use]
     pub fn hs256(secret: &[u8]) -> Self {
-        Self {
-            header: Header::new(Algorithm::HS256),
-            key: EncodingKey::from_secret(secret),
-        }
+        Self { header: Header::new(Algorithm::HS256), key: EncodingKey::from_secret(secret) }
     }
 
     /// An RS256 signer from a PKCS#1/PKCS#8 RSA **private** key in PEM form.
@@ -173,10 +168,7 @@ impl JwtSigner {
     pub fn rs256_pem(private_key_pem: &[u8]) -> Result<Self, SecurityError> {
         let key = EncodingKey::from_rsa_pem(private_key_pem)
             .map_err(|e| SecurityError::Key(e.to_string()))?;
-        Ok(Self {
-            header: Header::new(Algorithm::RS256),
-            key,
-        })
+        Ok(Self { header: Header::new(Algorithm::RS256), key })
     }
 
     /// Encode and sign `claims`, returning the compact JWT string.
@@ -217,10 +209,7 @@ impl JwtVerifier {
     pub fn rs256_pem(public_key_pem: &[u8]) -> Result<Self, SecurityError> {
         let key = DecodingKey::from_rsa_pem(public_key_pem)
             .map_err(|e| SecurityError::Key(e.to_string()))?;
-        Ok(Self {
-            key,
-            validation: default_validation(Algorithm::RS256),
-        })
+        Ok(Self { key, validation: default_validation(Algorithm::RS256) })
     }
 
     /// Require the token's `iss` to equal `issuer`.
@@ -305,18 +294,12 @@ mod tests {
             .build();
 
         let token = signer.encode(&claims).unwrap();
-        let decoded = verifier
-            .expecting_issuer("klauthed")
-            .expecting_audience("api")
-            .decode(&token)
-            .unwrap();
+        let decoded =
+            verifier.expecting_issuer("klauthed").expecting_audience("api").decode(&token).unwrap();
 
         assert_eq!(decoded.sub.as_deref(), Some("user-1"));
         assert_eq!(decoded.iss.as_deref(), Some("klauthed"));
-        assert_eq!(
-            decoded.custom.get("role").and_then(|v| v.as_str()),
-            Some("admin")
-        );
+        assert_eq!(decoded.custom.get("role").and_then(|v| v.as_str()), Some("admin"));
     }
 
     #[test]
@@ -342,16 +325,9 @@ mod tests {
     #[test]
     fn wrong_issuer_is_invalid() {
         let token = JwtSigner::hs256(b"k")
-            .encode(
-                &Claims::builder("u", &now_clock(), Duration::hours(1))
-                    .issuer("real")
-                    .build(),
-            )
+            .encode(&Claims::builder("u", &now_clock(), Duration::hours(1)).issuer("real").build())
             .unwrap();
-        let err = JwtVerifier::hs256(b"k")
-            .expecting_issuer("expected")
-            .decode(&token)
-            .unwrap_err();
+        let err = JwtVerifier::hs256(b"k").expecting_issuer("expected").decode(&token).unwrap_err();
         assert!(matches!(err, SecurityError::InvalidToken(_)));
     }
 
@@ -374,10 +350,8 @@ mod tests {
 
     #[test]
     fn random_jwt_id_is_set() {
-        let claims = Claims::builder("u", &now_clock(), Duration::hours(1))
-            .random_jwt_id()
-            .unwrap()
-            .build();
+        let claims =
+            Claims::builder("u", &now_clock(), Duration::hours(1)).random_jwt_id().unwrap().build();
         assert!(claims.jti.is_some());
     }
 }

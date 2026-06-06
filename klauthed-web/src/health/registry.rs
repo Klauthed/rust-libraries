@@ -53,11 +53,7 @@ impl ReadinessReport {
     /// `503` otherwise.
     #[must_use]
     pub fn http_status(&self) -> StatusCode {
-        if self.is_ready() {
-            StatusCode::OK
-        } else {
-            StatusCode::SERVICE_UNAVAILABLE
-        }
+        if self.is_ready() { StatusCode::OK } else { StatusCode::SERVICE_UNAVAILABLE }
     }
 }
 
@@ -112,16 +108,10 @@ impl HealthRegistry {
         for check in &self.checks {
             let status = check.check().await;
             overall = overall.worse(status);
-            entries.push(CheckResult {
-                name: check.name().to_owned(),
-                status,
-            });
+            entries.push(CheckResult { name: check.name().to_owned(), status });
         }
 
-        ReadinessReport {
-            status: overall,
-            checks: entries,
-        }
+        ReadinessReport { status: overall, checks: entries }
     }
 }
 
@@ -136,8 +126,12 @@ mod tests {
 
     #[async_trait::async_trait]
     impl HealthCheck for Static {
-        fn name(&self) -> &str { self.0 }
-        async fn check(&self) -> HealthStatus { self.1 }
+        fn name(&self) -> &str {
+            self.0
+        }
+        async fn check(&self) -> HealthStatus {
+            self.1
+        }
     }
 
     fn check(name: &'static str, status: HealthStatus) -> Arc<dyn HealthCheck> {

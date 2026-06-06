@@ -87,9 +87,7 @@ pub enum CqrsError {
 
 impl CqrsError {
     fn no_handler<M: 'static>() -> Self {
-        CqrsError::NoHandler {
-            message_type: type_name::<M>(),
-        }
+        CqrsError::NoHandler { message_type: type_name::<M>() }
     }
 
     /// Wrap a handler's [`DomainError`].
@@ -264,10 +262,7 @@ impl EventBus {
         H: EventHandler<E> + 'static,
     {
         let erased: Arc<dyn ErasedEventHandler<E>> = Arc::new(handler);
-        self.handlers
-            .entry(TypeId::of::<E>())
-            .or_default()
-            .push(Box::new(erased));
+        self.handlers.entry(TypeId::of::<E>()).or_default().push(Box::new(erased));
         self
     }
 
@@ -387,16 +382,10 @@ mod tests {
         let mut bus = CommandBus::new();
         bus.register::<CreateUser, _>(CreateUserHandler);
 
-        let out = bus
-            .dispatch(CreateUser { name: "ada".into() })
-            .await
-            .unwrap();
+        let out = bus.dispatch(CreateUser { name: "ada".into() }).await.unwrap();
         assert_eq!(out, "user:ada");
 
-        let err = bus
-            .dispatch(CreateUser { name: String::new() })
-            .await
-            .unwrap_err();
+        let err = bus.dispatch(CreateUser { name: String::new() }).await.unwrap_err();
         assert_eq!(err.code().as_str(), "demo.failed");
         assert_eq!(err.category(), ErrorCategory::Conflict);
     }
@@ -404,10 +393,7 @@ mod tests {
     #[tokio::test]
     async fn command_bus_reports_missing_handler() {
         let bus = CommandBus::new();
-        let err = bus
-            .dispatch(CreateUser { name: "x".into() })
-            .await
-            .unwrap_err();
+        let err = bus.dispatch(CreateUser { name: "x".into() }).await.unwrap_err();
         assert!(matches!(err, CqrsError::NoHandler { .. }));
         assert_eq!(err.code().as_str(), "cqrs.no_handler");
         assert_eq!(err.category(), ErrorCategory::Internal);
@@ -417,10 +403,7 @@ mod tests {
     async fn query_bus_dispatches() {
         let mut bus = QueryBus::new();
         bus.register::<GetGreeting, _>(GetGreetingHandler);
-        let out = bus
-            .dispatch(GetGreeting { who: "bob".into() })
-            .await
-            .unwrap();
+        let out = bus.dispatch(GetGreeting { who: "bob".into() }).await.unwrap();
         assert_eq!(out, "hello, bob");
     }
 

@@ -5,7 +5,7 @@ use std::str::FromStr;
 /// Profiles can be used to differentiate between environments (e.g., local, dev, staging, prod).
 /// The profile can influence which config sources are used (e.g., Vault for prod/staging) and which security policies apply.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
-pub enum Profile{
+pub enum Profile {
     /// Local developer machine. File secrets and env vars are allowed.
     #[default]
     Local,

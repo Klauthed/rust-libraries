@@ -37,7 +37,7 @@
 
 use actix_web::body::MessageBody;
 use actix_web::dev::{Server, ServiceFactory, ServiceRequest, ServiceResponse};
-use actix_web::{web, App, Error, HttpServer};
+use actix_web::{App, Error, HttpServer, web};
 use klauthed_core::config::ServerConfig;
 
 use crate::app::Components;
@@ -142,7 +142,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{web, HttpResponse};
+    use actix_web::{HttpResponse, web};
 
     fn ephemeral_config() -> ServerConfig {
         ServerConfig {
@@ -157,10 +157,7 @@ mod tests {
     async fn serve_binds_to_ephemeral_port() {
         let config = ephemeral_config();
         let server = serve(&config, || {
-            App::new().route(
-                "/",
-                web::get().to(|| async { HttpResponse::Ok().finish() }),
-            )
+            App::new().route("/", web::get().to(|| async { HttpResponse::Ok().finish() }))
         })
         .expect("server should bind to 127.0.0.1:0");
         // Binding succeeded; drop without awaiting so we don't block forever.
@@ -171,10 +168,7 @@ mod tests {
     async fn serve_with_defaults_binds_and_wires_health() {
         let config = ephemeral_config();
         let server = serve_with_defaults(&config, |cfg: &mut web::ServiceConfig| {
-            cfg.route(
-                "/ping",
-                web::get().to(|| async { HttpResponse::Ok().finish() }),
-            );
+            cfg.route("/ping", web::get().to(|| async { HttpResponse::Ok().finish() }));
         })
         .expect("server with defaults should bind");
         drop(server);
@@ -185,10 +179,7 @@ mod tests {
         let mut config = ephemeral_config();
         config.tls = true; // accepted, logs a warning, still binds plaintext
         let server = serve(&config, || {
-            App::new().route(
-                "/",
-                web::get().to(|| async { HttpResponse::Ok().finish() }),
-            )
+            App::new().route("/", web::get().to(|| async { HttpResponse::Ok().finish() }))
         })
         .expect("binds even with tls flag set");
         drop(server);

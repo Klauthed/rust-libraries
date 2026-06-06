@@ -129,10 +129,7 @@ pub struct Role {
 impl Role {
     /// A role named `name` with no permissions yet.
     pub fn new(name: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            permissions: BTreeSet::new(),
-        }
+        Self { name: name.into(), permissions: BTreeSet::new() }
     }
 
     /// Builder: add `permissions` to this role.
@@ -142,8 +139,7 @@ impl Role {
         I: IntoIterator<Item = P>,
         P: Into<Permission>,
     {
-        self.permissions
-            .extend(permissions.into_iter().map(Into::into));
+        self.permissions.extend(permissions.into_iter().map(Into::into));
         self
     }
 
@@ -221,11 +217,7 @@ impl Authorizer {
     where
         I: IntoIterator<Item = &'a Permission>,
     {
-        if Self::is_authorized(granted, required) {
-            Ok(())
-        } else {
-            Err(SecurityError::Forbidden)
-        }
+        if Self::is_authorized(granted, required) { Ok(()) } else { Err(SecurityError::Forbidden) }
     }
 }
 
@@ -241,82 +233,50 @@ mod tests {
     #[test]
     fn exact_match_allows() {
         let granted = perms(&["users:read"]);
-        assert!(Authorizer::is_authorized(
-            &granted,
-            &Permission::new("users:read")
-        ));
+        assert!(Authorizer::is_authorized(&granted, &Permission::new("users:read")));
     }
 
     #[test]
     fn missing_permission_denies() {
         let granted = perms(&["users:read"]);
-        assert!(!Authorizer::is_authorized(
-            &granted,
-            &Permission::new("users:write")
-        ));
+        assert!(!Authorizer::is_authorized(&granted, &Permission::new("users:write")));
     }
 
     #[test]
     fn resource_wildcard_matches_actions() {
         let granted = perms(&["users:*"]);
-        assert!(Authorizer::is_authorized(
-            &granted,
-            &Permission::new("users:read")
-        ));
-        assert!(Authorizer::is_authorized(
-            &granted,
-            &Permission::new("users:delete")
-        ));
+        assert!(Authorizer::is_authorized(&granted, &Permission::new("users:read")));
+        assert!(Authorizer::is_authorized(&granted, &Permission::new("users:delete")));
         // Different resource is not covered.
-        assert!(!Authorizer::is_authorized(
-            &granted,
-            &Permission::new("orders:read")
-        ));
+        assert!(!Authorizer::is_authorized(&granted, &Permission::new("orders:read")));
     }
 
     #[test]
     fn global_wildcard_matches_everything() {
         let granted = perms(&["*"]);
-        assert!(Authorizer::is_authorized(
-            &granted,
-            &Permission::new("anything:goes")
-        ));
-        assert!(Authorizer::is_authorized(
-            &granted,
-            &Permission::new("a:b:c")
-        ));
+        assert!(Authorizer::is_authorized(&granted, &Permission::new("anything:goes")));
+        assert!(Authorizer::is_authorized(&granted, &Permission::new("a:b:c")));
     }
 
     #[test]
     fn mid_segment_wildcard_matches_one_segment() {
         let granted = perms(&["users:*:read"]);
-        assert!(Authorizer::is_authorized(
-            &granted,
-            &Permission::new("users:42:read")
-        ));
+        assert!(Authorizer::is_authorized(&granted, &Permission::new("users:42:read")));
         // Length mismatch is not a grant.
-        assert!(!Authorizer::is_authorized(
-            &granted,
-            &Permission::new("users:42")
-        ));
+        assert!(!Authorizer::is_authorized(&granted, &Permission::new("users:42")));
     }
 
     #[test]
     fn resource_wildcard_does_not_grant_shorter_requirement() {
         // "users:*" should not grant the bare "users".
         let granted = perms(&["users:*"]);
-        assert!(!Authorizer::is_authorized(
-            &granted,
-            &Permission::new("users")
-        ));
+        assert!(!Authorizer::is_authorized(&granted, &Permission::new("users")));
     }
 
     #[test]
     fn registry_resolves_effective_permissions_from_roles() {
         let mut reg = RoleRegistry::new();
-        reg.define(
-            Role::new("reader").with_permissions([Permission::new("articles:read")]),
-        );
+        reg.define(Role::new("reader").with_permissions([Permission::new("articles:read")]));
         reg.define(Role::new("writer").with_permissions(["articles:write"]));
 
         let effective = reg.effective_permissions(["reader", "writer", "unknown"]);
@@ -325,14 +285,8 @@ mod tests {
             collected.iter().copied(),
             &Permission::new("articles:read")
         ));
-        assert!(Authorizer::is_authorized(
-            effective.iter(),
-            &Permission::new("articles:write")
-        ));
-        assert!(!Authorizer::is_authorized(
-            effective.iter(),
-            &Permission::new("articles:delete")
-        ));
+        assert!(Authorizer::is_authorized(effective.iter(), &Permission::new("articles:write")));
+        assert!(!Authorizer::is_authorized(effective.iter(), &Permission::new("articles:delete")));
     }
 
     #[test]
@@ -340,10 +294,7 @@ mod tests {
         let mut reg = RoleRegistry::new();
         reg.define(Role::new("admin").with_permissions(["*"]));
         let effective = reg.effective_permissions(["admin"]);
-        assert!(Authorizer::is_authorized(
-            effective.iter(),
-            &Permission::new("billing:refund")
-        ));
+        assert!(Authorizer::is_authorized(effective.iter(), &Permission::new("billing:refund")));
     }
 
     #[test]

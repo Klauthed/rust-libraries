@@ -110,9 +110,8 @@ mod tests {
     #[tokio::test]
     async fn noop_propagates_error() {
         let tx = NoopTransact;
-        let result: Result<u32, DataError> = tx
-            .transact(|| async { Err(DataError::InvalidPage("test".into())) })
-            .await;
+        let result: Result<u32, DataError> =
+            tx.transact(|| async { Err(DataError::InvalidPage("test".into())) }).await;
         assert!(matches!(result, Err(DataError::InvalidPage(_))));
     }
 

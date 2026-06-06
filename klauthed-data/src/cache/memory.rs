@@ -29,11 +29,7 @@ mod tests {
 
     #[tokio::test]
     async fn builds_and_stores_values() {
-        let config = CacheConfig {
-            max_entries: 100,
-            default_ttl_secs: 60,
-            ..Default::default()
-        };
+        let config = CacheConfig { max_entries: 100, default_ttl_secs: 60, ..Default::default() };
         let cache: Cache<String, u32> = build_memory_cache(&config);
 
         cache.insert("answer".to_string(), 42).await;

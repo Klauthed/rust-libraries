@@ -1,7 +1,7 @@
 //! Internal redirect and error-response helpers for the OAuth handlers.
 
-use actix_web::http::StatusCode;
 use actix_web::HttpResponse;
+use actix_web::http::StatusCode;
 use klauthed_protocol::oauth2::{OAuth2ErrorCode, TokenErrorResponse};
 
 // ── URL construction ──────────────────────────────────────────────────────────
@@ -40,9 +40,7 @@ pub(super) fn percent_encode(s: &str) -> String {
 
 /// `302 Found` redirect to `location`.
 pub(super) fn redirect(location: &str) -> HttpResponse {
-    HttpResponse::Found()
-        .insert_header(("Location", location))
-        .finish()
+    HttpResponse::Found().insert_header(("Location", location)).finish()
 }
 
 /// Redirect to `redirect_uri` carrying an OAuth error code and optional state.
@@ -60,10 +58,8 @@ pub(super) fn error_redirect(
         .and_then(|v| v.as_str().map(str::to_owned))
         .unwrap_or_else(|| "server_error".into());
 
-    let mut params: Vec<(&str, &str)> = vec![
-        ("error", &error_str),
-        ("error_description", description),
-    ];
+    let mut params: Vec<(&str, &str)> =
+        vec![("error", &error_str), ("error_description", description)];
     let state_owned;
     if let Some(s) = state {
         state_owned = s.to_owned();
@@ -88,10 +84,8 @@ mod tests {
 
     #[test]
     fn redirect_url_encodes_params() {
-        let url = redirect_url(
-            "https://app.example.com/cb",
-            &[("code", "abc123"), ("state", "x y")],
-        );
+        let url =
+            redirect_url("https://app.example.com/cb", &[("code", "abc123"), ("state", "x y")]);
         assert_eq!(url, "https://app.example.com/cb?code=abc123&state=x%20y");
     }
 

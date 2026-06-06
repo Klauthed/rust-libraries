@@ -32,14 +32,14 @@ async fn build_options(nats: &NatsConfig) -> Result<ConnectOptions, DataError> {
             ConnectOptions::new().user_and_password(username.clone(), password.clone())
         }
         NatsCredentials::NKey { seed } => ConnectOptions::new().nkey(seed.clone()),
-        NatsCredentials::CredsFile { path } => ConnectOptions::with_credentials_file(path)
-            .await
-            .map_err(|e| {
+        NatsCredentials::CredsFile { path } => {
+            ConnectOptions::with_credentials_file(path).await.map_err(|e| {
                 DataError::Messaging(format!(
                     "reading NATS credentials file '{}': {e}",
                     path.display()
                 ))
-            })?,
+            })?
+        }
     };
 
     if let Some(name) = &nats.name {
@@ -73,9 +73,7 @@ mod tests {
         // Exercises the option-building path without opening a socket.
         let nats = NatsConfig {
             name: Some("svc".into()),
-            credentials: NatsCredentials::Token {
-                token: "t".into(),
-            },
+            credentials: NatsCredentials::Token { token: "t".into() },
             ..Default::default()
         };
         build_options(&nats).await.expect("options build");

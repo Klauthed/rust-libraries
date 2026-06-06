@@ -98,9 +98,7 @@ pub fn validate_id_token(
 
     // aud must contain the expected audience (client_id).
     if !claims.aud.contains(&opts.expected_audience) {
-        return Err(ProtocolError::AudienceMismatch {
-            expected: opts.expected_audience.clone(),
-        });
+        return Err(ProtocolError::AudienceMismatch { expected: opts.expected_audience.clone() });
     }
 
     // exp must be strictly after (now - leeway).
@@ -130,4 +128,3 @@ pub fn validate_id_token(
 
     Ok(())
 }
-

@@ -312,20 +312,12 @@ pub struct TokenErrorResponse {
 impl TokenErrorResponse {
     /// Construct an error response carrying just an error code.
     pub fn new(error: OAuth2ErrorCode) -> Self {
-        Self {
-            error,
-            error_description: None,
-            error_uri: None,
-        }
+        Self { error, error_description: None, error_uri: None }
     }
 
     /// Construct an error response with a human-readable description.
     pub fn with_description(error: OAuth2ErrorCode, description: impl Into<String>) -> Self {
-        Self {
-            error,
-            error_description: Some(description.into()),
-            error_uri: None,
-        }
+        Self { error, error_description: Some(description.into()), error_uri: None }
     }
 }
 
@@ -458,11 +450,7 @@ where
 /// Split the space-delimited `scope` wire form into individual tokens,
 /// dropping empty segments (RFC 6749 section 3.3).
 pub fn scope_from_str(scope: &str) -> Vec<String> {
-    scope
-        .split(' ')
-        .filter(|s| !s.is_empty())
-        .map(str::to_owned)
-        .collect()
+    scope.split(' ').filter(|s| !s.is_empty()).map(str::to_owned).collect()
 }
 
 #[cfg(test)]
@@ -580,14 +568,8 @@ mod tests {
             serde_json::to_value(OAuth2ErrorCode::InvalidRequest).unwrap(),
             "invalid_request"
         );
-        assert_eq!(
-            serde_json::to_value(OAuth2ErrorCode::InvalidClient).unwrap(),
-            "invalid_client"
-        );
-        assert_eq!(
-            serde_json::to_value(OAuth2ErrorCode::InvalidGrant).unwrap(),
-            "invalid_grant"
-        );
+        assert_eq!(serde_json::to_value(OAuth2ErrorCode::InvalidClient).unwrap(), "invalid_client");
+        assert_eq!(serde_json::to_value(OAuth2ErrorCode::InvalidGrant).unwrap(), "invalid_grant");
         assert_eq!(
             serde_json::to_value(OAuth2ErrorCode::UnauthorizedClient).unwrap(),
             "unauthorized_client"
@@ -596,10 +578,7 @@ mod tests {
             serde_json::to_value(OAuth2ErrorCode::UnsupportedGrantType).unwrap(),
             "unsupported_grant_type"
         );
-        assert_eq!(
-            serde_json::to_value(OAuth2ErrorCode::InvalidScope).unwrap(),
-            "invalid_scope"
-        );
+        assert_eq!(serde_json::to_value(OAuth2ErrorCode::InvalidScope).unwrap(), "invalid_scope");
     }
 
     #[test]

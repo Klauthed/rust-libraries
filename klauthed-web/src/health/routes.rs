@@ -5,7 +5,7 @@
 //!
 //! Mount with [`configure`].
 
-use actix_web::{web, HttpResponse};
+use actix_web::{HttpResponse, web};
 use serde::Serialize;
 
 use super::registry::{HealthRegistry, ReadinessReport};
@@ -22,9 +22,7 @@ struct LivenessBody {
 
 /// Liveness handler — the process is running, so this always returns `200`.
 async fn liveness() -> HttpResponse {
-    HttpResponse::Ok().json(LivenessBody {
-        status: HealthStatus::Up,
-    })
+    HttpResponse::Ok().json(LivenessBody { status: HealthStatus::Up })
 }
 
 /// Readiness handler — `200` when all checks are `Up`, `503` otherwise.
@@ -32,10 +30,7 @@ async fn readiness(registry: Option<web::Data<HealthRegistry>>) -> HttpResponse 
     let report = match registry {
         Some(r) => r.report().await,
         // No registry mounted ⇒ nothing to depend on ⇒ trivially ready.
-        None => ReadinessReport {
-            status: HealthStatus::Up,
-            checks: Vec::new(),
-        },
+        None => ReadinessReport { status: HealthStatus::Up, checks: Vec::new() },
     };
     HttpResponse::build(report.http_status()).json(report)
 }
@@ -51,8 +46,7 @@ async fn readiness(registry: Option<web::Data<HealthRegistry>>) -> HttpResponse 
 /// Register a [`HealthRegistry`] via `app_data(web::Data::new(registry))` to
 /// surface real checks; without one the readiness probe reports ready.
 pub fn configure(cfg: &mut web::ServiceConfig) {
-    cfg.route("/health", web::get().to(liveness))
-        .route("/health/ready", web::get().to(readiness));
+    cfg.route("/health", web::get().to(liveness)).route("/health/ready", web::get().to(readiness));
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -60,10 +54,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
+    use actix_web::App;
     use actix_web::http::StatusCode;
     use actix_web::test as http_test;
-    use actix_web::App;
+    use std::sync::Arc;
 
     use super::super::registry::{HealthCheck, HealthRegistry};
 
@@ -71,8 +65,12 @@ mod tests {
 
     #[async_trait::async_trait]
     impl HealthCheck for Static {
-        fn name(&self) -> &str { self.0 }
-        async fn check(&self) -> HealthStatus { self.1 }
+        fn name(&self) -> &str {
+            self.0
+        }
+        async fn check(&self) -> HealthStatus {
+            self.1
+        }
     }
 
     fn check(name: &'static str, status: HealthStatus) -> Arc<dyn HealthCheck> {
@@ -95,9 +93,7 @@ mod tests {
     async fn readiness_200_when_all_up() {
         let registry = HealthRegistry::new().with_check(check("db", HealthStatus::Up));
         let app = http_test::init_service(
-            App::new()
-                .app_data(web::Data::new(registry))
-                .configure(configure),
+            App::new().app_data(web::Data::new(registry)).configure(configure),
         )
         .await;
 
@@ -113,9 +109,7 @@ mod tests {
             .with_check(check("broker", HealthStatus::Down));
 
         let app = http_test::init_service(
-            App::new()
-                .app_data(web::Data::new(registry))
-                .configure(configure),
+            App::new().app_data(web::Data::new(registry)).configure(configure),
         )
         .await;
 

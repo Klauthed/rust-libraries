@@ -71,12 +71,7 @@ impl InMemoryClientStore {
 #[async_trait]
 impl ClientStore for InMemoryClientStore {
     async fn get(&self, client_id: &str) -> Result<Option<OAuth2Client>, SecurityError> {
-        Ok(self
-            .clients
-            .lock()
-            .expect("client store mutex poisoned")
-            .get(client_id)
-            .cloned())
+        Ok(self.clients.lock().expect("client store mutex poisoned").get(client_id).cloned())
     }
 
     async fn register(&self, client: OAuth2Client) -> Result<(), SecurityError> {
@@ -88,10 +83,7 @@ impl ClientStore for InMemoryClientStore {
     }
 
     async fn delete(&self, client_id: &str) -> Result<(), SecurityError> {
-        self.clients
-            .lock()
-            .expect("client store mutex poisoned")
-            .remove(client_id);
+        self.clients.lock().expect("client store mutex poisoned").remove(client_id);
         Ok(())
     }
 }
@@ -100,9 +92,9 @@ impl ClientStore for InMemoryClientStore {
 
 #[cfg(test)]
 mod tests {
+    use super::super::client::{ClientGrantType, ClientType, TokenEndpointAuthMethod};
     use super::*;
     use klauthed_core::time::Timestamp;
-    use super::super::client::{ClientGrantType, ClientType, TokenEndpointAuthMethod};
 
     fn test_client(id: &str) -> OAuth2Client {
         OAuth2Client {
@@ -148,10 +140,7 @@ mod tests {
         updated.client_name = Some("Updated".into());
         store.register(updated).await.unwrap();
         assert_eq!(store.len(), 1);
-        assert_eq!(
-            store.get("c").await.unwrap().unwrap().client_name.as_deref(),
-            Some("Updated")
-        );
+        assert_eq!(store.get("c").await.unwrap().unwrap().client_name.as_deref(), Some("Updated"));
     }
 
     #[tokio::test]

@@ -23,7 +23,7 @@
 //!     .configure(configure_oauth);
 //! ```
 
-use actix_web::{web, HttpResponse};
+use actix_web::{HttpResponse, web};
 use klauthed_protocol::oidc::{GrantType, ProviderMetadata, ResponseType, SubjectType};
 
 use super::config::OAuthConfig;
@@ -36,9 +36,7 @@ use super::config::OAuthConfig;
 /// If no document is registered the response is `404`.
 async fn discovery_handler(meta: Option<web::Data<ProviderMetadata>>) -> HttpResponse {
     match meta {
-        Some(m) => HttpResponse::Ok()
-            .content_type("application/json")
-            .json(m.as_ref()),
+        Some(m) => HttpResponse::Ok().content_type("application/json").json(m.as_ref()),
         None => HttpResponse::NotFound().finish(),
     }
 }
@@ -50,10 +48,7 @@ async fn discovery_handler(meta: Option<web::Data<ProviderMetadata>>) -> HttpRes
 /// Register a [`ProviderMetadata`] document via
 /// `app_data(web::Data::new(meta))`. Without one the route returns `404`.
 pub fn configure(cfg: &mut web::ServiceConfig) {
-    cfg.route(
-        "/.well-known/openid-configuration",
-        web::get().to(discovery_handler),
-    );
+    cfg.route("/.well-known/openid-configuration", web::get().to(discovery_handler));
 }
 
 // ── Metadata builder ──────────────────────────────────────────────────────────
@@ -124,11 +119,11 @@ pub fn build_metadata(config: &OAuthConfig) -> ProviderMetadata {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
     use actix_web::http::StatusCode;
     use actix_web::test as http_test;
-    use actix_web::{web, App};
-    use klauthed_security::{InMemoryClientStore, InMemoryAuthCodeStore, JwtSigner};
+    use actix_web::{App, web};
+    use klauthed_security::{InMemoryAuthCodeStore, InMemoryClientStore, JwtSigner};
+    use std::sync::Arc;
 
     fn test_config() -> OAuthConfig {
         OAuthConfig::builder()
@@ -144,16 +139,12 @@ mod tests {
         let config = test_config();
         let meta = build_metadata(&config);
 
-        let app = http_test::init_service(
-            App::new()
-                .app_data(web::Data::new(meta))
-                .configure(configure),
-        )
-        .await;
+        let app =
+            http_test::init_service(App::new().app_data(web::Data::new(meta)).configure(configure))
+                .await;
 
-        let req = http_test::TestRequest::get()
-            .uri("/.well-known/openid-configuration")
-            .to_request();
+        let req =
+            http_test::TestRequest::get().uri("/.well-known/openid-configuration").to_request();
         let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::OK);
 
@@ -161,28 +152,23 @@ mod tests {
         let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
         assert_eq!(json["issuer"], "https://auth.example.com");
-        assert_eq!(
-            json["authorization_endpoint"],
-            "https://auth.example.com/oauth/authorize"
-        );
-        assert_eq!(
-            json["token_endpoint"],
-            "https://auth.example.com/oauth/token"
-        );
+        assert_eq!(json["authorization_endpoint"], "https://auth.example.com/oauth/authorize");
+        assert_eq!(json["token_endpoint"], "https://auth.example.com/oauth/token");
         assert_eq!(json["response_types_supported"][0], "code");
-        assert!(json["code_challenge_methods_supported"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|v| v == "S256"));
+        assert!(
+            json["code_challenge_methods_supported"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|v| v == "S256")
+        );
     }
 
     #[actix_web::test]
     async fn discovery_404_without_metadata() {
         let app = http_test::init_service(App::new().configure(configure)).await;
-        let req = http_test::TestRequest::get()
-            .uri("/.well-known/openid-configuration")
-            .to_request();
+        let req =
+            http_test::TestRequest::get().uri("/.well-known/openid-configuration").to_request();
         let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }

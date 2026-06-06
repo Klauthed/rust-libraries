@@ -35,10 +35,7 @@ impl Args {
 
 impl<K: Into<String>, V: Display> FromIterator<(K, V)> for Args {
     fn from_iter<I: IntoIterator<Item = (K, V)>>(iter: I) -> Self {
-        let values = iter
-            .into_iter()
-            .map(|(k, v)| (k.into(), v.to_string()))
-            .collect();
+        let values = iter.into_iter().map(|(k, v)| (k.into(), v.to_string())).collect();
         Self { values }
     }
 }

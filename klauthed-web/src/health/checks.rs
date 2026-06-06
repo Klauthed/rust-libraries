@@ -37,7 +37,9 @@ impl SqlHealthCheck {
 #[cfg(feature = "data-sql")]
 #[async_trait::async_trait]
 impl HealthCheck for SqlHealthCheck {
-    fn name(&self) -> &str { &self.name }
+    fn name(&self) -> &str {
+        &self.name
+    }
 
     async fn check(&self) -> HealthStatus {
         match sqlx::query("SELECT 1").execute(&self.pool).await {
@@ -81,7 +83,9 @@ impl RedisHealthCheck {
 #[cfg(feature = "data-redis")]
 #[async_trait::async_trait]
 impl HealthCheck for RedisHealthCheck {
-    fn name(&self) -> &str { &self.name }
+    fn name(&self) -> &str {
+        &self.name
+    }
 
     async fn check(&self) -> HealthStatus {
         let mut conn = self.conn.clone();

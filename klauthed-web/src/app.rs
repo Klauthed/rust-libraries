@@ -98,10 +98,7 @@ impl Components {
     /// add infra via the builder methods.
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            registry: HealthRegistry::new(),
-            data_fns: Vec::new(),
-        }
+        Self { registry: HealthRegistry::new(), data_fns: Vec::new() }
     }
 
     /// Register a custom [`HealthCheck`] without contributing app data.
@@ -128,8 +125,7 @@ impl Components {
     #[must_use]
     pub fn pool(mut self, name: impl Into<String>, pool: sqlx::AnyPool) -> Self {
         use crate::health::SqlHealthCheck;
-        self.registry
-            .register(Arc::new(SqlHealthCheck::new(name, pool.clone())));
+        self.registry.register(Arc::new(SqlHealthCheck::new(name, pool.clone())));
         let p = pool.clone();
         self.data_fns.push(Arc::new(move |cfg: &mut web::ServiceConfig| {
             cfg.app_data(web::Data::new(p.clone()));
@@ -148,8 +144,7 @@ impl Components {
     #[must_use]
     pub fn redis(mut self, name: impl Into<String>, conn: redis::aio::ConnectionManager) -> Self {
         use crate::health::RedisHealthCheck;
-        self.registry
-            .register(Arc::new(RedisHealthCheck::new(name, conn.clone())));
+        self.registry.register(Arc::new(RedisHealthCheck::new(name, conn.clone())));
         let c = conn.clone();
         self.data_fns.push(Arc::new(move |cfg: &mut web::ServiceConfig| {
             cfg.app_data(web::Data::new(c.clone()));
@@ -191,7 +186,7 @@ impl Components {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::health::{HealthStatus, HealthCheck};
+    use crate::health::{HealthCheck, HealthStatus};
 
     struct AlwaysUp;
 
@@ -234,8 +229,8 @@ mod tests {
 
     #[actix_web::test]
     async fn configure_registers_health_registry_as_app_data() {
-        use actix_web::test as http_test;
         use actix_web::App;
+        use actix_web::test as http_test;
 
         let components = Components::new().check(Arc::new(AlwaysUp));
 
@@ -247,9 +242,7 @@ mod tests {
         )
         .await;
 
-        let req = http_test::TestRequest::get()
-            .uri("/health/ready")
-            .to_request();
+        let req = http_test::TestRequest::get().uri("/health/ready").to_request();
         let resp = http_test::call_service(&app, req).await;
         assert_eq!(resp.status(), actix_web::http::StatusCode::OK);
 

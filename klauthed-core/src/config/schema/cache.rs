@@ -133,21 +133,14 @@ mod tests {
 
     #[test]
     fn redis_with_password_and_tls() {
-        let cfg = CacheConfig {
-            password: Some("pw".into()),
-            tls: true,
-            db: 2,
-            ..Default::default()
-        };
+        let cfg =
+            CacheConfig { password: Some("pw".into()), tls: true, db: 2, ..Default::default() };
         assert_eq!(cfg.connection_url().as_deref(), Some("rediss://:pw@localhost:6379/2"));
     }
 
     #[test]
     fn in_memory_has_no_url() {
-        let cfg = CacheConfig {
-            backend: CacheBackend::InMemory,
-            ..Default::default()
-        };
+        let cfg = CacheConfig { backend: CacheBackend::InMemory, ..Default::default() };
         assert_eq!(cfg.connection_url(), None);
     }
 }

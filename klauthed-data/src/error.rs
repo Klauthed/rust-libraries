@@ -81,7 +81,9 @@ impl DataError {
         use ErrorCategory::Internal;
         match self {
             DataError::Config(e) => (e.category(), e.code()),
-            DataError::UnsupportedSystem(_) => (Internal, ErrorCode::new("data.unsupported_system")),
+            DataError::UnsupportedSystem(_) => {
+                (Internal, ErrorCode::new("data.unsupported_system"))
+            }
             DataError::UnsupportedCacheBackend(_) => {
                 (Internal, ErrorCode::new("data.unsupported_cache_backend"))
             }

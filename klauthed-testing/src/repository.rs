@@ -86,12 +86,7 @@ where
 {
     /// An empty repository.
     pub fn new() -> Self {
-        Self {
-            inner: Mutex::new(Inner {
-                store: HashMap::new(),
-                drained: Vec::new(),
-            }),
-        }
+        Self { inner: Mutex::new(Inner { store: HashMap::new(), drained: Vec::new() }) }
     }
 
     /// The number of stored aggregates.
@@ -229,14 +224,8 @@ mod tests {
 
     impl Account {
         fn open(id: AccountId, owner: &str) -> Self {
-            let mut account = Account {
-                id,
-                balance: 0,
-                events: EventLog::new(),
-            };
-            account.record(AccountEvent::Opened {
-                owner: owner.to_owned(),
-            });
+            let mut account = Account { id, balance: 0, events: EventLog::new() };
+            account.record(AccountEvent::Opened { owner: owner.to_owned() });
             account
         }
         fn deposit(&mut self, amount: i64) {
@@ -283,13 +272,9 @@ mod tests {
         assert_eq!(
             events,
             vec![
-                AccountEvent::Opened {
-                    owner: "alice".into()
-                },
+                AccountEvent::Opened { owner: "alice".into() },
                 AccountEvent::Deposited { amount: 10 },
-                AccountEvent::Opened {
-                    owner: "bob".into()
-                },
+                AccountEvent::Opened { owner: "bob".into() },
             ]
         );
         // Draining clears the buffer.

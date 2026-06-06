@@ -68,10 +68,7 @@ impl I18n {
 
     /// Build with the embedded framework catalogs and default locale `en`.
     pub fn with_embedded_defaults() -> Self {
-        I18nBuilder::new()
-            .embedded_defaults()
-            .expect("embedded catalogs are valid TOML")
-            .build()
+        I18nBuilder::new().embedded_defaults().expect("embedded catalogs are valid TOML").build()
     }
 
     /// The fallback locale used when a translation is missing.
@@ -141,10 +138,7 @@ pub struct I18nBuilder {
 impl I18nBuilder {
     /// A builder with no catalogs and default locale `en`.
     pub fn new() -> Self {
-        Self {
-            catalogs: HashMap::new(),
-            default: Locale::new("en"),
-        }
+        Self { catalogs: HashMap::new(), default: Locale::new("en") }
     }
 
     /// Set the fallback locale.
@@ -206,10 +200,7 @@ impl I18nBuilder {
 
     /// Finalize the [`I18n`].
     pub fn build(self) -> I18n {
-        I18n {
-            catalogs: self.catalogs,
-            default: self.default,
-        }
+        I18n { catalogs: self.catalogs, default: self.default }
     }
 }
 
@@ -255,19 +246,13 @@ mod tests {
         let i18n = I18n::with_embedded_defaults();
         // `jp` has no catalog → default `en`.
         let msg = i18n.translate(&Locale::new("jp"), "conflict.generic");
-        assert_eq!(
-            msg,
-            "The operation conflicts with the current state of the resource."
-        );
+        assert_eq!(msg, "The operation conflicts with the current state of the resource.");
     }
 
     #[test]
     fn missing_key_returns_the_key() {
         let i18n = I18n::with_embedded_defaults();
-        assert_eq!(
-            i18n.translate(&Locale::new("en"), "does.not.exist"),
-            "does.not.exist"
-        );
+        assert_eq!(i18n.translate(&Locale::new("en"), "does.not.exist"), "does.not.exist");
     }
 
     #[test]
@@ -278,14 +263,8 @@ mod tests {
             .add_catalog("en", "[internal]\nerror = \"Custom error message.\"")
             .unwrap()
             .build();
-        assert_eq!(
-            i18n.translate(&Locale::new("en"), "internal.error"),
-            "Custom error message."
-        );
+        assert_eq!(i18n.translate(&Locale::new("en"), "internal.error"), "Custom error message.");
         // A non-overridden key is still present.
-        assert_eq!(
-            i18n.translate(&Locale::new("en"), "tenant.not_found"),
-            "Tenant not found."
-        );
+        assert_eq!(i18n.translate(&Locale::new("en"), "tenant.not_found"), "Tenant not found.");
     }
 }

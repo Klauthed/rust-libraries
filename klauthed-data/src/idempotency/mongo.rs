@@ -63,10 +63,7 @@ impl MongoIdempotencyStore {
 
     /// Wrap an existing database using `collection_name`.
     pub fn with_collection(db: &Database, collection_name: &str) -> Self {
-        Self {
-            collection: db.collection(collection_name),
-            ttl_secs: DEFAULT_TTL_SECS,
-        }
+        Self { collection: db.collection(collection_name), ttl_secs: DEFAULT_TTL_SECS }
     }
 
     /// Set a custom TTL in seconds for idempotency keys.
@@ -101,8 +98,7 @@ impl MongoIdempotencyStore {
     fn expires_at(&self) -> Result<Timestamp, DataError> {
         let now = Timestamp::now();
         let ttl = klauthed_core::time::Duration::seconds(self.ttl_secs as i64);
-        now.checked_add(ttl)
-            .ok_or_else(|| DataError::Idempotency("TTL overflow".to_owned()))
+        now.checked_add(ttl).ok_or_else(|| DataError::Idempotency("TTL overflow".to_owned()))
     }
 }
 
@@ -117,9 +113,7 @@ fn str_to_status(s: &str) -> Result<IdempotencyStatus, DataError> {
     match s {
         "in_progress" => Ok(IdempotencyStatus::InProgress),
         "completed" => Ok(IdempotencyStatus::Completed),
-        other => Err(DataError::Idempotency(format!(
-            "unknown idempotency status '{other}'"
-        ))),
+        other => Err(DataError::Idempotency(format!("unknown idempotency status '{other}'"))),
     }
 }
 
@@ -151,13 +145,7 @@ fn doc_to_record(key: &str, doc: &Document) -> Result<IdempotencyRecord, DataErr
             .map_err(|e| DataError::Idempotency(format!("missing updated_at: {e}")))?,
     )?;
 
-    Ok(IdempotencyRecord {
-        key: key.to_owned(),
-        status,
-        response,
-        created_at,
-        updated_at,
-    })
+    Ok(IdempotencyRecord { key: key.to_owned(), status, response, created_at, updated_at })
 }
 
 #[async_trait]
@@ -190,7 +178,9 @@ impl IdempotencyStore for MongoIdempotencyStore {
             .find_one_and_update(filter, update)
             .with_options(options)
             .await
-            .map_err(|e| DataError::Idempotency(format!("mongo find_one_and_update failed: {e}")))?;
+            .map_err(|e| {
+                DataError::Idempotency(format!("mongo find_one_and_update failed: {e}"))
+            })?;
 
         match existing {
             // Document did not exist before — we just inserted it.
@@ -259,11 +249,9 @@ mod tests {
     use klauthed_core::id::Id;
 
     async fn live_store() -> MongoIdempotencyStore {
-        let url = std::env::var("MONGODB_URL")
-            .unwrap_or_else(|_| "mongodb://127.0.0.1:27017".to_owned());
-        let client = mongodb::Client::with_uri_str(&url)
-            .await
-            .expect("connect mongodb");
+        let url =
+            std::env::var("MONGODB_URL").unwrap_or_else(|_| "mongodb://127.0.0.1:27017".to_owned());
+        let client = mongodb::Client::with_uri_str(&url).await.expect("connect mongodb");
         let db_name = format!("klauthed_test_{}", Id::<()>::new());
         let store = MongoIdempotencyStore::new(&client.database(&db_name));
         store.ensure_schema().await.expect("ensure schema");
@@ -282,10 +270,7 @@ mod tests {
         let response = serde_json::json!({ "charged": true });
         store.complete(&key, response.clone()).await.unwrap();
 
-        assert_eq!(
-            store.begin(&key).await.unwrap(),
-            Outcome::Completed(response)
-        );
+        assert_eq!(store.begin(&key).await.unwrap(), Outcome::Completed(response));
     }
 
     #[tokio::test]
@@ -293,10 +278,7 @@ mod tests {
     async fn complete_unknown_key_errors() {
         let store = live_store().await;
         let key = format!("test:{}:missing", Id::<()>::new());
-        let err = store
-            .complete(&key, serde_json::Value::Null)
-            .await
-            .unwrap_err();
+        let err = store.complete(&key, serde_json::Value::Null).await.unwrap_err();
         assert!(matches!(err, DataError::Idempotency(_)));
     }
 }

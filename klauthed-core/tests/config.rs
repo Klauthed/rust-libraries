@@ -44,7 +44,9 @@ async fn builds_and_reads_typed_sections() {
 #[tokio::test]
 async fn later_providers_override_earlier_ones_per_key() {
     let config = Config::builder(Profile::Local)
-        .with_provider(MemoryProvider::new().set("server", json!({ "host": "0.0.0.0", "port": 8080 })))
+        .with_provider(
+            MemoryProvider::new().set("server", json!({ "host": "0.0.0.0", "port": 8080 })),
+        )
         .with_provider(MemoryProvider::new().set("server", json!({ "port": 8088 })))
         .build()
         .await
@@ -76,10 +78,7 @@ async fn loads_and_resolves_a_toml_file() {
         .await
         .unwrap();
 
-    assert_eq!(
-        config.database().unwrap().connection_url(),
-        "postgres://localhost:5432/app"
-    );
+    assert_eq!(config.database().unwrap().connection_url(), "postgres://localhost:5432/app");
 
     std::fs::remove_dir_all(&dir).ok();
 }

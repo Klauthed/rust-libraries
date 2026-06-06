@@ -89,13 +89,10 @@ impl Config {
     /// # }
     /// ```
     pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Result<T, ConfigError> {
-        let value = self
-            .get_raw(key)
-            .ok_or_else(|| ConfigError::MissingRequired(key.to_owned()))?;
-        serde_json::from_value(value.clone()).map_err(|e| ConfigError::Deserialization {
-            key: key.to_owned(),
-            source: e,
-        })
+        let value =
+            self.get_raw(key).ok_or_else(|| ConfigError::MissingRequired(key.to_owned()))?;
+        serde_json::from_value(value.clone())
+            .map_err(|e| ConfigError::Deserialization { key: key.to_owned(), source: e })
     }
 
     /// Like [`get`](Self::get) but returns `Ok(None)` when the key is absent.
@@ -108,10 +105,7 @@ impl Config {
             None => Ok(None),
             Some(value) => serde_json::from_value(value.clone())
                 .map(Some)
-                .map_err(|e| ConfigError::Deserialization {
-                    key: key.to_owned(),
-                    source: e,
-                }),
+                .map_err(|e| ConfigError::Deserialization { key: key.to_owned(), source: e }),
         }
     }
 
@@ -206,13 +200,7 @@ mod tests {
     async fn get_deserializes_nested_section() {
         let config = fixture().await;
         let db: DbFixture = config.get("database").unwrap();
-        assert_eq!(
-            db,
-            DbFixture {
-                url: "postgres://localhost".into(),
-                pool_size: 10
-            }
-        );
+        assert_eq!(db, DbFixture { url: "postgres://localhost".into(), pool_size: 10 });
     }
 
     #[tokio::test]
@@ -225,10 +213,7 @@ mod tests {
     #[tokio::test]
     async fn missing_vs_optional() {
         let config = fixture().await;
-        assert!(matches!(
-            config.get::<DbFixture>("nope"),
-            Err(ConfigError::MissingRequired(_))
-        ));
+        assert!(matches!(config.get::<DbFixture>("nope"), Err(ConfigError::MissingRequired(_))));
         assert_eq!(config.get_optional::<DbFixture>("nope").unwrap(), None);
         assert!(!config.contains_key("nope"));
         assert!(config.contains_key("database.url"));

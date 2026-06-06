@@ -16,7 +16,7 @@
 //!     .configure(configure_jwks);
 //! ```
 
-use actix_web::{web, HttpResponse};
+use actix_web::{HttpResponse, web};
 use klauthed_protocol::jwks::JsonWebKeySet;
 
 /// `GET /oauth/jwks`
@@ -26,9 +26,7 @@ use klauthed_protocol::jwks::JsonWebKeySet;
 /// deployment has no public keys to publish.
 async fn jwks_handler(keys: Option<web::Data<JsonWebKeySet>>) -> HttpResponse {
     match keys {
-        Some(k) => HttpResponse::Ok()
-            .content_type("application/json")
-            .json(k.as_ref()),
+        Some(k) => HttpResponse::Ok().content_type("application/json").json(k.as_ref()),
         None => HttpResponse::NotFound().finish(),
     }
 }
@@ -46,7 +44,7 @@ mod tests {
     use super::*;
     use actix_web::http::StatusCode;
     use actix_web::test as http_test;
-    use actix_web::{web, App};
+    use actix_web::{App, web};
     use klauthed_protocol::jwks::{JsonWebKey, JsonWebKeySet, KeyType};
 
     fn key_set() -> JsonWebKeySet {
@@ -62,9 +60,7 @@ mod tests {
     #[actix_web::test]
     async fn serves_registered_key_set() {
         let app = http_test::init_service(
-            App::new()
-                .app_data(web::Data::new(key_set()))
-                .configure(configure),
+            App::new().app_data(web::Data::new(key_set())).configure(configure),
         )
         .await;
 

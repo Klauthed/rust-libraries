@@ -1,0 +1,11 @@
+# Formatting is enforced in CI (`cargo fmt --check`).
+#
+# Tuned for the stable toolchain and kept close to the project's dense,
+# deliberately-grouped style: section-banner comments (`// ──`) and the
+# blank-line-separated std / external / crate import groups are left untouched
+# by rustfmt; only code wrapping and spacing are normalised.
+max_width = 100
+use_small_heuristics = "Max"
+newline_style = "Unix"
+reorder_imports = true
+reorder_modules = true

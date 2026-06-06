@@ -1,7 +1,7 @@
 //! Request extractors: [`AuthenticatedUser`] (requires authentication) and
 //! [`OptionalAuthentication`] (never fails).
 
-use std::future::{ready, Ready};
+use std::future::{Ready, ready};
 use std::ops::Deref;
 
 use actix_web::{Error, FromRequest, HttpMessage as _, HttpRequest};

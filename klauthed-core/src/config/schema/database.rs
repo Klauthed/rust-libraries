@@ -170,12 +170,8 @@ impl DatabaseConfig {
         url.push_str(&self.database);
 
         if !self.options.is_empty() {
-            let query = self
-                .options
-                .iter()
-                .map(|(k, v)| format!("{k}={v}"))
-                .collect::<Vec<_>>()
-                .join("&");
+            let query =
+                self.options.iter().map(|(k, v)| format!("{k}={v}")).collect::<Vec<_>>().join("&");
             url.push('?');
             url.push_str(&query);
         }
@@ -206,10 +202,7 @@ mod tests {
 
     #[test]
     fn url_field_overrides_components() {
-        let cfg = DatabaseConfig {
-            url: Some("postgres://custom/db".into()),
-            ..Default::default()
-        };
+        let cfg = DatabaseConfig { url: Some("postgres://custom/db".into()), ..Default::default() };
         assert_eq!(cfg.connection_url(), "postgres://custom/db");
     }
 

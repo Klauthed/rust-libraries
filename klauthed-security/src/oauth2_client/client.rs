@@ -135,13 +135,13 @@ mod tests {
                 "https://app.example.com/cb".into(),
                 "https://app.example.com/cb2".into(),
             ],
-            allowed_grant_types: [ClientGrantType::AuthorizationCode, ClientGrantType::RefreshToken]
-                .into_iter()
-                .collect(),
-            allowed_scopes: ["openid", "email", "profile"]
-                .iter()
-                .map(|s| s.to_string())
-                .collect(),
+            allowed_grant_types: [
+                ClientGrantType::AuthorizationCode,
+                ClientGrantType::RefreshToken,
+            ]
+            .into_iter()
+            .collect(),
+            allowed_scopes: ["openid", "email", "profile"].iter().map(|s| s.to_string()).collect(),
             token_endpoint_auth_method: TokenEndpointAuthMethod::ClientSecretBasic,
             client_name: None,
             created_at: Timestamp::now(),

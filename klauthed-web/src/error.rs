@@ -51,12 +51,7 @@ impl AppError {
     /// An ad-hoc error with an explicit category and message and the category's
     /// default code (override with [`with_code`](Self::with_code)).
     pub fn new(category: ErrorCategory, message: impl Into<String>) -> Self {
-        AppError {
-            category,
-            code: default_code(category),
-            message: message.into(),
-            source: None,
-        }
+        AppError { category, code: default_code(category), message: message.into(), source: None }
     }
 
     /// Override the stable error code.
@@ -224,11 +219,8 @@ impl ResponseError for AppError {
         }
 
         // Never leak server-side detail to the client; the real message is logged above.
-        let message = if client_facing {
-            self.message.clone()
-        } else {
-            "internal server error".to_owned()
-        };
+        let message =
+            if client_facing { self.message.clone() } else { "internal server error".to_owned() };
 
         HttpResponse::build(self.status_code()).json(ErrorBody {
             error: ErrorDetail {
@@ -249,10 +241,7 @@ mod tests {
     fn status_maps_from_category() {
         assert_eq!(AppError::not_found("x").status_code(), StatusCode::NOT_FOUND);
         assert_eq!(AppError::bad_request("x").status_code().as_u16(), 400);
-        assert_eq!(
-            AppError::internal("x").status_code(),
-            StatusCode::INTERNAL_SERVER_ERROR
-        );
+        assert_eq!(AppError::internal("x").status_code(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     #[test]
@@ -303,10 +292,8 @@ mod tests {
 
     #[test]
     fn from_platform_error_preserves_code_and_category() {
-        let err: AppError = klauthed_platform::PlatformError::TenantNotFound {
-            id_or_slug: "acme".into(),
-        }
-        .into();
+        let err: AppError =
+            klauthed_platform::PlatformError::TenantNotFound { id_or_slug: "acme".into() }.into();
         assert_eq!(err.code().as_str(), "platform.tenant_not_found");
         assert_eq!(err.category(), ErrorCategory::NotFound);
         assert_eq!(err.status_code().as_u16(), 404);
@@ -315,10 +302,8 @@ mod tests {
 
     #[test]
     fn from_platform_backend_is_internal() {
-        let err: AppError = klauthed_platform::PlatformError::Backend {
-            message: "db conn failed".into(),
-        }
-        .into();
+        let err: AppError =
+            klauthed_platform::PlatformError::Backend { message: "db conn failed".into() }.into();
         assert_eq!(err.category(), ErrorCategory::Internal);
     }
 

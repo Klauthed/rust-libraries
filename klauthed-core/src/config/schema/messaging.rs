@@ -287,10 +287,7 @@ mod tests {
                 assert!(nats.jetstream);
                 assert_eq!(
                     nats.credentials,
-                    NatsCredentials::UserPassword {
-                        username: "svc".into(),
-                        password: "pw".into()
-                    }
+                    NatsCredentials::UserPassword { username: "svc".into(), password: "pw".into() }
                 );
             }
             other => panic!("expected NATS, got {other:?}"),

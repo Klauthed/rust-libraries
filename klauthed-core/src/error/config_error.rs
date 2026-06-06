@@ -26,10 +26,7 @@ pub enum ConfigError {
     InvalidProviderChain { profile: String, message: String },
 
     #[error("deserialization error for key '{key}': {source}")]
-    Deserialization {
-        key: String,
-        source: serde_json::Error,
-    },
+    Deserialization { key: String, source: serde_json::Error },
 
     // ── Vault provider (feature = "vault") ────────────────────────────────────
     #[error("vault authentication failed via {method}: {message}")]
@@ -107,10 +104,7 @@ mod tests {
         assert_eq!(missing.http_status(), 500);
         assert!(!missing.is_retryable());
 
-        let vault = ConfigError::VaultRequest {
-            path: "secret/app".into(),
-            message: "503".into(),
-        };
+        let vault = ConfigError::VaultRequest { path: "secret/app".into(), message: "503".into() };
         assert_eq!(vault.category(), ErrorCategory::Unavailable);
         assert!(vault.is_retryable());
     }

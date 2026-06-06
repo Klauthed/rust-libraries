@@ -1,7 +1,7 @@
 //! JWT Bearer authentication middleware ([`JwtAuth`]) plus the optional
 //! [`TokenRevocationCheck`] denylist hook.
 
-use std::future::{ready, Ready};
+use std::future::{Ready, ready};
 use std::rc::Rc;
 use std::sync::Arc;
 use std::task::{Context as TaskContext, Poll};
@@ -9,7 +9,7 @@ use std::task::{Context as TaskContext, Poll};
 use actix_web::body::BoxBody;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::header::AUTHORIZATION;
-use actix_web::{web, Error, HttpMessage as _, ResponseError as _};
+use actix_web::{Error, HttpMessage as _, ResponseError as _, web};
 use futures_util::future::LocalBoxFuture;
 use klauthed_core::context::RequestContext;
 use klauthed_error::DomainError as _;
@@ -91,9 +91,7 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(JwtAuthService {
-            service: Rc::new(service),
-        }))
+        ready(Ok(JwtAuthService { service: Rc::new(service) }))
     }
 }
 
@@ -185,9 +183,7 @@ where
         // Optional: check jti against a registered TokenDenylist.
         // If web::Data<TokenRevocationCheck> is present AND the token carries
         // a jti, we check whether it has been revoked.
-        let denylist = req
-            .app_data::<web::Data<TokenRevocationCheck>>()
-            .map(|d| Arc::clone(&d.0));
+        let denylist = req.app_data::<web::Data<TokenRevocationCheck>>().map(|d| Arc::clone(&d.0));
 
         let service = Rc::clone(&self.service);
         Box::pin(async move {
@@ -199,17 +195,11 @@ where
                     Ok(false) => {}
                     Err(e) => {
                         tracing::error!(error = %e, "token denylist check failed");
-                        return Ok(reject(
-                            req,
-                            AppError::internal("authentication check failed"),
-                        ));
+                        return Ok(reject(req, AppError::internal("authentication check failed")));
                     }
                 }
             }
-            service
-                .call(req)
-                .await
-                .map(ServiceResponse::map_into_boxed_body)
+            service.call(req).await.map(ServiceResponse::map_into_boxed_body)
         })
     }
 }

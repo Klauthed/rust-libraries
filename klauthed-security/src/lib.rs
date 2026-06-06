@@ -73,7 +73,7 @@
 pub mod aead;
 pub mod apikey;
 pub mod authz;
-pub mod authz_code;    // folder: authz_code/{code,store,pkce}.rs
+pub mod authz_code; // folder: authz_code/{code,store,pkce}.rs
 pub mod compare;
 pub mod error;
 pub mod jwt;
@@ -86,13 +86,11 @@ pub mod revocation;
 pub mod session;
 pub mod token;
 
-pub use aead::{
-    decrypt, decrypt_from_base64, encrypt, encrypt_to_base64, EncryptionKey, KEY_LEN,
-};
+pub use aead::{EncryptionKey, KEY_LEN, decrypt, decrypt_from_base64, encrypt, encrypt_to_base64};
 pub use apikey::{generate_api_key, verify_api_key};
 pub use authz::{Authorizer, Permission, Role, RoleRegistry};
 pub use authz_code::{
-    verify_pkce, AuthCode, AuthCodeBuilder, AuthCodeStore, InMemoryAuthCodeStore, PkceMethod,
+    AuthCode, AuthCodeBuilder, AuthCodeStore, InMemoryAuthCodeStore, PkceMethod, verify_pkce,
 };
 pub use compare::constant_time_eq;
 pub use error::SecurityError;
@@ -105,8 +103,7 @@ pub use oauth2_client::{
 };
 pub use password::{hash_password, verify_password};
 pub use refresh_token::{
-    ConsumeResult, InMemoryRefreshTokenStore, RefreshToken, RefreshTokenBuilder,
-    RefreshTokenStore,
+    ConsumeResult, InMemoryRefreshTokenStore, RefreshToken, RefreshTokenBuilder, RefreshTokenStore,
 };
 pub use revocation::{InMemoryTokenDenylist, TokenDenylist};
 pub use session::{InMemorySessionStore, Session, SessionId, SessionStore};

@@ -72,9 +72,7 @@ impl Timestamp {
     /// `millis` is untrusted or computed and an out-of-range value should be
     /// treated as an error rather than silently clamped.
     pub fn from_unix_millis_opt(millis: i64) -> Option<Self> {
-        OffsetDateTime::from_unix_timestamp_nanos(millis as i128 * 1_000_000)
-            .ok()
-            .map(Self)
+        OffsetDateTime::from_unix_timestamp_nanos(millis as i128 * 1_000_000).ok().map(Self)
     }
 
     /// Construct from milliseconds since the Unix epoch.
@@ -128,9 +126,7 @@ impl Timestamp {
         let fmt = time::macros::format_description!(
             "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3]Z"
         );
-        self.0
-            .format(fmt)
-            .expect("formatting a UTC timestamp with a fixed description cannot fail")
+        self.0.format(fmt).expect("formatting a UTC timestamp with a fixed description cannot fail")
     }
 
     /// The signed duration elapsed since `earlier` (negative if `earlier` is later).
@@ -231,9 +227,8 @@ impl FixedClock {
     /// Move the clock forward (or backward, for a negative delta) by `delta`.
     pub fn advance(&self, delta: Duration) {
         let mut guard = self.now.lock().expect("clock mutex poisoned");
-        *guard = guard
-            .checked_add(delta)
-            .expect("clock advance overflowed the representable range");
+        *guard =
+            guard.checked_add(delta).expect("clock advance overflowed the representable range");
     }
 }
 
@@ -303,8 +298,7 @@ mod tests {
 
     #[test]
     fn works_behind_dyn_clock() {
-        let clock: std::sync::Arc<dyn Clock> =
-            std::sync::Arc::new(FixedClock::at_unix_millis(42));
+        let clock: std::sync::Arc<dyn Clock> = std::sync::Arc::new(FixedClock::at_unix_millis(42));
         assert_eq!(clock.now().unix_millis(), 42);
     }
 

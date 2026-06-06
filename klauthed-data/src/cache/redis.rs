@@ -13,9 +13,7 @@ pub async fn connect(config: &CacheConfig) -> Result<::redis::aio::ConnectionMan
         return Err(DataError::UnsupportedCacheBackend(config.backend));
     }
 
-    let url = config
-        .connection_url()
-        .ok_or(DataError::MissingUrl("redis"))?;
+    let url = config.connection_url().ok_or(DataError::MissingUrl("redis"))?;
 
     tracing::debug!("connecting to redis cache");
     let client = ::redis::Client::open(url)?;
@@ -29,14 +27,8 @@ mod tests {
 
     #[tokio::test]
     async fn rejects_in_memory_backend() {
-        let config = CacheConfig {
-            backend: CacheBackend::InMemory,
-            ..Default::default()
-        };
+        let config = CacheConfig { backend: CacheBackend::InMemory, ..Default::default() };
         let err = connect(&config).await.unwrap_err();
-        assert!(matches!(
-            err,
-            DataError::UnsupportedCacheBackend(CacheBackend::InMemory)
-        ));
+        assert!(matches!(err, DataError::UnsupportedCacheBackend(CacheBackend::InMemory)));
     }
 }

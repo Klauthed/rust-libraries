@@ -4,14 +4,16 @@
 //!   [`AuthCode`](klauthed_security::AuthCode), and redirects to the client.
 //! * [`token`] — `POST /oauth/token`: exchanges the code for a JWT access token.
 
-use actix_web::{web, HttpResponse, ResponseError as _};
-use klauthed_protocol::oauth2::{AuthorizationRequest, OAuth2ErrorCode, TokenRequest, TokenResponse, TokenType};
+use actix_web::{HttpResponse, ResponseError as _, web};
+use klauthed_protocol::oauth2::{
+    AuthorizationRequest, OAuth2ErrorCode, TokenRequest, TokenResponse, TokenType,
+};
 use klauthed_protocol::oidc::{GrantType, ResponseType};
 use klauthed_security::{
-    authz_code::{verify_pkce, AuthCodeBuilder, PkceMethod},
+    Claims,
+    authz_code::{AuthCodeBuilder, PkceMethod, verify_pkce},
     oauth2_client::{ClientGrantType, OAuth2Client},
     refresh_token::{ConsumeResult, RefreshTokenBuilder},
-    Claims,
 };
 
 use crate::auth::AuthenticatedUser;
@@ -184,10 +186,7 @@ pub async fn authorize(
 ///
 /// Dispatches on `grant_type`. Currently only `authorization_code` is
 /// supported; other grant types return `unsupported_grant_type`.
-pub async fn token(
-    form: web::Form<TokenRequest>,
-    config: web::Data<OAuthConfig>,
-) -> HttpResponse {
+pub async fn token(form: web::Form<TokenRequest>, config: web::Data<OAuthConfig>) -> HttpResponse {
     let req = form.into_inner();
     match req.grant_type {
         GrantType::AuthorizationCode => exchange_authorization_code(req, &config).await,
@@ -200,10 +199,7 @@ pub async fn token(
 }
 
 /// Exchange an authorization code for a JWT access token.
-pub async fn exchange_authorization_code(
-    req: TokenRequest,
-    config: &OAuthConfig,
-) -> HttpResponse {
+pub async fn exchange_authorization_code(req: TokenRequest, config: &OAuthConfig) -> HttpResponse {
     // ── 1. Require the code parameter ─────────────────────────────────────────
     let code_str = match req.code.as_deref() {
         Some(c) => c,
@@ -277,20 +273,15 @@ pub async fn exchange_authorization_code(
 
     // ── 7. Mint the access token ──────────────────────────────────────────────
     let scope_str = auth_code.scope.join(" ");
-    let access_token = match mint_access_token(
-        &auth_code.subject,
-        scope_str.as_str(),
-        client_id,
-        config,
-    ) {
-        Ok(t) => t,
-        Err(resp) => return resp,
-    };
+    let access_token =
+        match mint_access_token(&auth_code.subject, scope_str.as_str(), client_id, config) {
+            Ok(t) => t,
+            Err(resp) => return resp,
+        };
 
     // ── 8. Optionally issue a refresh token ───────────────────────────────────
     let refresh_token_value =
-        issue_refresh_token(client_id, &auth_code.subject, &auth_code.scope, None, config)
-            .await;
+        issue_refresh_token(client_id, &auth_code.subject, &auth_code.scope, None, config).await;
 
     // ── 9. Issue an OIDC ID token when the `openid` scope was granted ─────────
     // The `nonce` from the original authorization request is echoed so the
@@ -396,7 +387,8 @@ pub async fn exchange_refresh_token(req: TokenRequest, config: &OAuthConfig) -> 
         let requested: Vec<String> =
             requested_scope.split_whitespace().map(str::to_owned).collect();
         // Each requested scope must be a subset of the original grant.
-        let original: std::collections::HashSet<&str> = rt.scope.iter().map(String::as_str).collect();
+        let original: std::collections::HashSet<&str> =
+            rt.scope.iter().map(String::as_str).collect();
         if !requested.iter().all(|s| original.contains(s.as_str())) {
             return token_error(
                 OAuth2ErrorCode::InvalidScope,
@@ -416,14 +408,9 @@ pub async fn exchange_refresh_token(req: TokenRequest, config: &OAuthConfig) -> 
     };
 
     // ── 8. Issue a rotated refresh token (same family_id) ─────────────────────
-    let new_refresh_token = issue_refresh_token(
-        client_id,
-        &rt.subject,
-        &scope,
-        Some(rt.family_id.as_str()),
-        config,
-    )
-    .await;
+    let new_refresh_token =
+        issue_refresh_token(client_id, &rt.subject, &scope, Some(rt.family_id.as_str()), config)
+            .await;
 
     // ── 9. Issue an OIDC ID token when the `openid` scope is still granted ────
     // No `nonce` is echoed: the refresh exchange is decoupled from the original
@@ -488,7 +475,7 @@ pub(super) async fn authenticate_client(
             Err(e) => {
                 tracing::error!(error = %e, "client secret verification failed");
                 return Err(
-                    AppError::internal("could not verify client credentials").error_response(),
+                    AppError::internal("could not verify client credentials").error_response()
                 );
             }
         }

@@ -52,9 +52,7 @@ pub struct InMemoryAuthCodeStore {
 impl std::fmt::Debug for InMemoryAuthCodeStore {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let len = self.codes.lock().map(|m| m.len()).unwrap_or(0);
-        f.debug_struct("InMemoryAuthCodeStore")
-            .field("codes", &len)
-            .finish_non_exhaustive()
+        f.debug_struct("InMemoryAuthCodeStore").field("codes", &len).finish_non_exhaustive()
     }
 }
 
@@ -75,10 +73,7 @@ impl InMemoryAuthCodeStore {
     /// [`FixedClock`](klauthed_core::time::FixedClock) in tests.
     #[must_use]
     pub fn with_clock(clock: Arc<dyn Clock>) -> Self {
-        Self {
-            codes: Arc::new(Mutex::new(HashMap::new())),
-            clock,
-        }
+        Self { codes: Arc::new(Mutex::new(HashMap::new())), clock }
     }
 
     /// Number of stored codes (including expired ones not yet evicted).
@@ -97,10 +92,7 @@ impl InMemoryAuthCodeStore {
 #[async_trait]
 impl AuthCodeStore for InMemoryAuthCodeStore {
     async fn store(&self, code: AuthCode) -> Result<(), SecurityError> {
-        self.codes
-            .lock()
-            .expect("auth code store mutex poisoned")
-            .insert(code.code.clone(), code);
+        self.codes.lock().expect("auth code store mutex poisoned").insert(code.code.clone(), code);
         Ok(())
     }
 

@@ -57,20 +57,12 @@ impl ValidationError {
         code: impl Into<Cow<'static, str>>,
         message: impl Into<String>,
     ) -> Self {
-        Self {
-            field: Some(field.into()),
-            code: code.into(),
-            message: message.into(),
-        }
+        Self { field: Some(field.into()), code: code.into(), message: message.into() }
     }
 
     /// An object-level error not tied to a specific field.
     pub fn global(code: impl Into<Cow<'static, str>>, message: impl Into<String>) -> Self {
-        Self {
-            field: None,
-            code: code.into(),
-            message: message.into(),
-        }
+        Self { field: None, code: code.into(), message: message.into() }
     }
 }
 
@@ -125,11 +117,7 @@ impl ValidationErrors {
     }
 
     /// Record an object-level error.
-    pub fn add_global(
-        &mut self,
-        code: impl Into<Cow<'static, str>>,
-        message: impl Into<String>,
-    ) {
+    pub fn add_global(&mut self, code: impl Into<Cow<'static, str>>, message: impl Into<String>) {
         self.0.push(ValidationError::global(code, message));
     }
 
@@ -140,11 +128,7 @@ impl ValidationErrors {
 
     /// Collapse into a `Result`: `Ok(())` when empty, otherwise `Err(self)`.
     pub fn into_result(self) -> Result<(), ValidationErrors> {
-        if self.is_empty() {
-            Ok(())
-        } else {
-            Err(self)
-        }
+        if self.is_empty() { Ok(()) } else { Err(self) }
     }
 }
 
@@ -210,12 +194,7 @@ mod tests {
 
     #[test]
     fn accumulates_all_errors() {
-        let err = SignUp {
-            email: "nope".into(),
-            age: 10,
-        }
-        .validate()
-        .unwrap_err();
+        let err = SignUp { email: "nope".into(), age: 10 }.validate().unwrap_err();
 
         assert_eq!(err.len(), 2);
         assert_eq!(err.errors()[0].field.as_deref(), Some("email"));
@@ -224,24 +203,12 @@ mod tests {
 
     #[test]
     fn valid_input_passes() {
-        assert!(
-            SignUp {
-                email: "a@b.co".into(),
-                age: 21
-            }
-            .validate()
-            .is_ok()
-        );
+        assert!(SignUp { email: "a@b.co".into(), age: 21 }.validate().is_ok());
     }
 
     #[test]
     fn validation_errors_are_unprocessable_entity() {
-        let err = SignUp {
-            email: "x".into(),
-            age: 5,
-        }
-        .validate()
-        .unwrap_err();
+        let err = SignUp { email: "x".into(), age: 5 }.validate().unwrap_err();
         assert_eq!(err.category(), ErrorCategory::UnprocessableEntity);
         assert_eq!(err.code().as_str(), "validation.failed");
         // 422 Unprocessable Entity, NOT 400 Bad Request.

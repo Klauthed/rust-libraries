@@ -187,9 +187,7 @@ pub struct JsonWebKeySet {
 impl JsonWebKeySet {
     /// Find the key with the given `kid`, if any.
     pub fn find(&self, kid: &str) -> Option<&JsonWebKey> {
-        self.keys
-            .iter()
-            .find(|k| k.kid.as_deref() == Some(kid))
+        self.keys.iter().find(|k| k.kid.as_deref() == Some(kid))
     }
 
     /// Iterate over the keys usable for *signature verification*.
@@ -200,9 +198,7 @@ impl JsonWebKeySet {
     /// (`oct`) keys are excluded: a JWKS published for verification should not
     /// expose them, and they are not selected here.
     pub fn find_signing_keys(&self) -> impl Iterator<Item = &JsonWebKey> {
-        self.keys.iter().filter(|k| {
-            k.is_signing_key() && !matches!(k.kty, KeyType::Oct)
-        })
+        self.keys.iter().filter(|k| k.is_signing_key() && !matches!(k.kty, KeyType::Oct))
     }
 
     /// Select the key to use for a token whose JWS header carries the given
@@ -236,10 +232,7 @@ impl JsonWebKeySet {
     /// A convenience over [`JsonWebKeySet::find`] for callers that want an error
     /// rather than an [`Option`] (e.g. resolving the `kid` from a JWS header).
     pub fn require(&self, kid: &str) -> Result<&JsonWebKey, ProtocolError> {
-        self.find(kid)
-            .ok_or_else(|| ProtocolError::KeyNotFound {
-                kid: kid.to_owned(),
-            })
+        self.find(kid).ok_or_else(|| ProtocolError::KeyNotFound { kid: kid.to_owned() })
     }
 }
 
@@ -385,11 +378,7 @@ mod tests {
             key_use: Some(PublicKeyUse::Signature),
             ..Default::default()
         };
-        let unset = JsonWebKey {
-            kty: KeyType::Rsa,
-            key_use: None,
-            ..Default::default()
-        };
+        let unset = JsonWebKey { kty: KeyType::Rsa, key_use: None, ..Default::default() };
         let enc = JsonWebKey {
             kty: KeyType::Rsa,
             key_use: Some(PublicKeyUse::Encryption),
@@ -438,10 +427,7 @@ mod tests {
     #[test]
     fn find_signing_keys_excludes_oct_and_enc() {
         let set = multi_key_set();
-        let kids: Vec<_> = set
-            .find_signing_keys()
-            .filter_map(|k| k.kid.as_deref())
-            .collect();
+        let kids: Vec<_> = set.find_signing_keys().filter_map(|k| k.kid.as_deref()).collect();
         // oct excluded (symmetric), enc excluded (use=enc); rs and es remain.
         assert_eq!(kids, vec!["rs", "es"]);
     }

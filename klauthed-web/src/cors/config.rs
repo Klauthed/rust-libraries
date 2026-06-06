@@ -69,11 +69,7 @@ impl Default for CorsConfig {
 impl CorsConfig {
     /// Fully permissive (wildcard). **Development only — never production.**
     pub fn permissive() -> Self {
-        Self {
-            allowed_origins: vec!["*".into()],
-            allow_credentials: false,
-            ..Self::default()
-        }
+        Self { allowed_origins: vec!["*".into()], allow_credentials: false, ..Self::default() }
     }
 
     /// Explicit origins with credentials enabled — production-ready.
@@ -110,11 +106,8 @@ pub fn build_cors(config: &CorsConfig) -> Cors {
         c
     };
 
-    let methods: Vec<actix_web::http::Method> = config
-        .allowed_methods
-        .iter()
-        .filter_map(|m| m.parse().ok())
-        .collect();
+    let methods: Vec<actix_web::http::Method> =
+        config.allowed_methods.iter().filter_map(|m| m.parse().ok()).collect();
     if !methods.is_empty() {
         cors = cors.allowed_methods(methods);
     }
@@ -125,11 +118,8 @@ pub fn build_cors(config: &CorsConfig) -> Cors {
         }
     }
 
-    let expose: Vec<actix_web::http::header::HeaderName> = config
-        .expose_headers
-        .iter()
-        .filter_map(|h| h.parse().ok())
-        .collect();
+    let expose: Vec<actix_web::http::header::HeaderName> =
+        config.expose_headers.iter().filter_map(|h| h.parse().ok()).collect();
     if !expose.is_empty() {
         cors = cors.expose_headers(expose);
     }

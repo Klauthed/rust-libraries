@@ -141,10 +141,7 @@ where
     T: DeserializeOwned + 'static,
 {
     // Reject an explicit non-JSON content type early with a clear message.
-    if let Some(mime) = req
-        .headers()
-        .get(header::CONTENT_TYPE)
-        .and_then(|v| v.to_str().ok())
+    if let Some(mime) = req.headers().get(header::CONTENT_TYPE).and_then(|v| v.to_str().ok())
         && !is_json_content_type(mime)
     {
         let mime = mime.to_owned();
@@ -169,14 +166,15 @@ where
 /// `+json` structured suffix), ignoring parameters like `; charset=utf-8`.
 fn is_json_content_type(value: &str) -> bool {
     let essence = value.split(';').next().unwrap_or(value).trim();
-    essence.eq_ignore_ascii_case("application/json") || essence.to_ascii_lowercase().ends_with("+json")
+    essence.eq_ignore_ascii_case("application/json")
+        || essence.to_ascii_lowercase().ends_with("+json")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use actix_web::http::StatusCode;
-    use actix_web::{test, web, App, HttpResponse, ResponseError};
+    use actix_web::{App, HttpResponse, ResponseError, test, web};
     use klauthed_core::validation::ValidationErrors;
     use serde::Deserialize;
 
@@ -218,8 +216,7 @@ mod tests {
 
     #[actix_web::test]
     async fn json_accepts_valid_body() {
-        let app =
-            test::init_service(App::new().route("/", web::post().to(json_handler))).await;
+        let app = test::init_service(App::new().route("/", web::post().to(json_handler))).await;
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(serde_json::json!({ "email": "a@b.co", "age": 30 }))
@@ -230,8 +227,7 @@ mod tests {
 
     #[actix_web::test]
     async fn json_rejects_malformed_body_with_400() {
-        let app =
-            test::init_service(App::new().route("/", web::post().to(json_handler))).await;
+        let app = test::init_service(App::new().route("/", web::post().to(json_handler))).await;
         let req = test::TestRequest::post()
             .uri("/")
             .insert_header((header::CONTENT_TYPE, "application/json"))
@@ -253,9 +249,7 @@ mod tests {
                 .insert_header((header::CONTENT_TYPE, "text/plain"))
                 .set_payload("hello")
                 .to_http_parts();
-            Json::<CreateUser>::from_request(&req, &mut payload)
-                .await
-                .unwrap_err()
+            Json::<CreateUser>::from_request(&req, &mut payload).await.unwrap_err()
         };
         assert_eq!(err.error_response().status(), StatusCode::BAD_REQUEST);
     }

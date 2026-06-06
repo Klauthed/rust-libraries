@@ -116,18 +116,12 @@ pub struct EventLog<E> {
 impl<E> EventLog<E> {
     /// A fresh log at version 0 (a brand-new aggregate).
     pub fn new() -> Self {
-        Self {
-            pending: Vec::new(),
-            version: 0,
-        }
+        Self { pending: Vec::new(), version: 0 }
     }
 
     /// A log for an aggregate loaded at an existing `version`.
     pub fn with_version(version: u64) -> Self {
-        Self {
-            pending: Vec::new(),
-            version,
-        }
+        Self { pending: Vec::new(), version }
     }
 
     /// Record an event and advance the version.
@@ -318,14 +312,8 @@ mod tests {
 
     impl Account {
         fn open(owner: &str) -> Self {
-            let mut account = Account {
-                id: AccountId::new(),
-                balance: 0,
-                events: EventLog::new(),
-            };
-            account.record(AccountEvent::Opened {
-                owner: owner.to_owned(),
-            });
+            let mut account = Account { id: AccountId::new(), balance: 0, events: EventLog::new() };
+            account.record(AccountEvent::Opened { owner: owner.to_owned() });
             account
         }
         fn deposit(&mut self, amount: i64) {
@@ -389,10 +377,7 @@ mod tests {
         async fn save(&self, aggregate: &mut Account) -> Result<(), Infallible> {
             // A real impl would publish drained events here; we just persist state.
             let _events = aggregate.take_events();
-            self.store
-                .lock()
-                .unwrap()
-                .insert(*aggregate.id().as_uuid(), aggregate.clone());
+            self.store.lock().unwrap().insert(*aggregate.id().as_uuid(), aggregate.clone());
             Ok(())
         }
 

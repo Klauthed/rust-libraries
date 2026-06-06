@@ -134,39 +134,21 @@ mod tests {
 
     #[test]
     fn id_token_validation_errors_are_unauthorized() {
-        let expired = ProtocolError::IdTokenExpired {
-            exp: 1,
-            now: 2,
-            leeway: 0,
-        };
+        let expired = ProtocolError::IdTokenExpired { exp: 1, now: 2, leeway: 0 };
         assert_eq!(expired.category(), ErrorCategory::Unauthorized);
         assert_eq!(expired.code().as_str(), "protocol.id_token_expired");
         assert_eq!(expired.http_status(), 401);
 
-        let iss = ProtocolError::IssuerMismatch {
-            expected: "a".into(),
-            actual: "b".into(),
-        };
+        let iss = ProtocolError::IssuerMismatch { expected: "a".into(), actual: "b".into() };
         assert_eq!(iss.code().as_str(), "protocol.issuer_mismatch");
         assert_eq!(iss.category(), ErrorCategory::Unauthorized);
 
-        let aud = ProtocolError::AudienceMismatch {
-            expected: "client".into(),
-        };
+        let aud = ProtocolError::AudienceMismatch { expected: "client".into() };
         assert_eq!(aud.code().as_str(), "protocol.audience_mismatch");
 
+        assert_eq!(ProtocolError::NonceMismatch.code().as_str(), "protocol.nonce_mismatch");
         assert_eq!(
-            ProtocolError::NonceMismatch.code().as_str(),
-            "protocol.nonce_mismatch"
-        );
-        assert_eq!(
-            ProtocolError::IdTokenNotYetValid {
-                iat: 9,
-                now: 2,
-                leeway: 0
-            }
-            .code()
-            .as_str(),
+            ProtocolError::IdTokenNotYetValid { iat: 9, now: 2, leeway: 0 }.code().as_str(),
             "protocol.id_token_not_yet_valid"
         );
     }

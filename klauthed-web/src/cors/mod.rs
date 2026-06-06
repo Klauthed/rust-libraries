@@ -80,6 +80,6 @@ pub mod config;
 pub mod middleware;
 pub mod registry;
 
-pub use config::{build_cors, CorsConfig};
+pub use config::{CorsConfig, build_cors};
 pub use middleware::{DynamicCors, DynamicCorsService};
 pub use registry::{CachedOriginRegistry, CorsOriginRegistry, InMemoryOriginRegistry};

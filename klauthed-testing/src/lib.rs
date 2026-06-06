@@ -47,10 +47,10 @@ pub mod ids;
 pub mod repository;
 
 pub use assertions::{
-    assert_category, assert_code, assert_http_status, assert_retryable, DomainErrorExt,
+    DomainErrorExt, assert_category, assert_code, assert_http_status, assert_retryable,
 };
-pub use clock::{epoch_clock, fixed_clock, Clock, FixedClock, Timestamp};
-pub use context::{test_context, TestContextBuilder};
+pub use clock::{Clock, FixedClock, Timestamp, epoch_clock, fixed_clock};
+pub use context::{TestContextBuilder, test_context};
 pub use error::TestingError;
 pub use ids::{nil_id, seeded_id};
 pub use repository::InMemoryRepository;

@@ -180,28 +180,18 @@ mod tests {
     #[test]
     fn codes_are_unique_and_url_safe() {
         let clock = SystemClock;
-        let a = AuthCodeBuilder::new("c", "u")
-            .build(&clock, Duration::minutes(5))
-            .unwrap();
-        let b = AuthCodeBuilder::new("c", "u")
-            .build(&clock, Duration::minutes(5))
-            .unwrap();
+        let a = AuthCodeBuilder::new("c", "u").build(&clock, Duration::minutes(5)).unwrap();
+        let b = AuthCodeBuilder::new("c", "u").build(&clock, Duration::minutes(5)).unwrap();
         assert_ne!(a.code, b.code);
-        assert!(a
-            .code
-            .bytes()
-            .all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_'));
+        assert!(a.code.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_'));
     }
 
     #[test]
     fn is_expired_checks_expiry() {
         let clock = FixedClock::at_unix_millis(0);
-        let code = AuthCodeBuilder::new("c", "u")
-            .build(&clock, Duration::minutes(5))
-            .unwrap();
+        let code = AuthCodeBuilder::new("c", "u").build(&clock, Duration::minutes(5)).unwrap();
         let before = klauthed_core::time::Timestamp::from_unix_millis(1_000);
-        let after =
-            klauthed_core::time::Timestamp::from_unix_millis(5 * 60 * 1000 + 1);
+        let after = klauthed_core::time::Timestamp::from_unix_millis(5 * 60 * 1000 + 1);
         assert!(!code.is_expired(before));
         assert!(code.is_expired(after));
     }

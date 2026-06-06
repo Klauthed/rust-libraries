@@ -100,10 +100,7 @@ mod tests {
 
     #[tokio::test]
     async fn rejects_non_relational_system() {
-        let config = DatabaseConfig {
-            system: DbSystem::MongoDb,
-            ..Default::default()
-        };
+        let config = DatabaseConfig { system: DbSystem::MongoDb, ..Default::default() };
         let err = connect(&config).await.unwrap_err();
         assert!(matches!(err, DataError::UnsupportedSystem(DbSystem::MongoDb)));
     }

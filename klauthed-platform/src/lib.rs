@@ -58,7 +58,9 @@ pub mod jobs;
 pub mod tenancy;
 pub mod webhooks;
 
-pub use audit::{Audit, AuditEvent, AuditEventBuilder, AuditId, AuditOutcome, AuditSink, InMemoryAuditSink};
+pub use audit::{
+    Audit, AuditEvent, AuditEventBuilder, AuditId, AuditOutcome, AuditSink, InMemoryAuditSink,
+};
 pub use error::PlatformError;
 pub use featureflag::{FeatureFlag, FeatureFlags, InMemoryFeatureFlags};
 pub use jobs::{

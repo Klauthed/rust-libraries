@@ -21,10 +21,6 @@ pub(crate) fn fmt_layer(config: &LogConfig) -> BoxedLayer {
     match config.format {
         LogFormat::Pretty => fmt::layer().pretty().with_ansi(config.ansi).boxed(),
         LogFormat::Compact => fmt::layer().compact().with_ansi(config.ansi).boxed(),
-        LogFormat::Json => fmt::layer()
-            .json()
-            .with_current_span(true)
-            .flatten_event(true)
-            .boxed(),
+        LogFormat::Json => fmt::layer().json().with_current_span(true).flatten_event(true).boxed(),
     }
 }

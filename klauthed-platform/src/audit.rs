@@ -284,10 +284,7 @@ impl InMemoryAuditSink {
 #[async_trait]
 impl AuditSink for InMemoryAuditSink {
     async fn record(&self, event: AuditEvent) -> Result<(), PlatformError> {
-        self.events
-            .lock()
-            .expect("audit lock poisoned")
-            .push(event);
+        self.events.lock().expect("audit lock poisoned").push(event);
         Ok(())
     }
 }
@@ -338,9 +335,7 @@ impl AuditSink for OutboxAuditSink {
         self.outbox
             .enqueue(vec![entry])
             .await
-            .map_err(|e| PlatformError::Backend {
-                message: format!("outbox enqueue: {e}"),
-            })
+            .map_err(|e| PlatformError::Backend { message: format!("outbox enqueue: {e}") })
     }
 }
 
@@ -419,8 +414,8 @@ mod tests {
     #[cfg(feature = "audit-outbox")]
     mod outbox_sink_tests {
         use super::*;
-        use klauthed_data::outbox::{Outbox, OutboxEntry};
         use klauthed_data::outbox::sql::SqlOutbox;
+        use klauthed_data::outbox::{Outbox, OutboxEntry};
 
         async fn memory_outbox() -> SqlOutbox {
             sqlx::any::install_default_drivers();
@@ -467,8 +462,7 @@ mod tests {
             let entries: Vec<OutboxEntry> = outbox.fetch_unpublished(10).await.unwrap();
             assert_eq!(entries.len(), 1);
 
-            let recovered: AuditEvent =
-                serde_json::from_value(entries[0].payload.clone()).unwrap();
+            let recovered: AuditEvent = serde_json::from_value(entries[0].payload.clone()).unwrap();
             assert_eq!(recovered, original);
         }
 
@@ -477,9 +471,7 @@ mod tests {
             let outbox = memory_outbox().await;
             let sink = OutboxAuditSink::new(outbox.clone());
 
-            let event = AuditEvent::builder("invoice.paid")
-                .actor("svc-billing")
-                .build();
+            let event = AuditEvent::builder("invoice.paid").actor("svc-billing").build();
             let action = event.action().to_owned();
 
             sink.record(event).await.unwrap();

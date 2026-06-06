@@ -59,11 +59,7 @@ impl Telemetry {
 /// per features and config, the metrics recorder and OTLP trace pipeline.
 pub fn init(config: &TelemetryConfig) -> Result<Telemetry, ObservabilityError> {
     #[cfg(feature = "metrics")]
-    let metrics = if config.metrics.enabled {
-        Some(metrics::install()?)
-    } else {
-        None
-    };
+    let metrics = if config.metrics.enabled { Some(metrics::install()?) } else { None };
 
     // `mut` is only used when the otel layer is pushed below.
     #[cfg_attr(not(feature = "otel"), allow(unused_mut))]

@@ -57,9 +57,7 @@ use syn::{Attribute, Data, DeriveInput, Fields, Ident, LitStr, parse_macro_input
 #[proc_macro_derive(DomainError, attributes(domain))]
 pub fn derive_domain_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    expand(input)
-        .unwrap_or_else(syn::Error::into_compile_error)
-        .into()
+    expand(input).unwrap_or_else(syn::Error::into_compile_error).into()
 }
 
 /// Parsed `#[domain(...)]` options (used at both container and variant level).
@@ -91,8 +89,9 @@ fn parse_domain_attr(attrs: &[Attribute]) -> syn::Result<DomainAttr> {
             } else if is_prefix {
                 &mut out.prefix
             } else {
-                return Err(meta
-                    .error("unknown `domain` key (expected category, code, prefix, or transparent)"));
+                return Err(meta.error(
+                    "unknown `domain` key (expected category, code, prefix, or transparent)",
+                ));
             };
             let value: LitStr = meta.value()?.parse()?;
             let s = value.value();
@@ -123,7 +122,9 @@ fn validate_code_segment(value: &str, span: proc_macro2::Span) -> syn::Result<()
     if value.starts_with('.') || value.ends_with('.') || value.contains("..") {
         return Err(syn::Error::new(
             span,
-            format!("code '{value}' has invalid dot placement (no leading, trailing, or consecutive dots)"),
+            format!(
+                "code '{value}' has invalid dot placement (no leading, trailing, or consecutive dots)"
+            ),
         ));
     }
     for segment in value.split('.') {
@@ -150,11 +151,7 @@ fn validate_prefix_segment(value: &str, span: proc_macro2::Span) -> syn::Result<
 }
 
 /// Validate a single `[a-z][a-z0-9_]*` identifier segment.
-fn validate_ident_segment(
-    segment: &str,
-    full: &str,
-    span: proc_macro2::Span,
-) -> syn::Result<()> {
+fn validate_ident_segment(segment: &str, full: &str, span: proc_macro2::Span) -> syn::Result<()> {
     if segment.is_empty() {
         return Err(syn::Error::new(
             span,
@@ -198,10 +195,7 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
         Data::Enum(data) => enum_bodies(&data.variants, &container)?,
         Data::Struct(data) => struct_bodies(name, &data.fields, &container)?,
         Data::Union(_) => {
-            return Err(syn::Error::new(
-                input.span(),
-                "DomainError cannot be derived for unions",
-            ));
+            return Err(syn::Error::new(input.span(), "DomainError cannot be derived for unions"));
         }
     };
 
@@ -229,11 +223,8 @@ fn enum_bodies<'a>(
         let vident = &variant.ident;
         // Forward `#[cfg(...)]` so feature-gated variants and their match arms
         // appear or vanish together.
-        let cfgs: Vec<&Attribute> = variant
-            .attrs
-            .iter()
-            .filter(|a| a.path().is_ident("cfg"))
-            .collect();
+        let cfgs: Vec<&Attribute> =
+            variant.attrs.iter().filter(|a| a.path().is_ident("cfg")).collect();
 
         if attr.transparent {
             let (pattern, binding) = transparent_pattern(&variant.fields, vident.span())?;
@@ -285,11 +276,7 @@ fn category_path(
     container: &DomainAttr,
     span: proc_macro2::Span,
 ) -> syn::Result<TokenStream2> {
-    let name = attr
-        .category
-        .as_deref()
-        .or(container.category.as_deref())
-        .unwrap_or("internal");
+    let name = attr.category.as_deref().or(container.category.as_deref()).unwrap_or("internal");
     let variant = match name {
         "bad_request" => "BadRequest",
         "unauthorized" => "Unauthorized",
@@ -322,9 +309,7 @@ fn category_path(
 /// Conversion uses [`heck::ToSnakeCase`], which correctly handles consecutive
 /// capitals (e.g. `HTTPError` → `http_error`, `APIKey` → `api_key`).
 fn build_code(prefix: Option<&str>, code: Option<&str>, ident: &Ident) -> String {
-    let suffix = code
-        .map(str::to_owned)
-        .unwrap_or_else(|| ident.to_string().to_snake_case());
+    let suffix = code.map(str::to_owned).unwrap_or_else(|| ident.to_string().to_snake_case());
     match prefix {
         Some(prefix) => format!("{prefix}.{suffix}"),
         None => suffix,
@@ -374,4 +359,3 @@ fn transparent_field_access(fields: &Fields, span: proc_macro2::Span) -> syn::Re
         )),
     }
 }
-

@@ -39,8 +39,8 @@ pub mod redis;
 pub mod mongo;
 
 use async_trait::async_trait;
-use klauthed_core::time::Duration;
 use klauthed_core::id::Id;
+use klauthed_core::time::Duration;
 use klauthed_core::time::{Clock, SystemClock, Timestamp};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -67,11 +67,7 @@ pub trait LockManager: Send + Sync {
     /// # Errors
     /// Returns a [`DataError`] only on backend failure; contention is reported
     /// as `Ok(None)`, not an error.
-    async fn acquire(
-        &self,
-        key: &str,
-        ttl: Duration,
-    ) -> Result<Option<LockGuard>, DataError>;
+    async fn acquire(&self, key: &str, ttl: Duration) -> Result<Option<LockGuard>, DataError>;
 }
 
 /// Which backend a [`LockGuard`] releases against.
@@ -107,12 +103,7 @@ pub struct LockGuard {
 impl LockGuard {
     /// Construct an in-memory guard (used by [`InMemoryLockManager`]).
     fn in_memory(key: String, token: LockToken, table: Arc<LockTable>) -> Self {
-        Self {
-            key,
-            token,
-            backend: LockBackend::InMemory(table),
-            released: false,
-        }
+        Self { key, token, backend: LockBackend::InMemory(table), released: false }
     }
 
     /// Construct a Redis-backed guard (used by `RedisLockManager`).
@@ -122,12 +113,7 @@ impl LockGuard {
         token: LockToken,
         manager: self::redis::RedisLockManager,
     ) -> Self {
-        Self {
-            key,
-            token,
-            backend: LockBackend::Redis(manager),
-            released: false,
-        }
+        Self { key, token, backend: LockBackend::Redis(manager), released: false }
     }
 
     /// Construct a MongoDB-backed guard (used by `MongoLockManager`).
@@ -137,12 +123,7 @@ impl LockGuard {
         token: LockToken,
         manager: self::mongo::MongoLockManager,
     ) -> Self {
-        Self {
-            key,
-            token,
-            backend: LockBackend::Mongo(manager),
-            released: false,
-        }
+        Self { key, token, backend: LockBackend::Mongo(manager), released: false }
     }
 
     /// The key this guard holds.
@@ -239,10 +220,7 @@ pub struct InMemoryLockManager {
 impl InMemoryLockManager {
     /// A manager driven by `clock` (use a `FixedClock` in tests).
     pub fn new(clock: Arc<dyn Clock>) -> Self {
-        Self {
-            table: Arc::new(Mutex::new(HashMap::new())),
-            clock,
-        }
+        Self { table: Arc::new(Mutex::new(HashMap::new())), clock }
     }
 }
 
@@ -255,11 +233,7 @@ impl Default for InMemoryLockManager {
 
 #[async_trait]
 impl LockManager for InMemoryLockManager {
-    async fn acquire(
-        &self,
-        key: &str,
-        ttl: Duration,
-    ) -> Result<Option<LockGuard>, DataError> {
+    async fn acquire(&self, key: &str, ttl: Duration) -> Result<Option<LockGuard>, DataError> {
         let now = self.clock.now();
         let expires_at = now
             .checked_add(ttl)
@@ -268,9 +242,7 @@ impl LockManager for InMemoryLockManager {
         let mut guard = self.table.lock().expect("lock table mutex poisoned");
 
         // A key is takeable if absent or if its current holder has expired.
-        let live_holder = guard
-            .get(key)
-            .is_some_and(|(_, holder_expiry)| now < *holder_expiry);
+        let live_holder = guard.get(key).is_some_and(|(_, holder_expiry)| now < *holder_expiry);
         if live_holder {
             return Ok(None);
         }
@@ -279,11 +251,7 @@ impl LockManager for InMemoryLockManager {
         guard.insert(key.to_owned(), (token, expires_at));
         drop(guard);
 
-        Ok(Some(LockGuard::in_memory(
-            key.to_owned(),
-            token,
-            Arc::clone(&self.table),
-        )))
+        Ok(Some(LockGuard::in_memory(key.to_owned(), token, Arc::clone(&self.table))))
     }
 }
 
@@ -301,11 +269,8 @@ mod tests {
         let clock = Arc::new(FixedClock::at_unix_millis(0));
         let locks = manager_with(clock);
 
-        let first = locks
-            .acquire("k", Duration::seconds(30))
-            .await
-            .unwrap()
-            .expect("first acquire wins");
+        let first =
+            locks.acquire("k", Duration::seconds(30)).await.unwrap().expect("first acquire wins");
         assert_eq!(first.key(), "k");
 
         // Second acquire while the first is alive returns None.

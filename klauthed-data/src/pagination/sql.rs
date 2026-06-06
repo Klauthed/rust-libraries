@@ -92,11 +92,7 @@ pub fn sort_clause(sort: &[SortKey], allowed_fields: &[&str]) -> String {
         })
         .collect();
 
-    if parts.is_empty() {
-        String::new()
-    } else {
-        format!(" ORDER BY {}", parts.join(", "))
-    }
+    if parts.is_empty() { String::new() } else { format!(" ORDER BY {}", parts.join(", ")) }
 }
 
 /// Build the keyset `WHERE` clause fragment for compound column pagination.
@@ -145,11 +141,7 @@ pub fn keyset_where_clause(
             KeysetDialect::Question => "?".to_owned(),
         })
         .collect();
-    Some(format!(
-        "({}) > ({})",
-        cols.join(", "),
-        params.join(", ")
-    ))
+    Some(format!("({}) > ({})", cols.join(", "), params.join(", ")))
 }
 
 #[cfg(test)]
@@ -177,10 +169,8 @@ mod tests {
 
     #[test]
     fn sort_clause_multi_mixed() {
-        let s = sort_clause(
-            &[SortKey::asc("created_at"), SortKey::desc("id")],
-            &["created_at", "id"],
-        );
+        let s =
+            sort_clause(&[SortKey::asc("created_at"), SortKey::desc("id")], &["created_at", "id"]);
         assert_eq!(s, " ORDER BY created_at ASC, id DESC");
     }
 
@@ -207,11 +197,7 @@ mod tests {
 
     #[test]
     fn keyset_where_question_mark() {
-        let clause = keyset_where_clause(
-            &[SortKey::asc("id")],
-            1,
-            KeysetDialect::Question,
-        );
+        let clause = keyset_where_clause(&[SortKey::asc("id")], 1, KeysetDialect::Question);
         assert_eq!(clause, Some("(id) > (?)".to_owned()));
     }
 

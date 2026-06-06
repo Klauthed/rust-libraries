@@ -32,16 +32,12 @@ pub struct EnvProvider {
 impl EnvProvider {
     /// Provider using the default `APP` prefix.
     pub fn new() -> Self {
-        Self {
-            prefix: DEFAULT_PREFIX.to_owned(),
-        }
+        Self { prefix: DEFAULT_PREFIX.to_owned() }
     }
 
     /// Provider using a custom prefix (without the trailing underscore).
     pub fn with_prefix(prefix: impl Into<String>) -> Self {
-        Self {
-            prefix: prefix.into(),
-        }
+        Self { prefix: prefix.into() }
     }
 
     /// Collect matching variables from an arbitrary iterator. Kept separate from
@@ -124,10 +120,7 @@ mod tests {
     use serde_json::json;
 
     fn vars(pairs: &[(&str, &str)]) -> Vec<(String, String)> {
-        pairs
-            .iter()
-            .map(|(k, v)| (k.to_string(), v.to_string()))
-            .collect()
+        pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
     }
 
     #[test]

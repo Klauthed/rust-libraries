@@ -209,10 +209,7 @@ mod tests {
     fn deadline_and_received_at_pinning() {
         let received = Timestamp::from_unix_millis(10_000);
         let deadline = Timestamp::from_unix_millis(15_000);
-        let ctx = TestContextBuilder::new()
-            .received_at(received)
-            .deadline(deadline)
-            .build();
+        let ctx = TestContextBuilder::new().received_at(received).deadline(deadline).build();
         assert_eq!(ctx.received_at(), received);
         assert_eq!(ctx.deadline(), Some(deadline));
     }

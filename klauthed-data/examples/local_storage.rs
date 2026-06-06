@@ -18,9 +18,7 @@ use object_store::path::Path as ObjectPath;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // In a real service this comes from `Config::load().await?.storage()?`.
-    let config = StorageConfig::Local {
-        root: std::env::temp_dir().join("klauthed-example-store"),
-    };
+    let config = StorageConfig::Local { root: std::env::temp_dir().join("klauthed-example-store") };
 
     let store = storage::connect(&config).await?;
 

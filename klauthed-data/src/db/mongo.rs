@@ -29,20 +29,15 @@ use crate::error::DataError;
 /// Sets `server_selection_timeout` from `config.pool.acquire_timeout_secs`.
 /// Returns a connected (but not verified) [`Client`].
 pub async fn connect(config: &DatabaseConfig) -> Result<Client, DataError> {
-    let uri = config
-        .url
-        .as_deref()
-        .unwrap_or("mongodb://127.0.0.1:27017");
+    let uri = config.url.as_deref().unwrap_or("mongodb://127.0.0.1:27017");
 
     let mut opts = ClientOptions::parse(uri)
         .await
         .map_err(|e| DataError::Outbox(format!("mongodb URI parse error: {e}")))?;
 
-    opts.server_selection_timeout =
-        Some(Duration::from_secs(config.pool.acquire_timeout_secs));
+    opts.server_selection_timeout = Some(Duration::from_secs(config.pool.acquire_timeout_secs));
 
-    Client::with_options(opts)
-        .map_err(|e| DataError::Outbox(format!("mongodb client error: {e}")))
+    Client::with_options(opts).map_err(|e| DataError::Outbox(format!("mongodb client error: {e}")))
 }
 
 /// Connect to MongoDB and verify the server responds to a `ping` command.
@@ -72,12 +67,9 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires a live MongoDB at MONGODB_URL"]
     async fn connect_verified_and_ping() {
-        let url = std::env::var("MONGODB_URL")
-            .unwrap_or_else(|_| "mongodb://127.0.0.1:27017".to_owned());
-        let config = DatabaseConfig {
-            url: Some(url),
-            ..Default::default()
-        };
+        let url =
+            std::env::var("MONGODB_URL").unwrap_or_else(|_| "mongodb://127.0.0.1:27017".to_owned());
+        let config = DatabaseConfig { url: Some(url), ..Default::default() };
         let client = connect_verified(&config).await.expect("connect+ping");
         ping(&client).await.expect("second ping");
     }

@@ -39,17 +39,10 @@ impl TelemetryConfig {
     /// A config for `service_name` with profile-appropriate defaults: human
     /// `Pretty` logs on local/dev/test, structured `Json` logs on staging/prod.
     pub fn for_profile(profile: &Profile, service_name: impl Into<String>) -> Self {
-        let format = if profile.requires_vault() {
-            LogFormat::Json
-        } else {
-            LogFormat::Pretty
-        };
+        let format = if profile.requires_vault() { LogFormat::Json } else { LogFormat::Pretty };
         Self {
             service_name: service_name.into(),
-            log: LogConfig {
-                format,
-                ..LogConfig::default()
-            },
+            log: LogConfig { format, ..LogConfig::default() },
             ..Self::default()
         }
     }
@@ -78,11 +71,7 @@ fn default_true() -> bool {
 
 impl Default for LogConfig {
     fn default() -> Self {
-        Self {
-            format: LogFormat::default(),
-            level: default_level(),
-            ansi: default_true(),
-        }
+        Self { format: LogFormat::default(), level: default_level(), ansi: default_true() }
     }
 }
 
@@ -160,10 +149,7 @@ mod tests {
             TelemetryConfig::for_profile(&Profile::Local, "svc").log.format,
             LogFormat::Pretty
         );
-        assert_eq!(
-            TelemetryConfig::for_profile(&Profile::Prod, "svc").log.format,
-            LogFormat::Json
-        );
+        assert_eq!(TelemetryConfig::for_profile(&Profile::Prod, "svc").log.format, LogFormat::Json);
     }
 
     #[test]

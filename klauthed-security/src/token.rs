@@ -4,8 +4,8 @@
 //! Bytes come from the OS CSPRNG (via `ring`); [`random_token`] renders them as
 //! URL-safe, unpadded base64 so the result is safe in URLs, headers and cookies.
 
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ring::rand::{SecureRandom, SystemRandom};
 
 use crate::error::SecurityError;
@@ -20,9 +20,7 @@ use crate::error::SecurityError;
 /// ```
 pub fn random_bytes(n: usize) -> Result<Vec<u8>, SecurityError> {
     let mut buf = vec![0u8; n];
-    SystemRandom::new()
-        .fill(&mut buf)
-        .map_err(|_| SecurityError::Rng)?;
+    SystemRandom::new().fill(&mut buf).map_err(|_| SecurityError::Rng)?;
     Ok(buf)
 }
 

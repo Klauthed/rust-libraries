@@ -102,9 +102,7 @@ pub struct InMemoryTokenDenylist {
 impl std::fmt::Debug for InMemoryTokenDenylist {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let len = self.entries.lock().map(|m| m.len()).unwrap_or(0);
-        f.debug_struct("InMemoryTokenDenylist")
-            .field("entries", &len)
-            .finish_non_exhaustive()
+        f.debug_struct("InMemoryTokenDenylist").field("entries", &len).finish_non_exhaustive()
     }
 }
 
@@ -124,10 +122,7 @@ impl InMemoryTokenDenylist {
     /// A denylist driven by `clock`.
     #[must_use]
     pub fn with_clock(clock: Arc<dyn Clock>) -> Self {
-        Self {
-            entries: Arc::new(Mutex::new(HashMap::new())),
-            clock,
-        }
+        Self { entries: Arc::new(Mutex::new(HashMap::new())), clock }
     }
 
     /// Number of entries currently in the denylist (including expired ones not
@@ -147,10 +142,7 @@ impl InMemoryTokenDenylist {
 #[async_trait]
 impl TokenDenylist for InMemoryTokenDenylist {
     async fn revoke(&self, jti: String, expires_at: Timestamp) -> Result<(), SecurityError> {
-        self.entries
-            .lock()
-            .expect("denylist mutex poisoned")
-            .insert(jti, expires_at);
+        self.entries.lock().expect("denylist mutex poisoned").insert(jti, expires_at);
         Ok(())
     }
 

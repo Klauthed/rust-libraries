@@ -163,9 +163,7 @@ impl Tenant {
         if self.is_active() {
             Ok(self)
         } else {
-            Err(PlatformError::TenantSuspended {
-                slug: self.slug.clone(),
-            })
+            Err(PlatformError::TenantSuspended { slug: self.slug.clone() })
         }
     }
 }
@@ -186,9 +184,7 @@ pub trait TenantResolver: Send + Sync {
     async fn require(&self, id_or_slug: &str) -> Result<Tenant, PlatformError> {
         match self.resolve(id_or_slug).await? {
             Some(tenant) => Ok(tenant),
-            None => Err(PlatformError::TenantNotFound {
-                id_or_slug: id_or_slug.to_owned(),
-            }),
+            None => Err(PlatformError::TenantNotFound { id_or_slug: id_or_slug.to_owned() }),
         }
     }
 }
@@ -223,9 +219,7 @@ impl InMemoryTenantResolver {
 
     /// Build from an iterator of tenants.
     pub fn with_tenants(tenants: impl IntoIterator<Item = Tenant>) -> Self {
-        Self {
-            tenants: Mutex::new(tenants.into_iter().collect()),
-        }
+        Self { tenants: Mutex::new(tenants.into_iter().collect()) }
     }
 
     /// Insert (or replace, by id) a tenant.

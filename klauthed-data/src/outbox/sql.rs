@@ -74,10 +74,7 @@ CREATE TABLE IF NOT EXISTS outbox (
     /// Wrap an existing pool, using the [`DEFAULT_TABLE`](Self::DEFAULT_TABLE)
     /// table name.
     pub fn new(pool: AnyPool) -> Self {
-        Self {
-            pool,
-            table: Self::DEFAULT_TABLE.to_owned(),
-        }
+        Self { pool, table: Self::DEFAULT_TABLE.to_owned() }
     }
 
     /// Borrow the underlying pool.
@@ -90,9 +87,7 @@ CREATE TABLE IF NOT EXISTS outbox (
     /// Uses the bundled [`CREATE_TABLE_SQL`](Self::CREATE_TABLE_SQL); safe to call
     /// repeatedly. For non-default table names, run equivalent DDL yourself.
     pub async fn ensure_schema(&self) -> Result<(), DataError> {
-        sqlx::query(Self::CREATE_TABLE_SQL)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(Self::CREATE_TABLE_SQL).execute(&self.pool).await?;
         Ok(())
     }
 
@@ -270,9 +265,7 @@ mod tests {
             aggregate_type: Cow::Borrowed("account"),
             sequence: seq,
             occurred_at: Timestamp::from_unix_millis(1_000 + seq as i64),
-            payload: Opened {
-                owner: format!("owner-{seq}"),
-            },
+            payload: Opened { owner: format!("owner-{seq}") },
         };
         OutboxEntry::from_envelope(&envelope).unwrap()
     }

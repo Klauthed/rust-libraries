@@ -148,10 +148,7 @@ impl InMemoryOutbox {
 #[async_trait]
 impl Outbox for InMemoryOutbox {
     async fn enqueue(&self, entries: Vec<OutboxEntry>) -> Result<(), DataError> {
-        self.entries
-            .lock()
-            .expect("outbox mutex poisoned")
-            .extend(entries);
+        self.entries.lock().expect("outbox mutex poisoned").extend(entries);
         Ok(())
     }
 
@@ -202,9 +199,7 @@ mod tests {
             aggregate_type: Cow::Borrowed("account"),
             sequence: seq,
             occurred_at: Timestamp::from_unix_millis(1_000),
-            payload: Opened {
-                owner: "alice".to_owned(),
-            },
+            payload: Opened { owner: "alice".to_owned() },
         }
     }
 
@@ -246,9 +241,7 @@ mod tests {
     #[tokio::test]
     async fn fetch_unpublished_honors_limit() {
         let outbox = InMemoryOutbox::new();
-        let entries = (1..=5)
-            .map(|s| OutboxEntry::from_envelope(&envelope(s)).unwrap())
-            .collect();
+        let entries = (1..=5).map(|s| OutboxEntry::from_envelope(&envelope(s)).unwrap()).collect();
         outbox.enqueue(entries).await.unwrap();
 
         assert_eq!(outbox.fetch_unpublished(2).await.unwrap().len(), 2);

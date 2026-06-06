@@ -32,7 +32,9 @@ enum DemoError {
     Duplicate(String),
     // struct variant; code defaults → "demo.invalid"
     #[domain(category = "bad_request")]
-    Invalid { reason: String },
+    Invalid {
+        reason: String,
+    },
     // no #[domain] attr at all → category internal, code "demo.defaulted"
     Defaulted,
     // delegates category()/code() to the wrapped DomainError
@@ -57,9 +59,7 @@ fn category_and_code_from_attributes() {
     assert_eq!(dup.category(), ErrorCategory::Conflict);
     assert_eq!(dup.code().as_str(), "demo.already_there");
 
-    let invalid = DemoError::Invalid {
-        reason: "bad".into(),
-    };
+    let invalid = DemoError::Invalid { reason: "bad".into() };
     assert_eq!(invalid.category(), ErrorCategory::BadRequest);
     assert_eq!(invalid.code().as_str(), "demo.invalid");
 }
@@ -149,15 +149,9 @@ impl std::error::Error for CircuitOpen {}
 
 #[test]
 fn valid_codes_compile_and_produce_correct_strings() {
-    assert_eq!(
-        ValidCodes::WithUnderscore.code().as_str(),
-        "svc.resource_not_found"
-    );
+    assert_eq!(ValidCodes::WithUnderscore.code().as_str(), "svc.resource_not_found");
     assert_eq!(ValidCodes::WithDigit.code().as_str(), "svc.step2_failed");
-    assert_eq!(
-        ValidCodes::ConnectionTimeout.code().as_str(),
-        "svc.connection_timeout"
-    );
+    assert_eq!(ValidCodes::ConnectionTimeout.code().as_str(), "svc.connection_timeout");
     // Fully-qualified code preserves the dot.
     assert_eq!(CircuitOpen.code().as_str(), "infra.circuit_open");
 }

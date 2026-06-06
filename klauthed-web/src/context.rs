@@ -26,7 +26,7 @@
 //!     .route("/", web::get().to(handler));
 //! ```
 
-use std::future::{ready, Ready};
+use std::future::{Ready, ready};
 use std::ops::Deref;
 use std::rc::Rc;
 use std::task::{Context as TaskContext, Poll};
@@ -127,9 +127,7 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(RequestContextService {
-            service: Rc::new(service),
-        }))
+        ready(Ok(RequestContextService { service: Rc::new(service) }))
     }
 }
 
@@ -165,8 +163,7 @@ where
             let mut res = call_in_context(service, req, ctx).await?;
 
             if let Ok(value) = HeaderValue::from_str(&request_id.to_string()) {
-                res.headers_mut()
-                    .insert(HeaderName::from_static(REQUEST_ID_HEADER), value);
+                res.headers_mut().insert(HeaderName::from_static(REQUEST_ID_HEADER), value);
             }
 
             Ok(res)
@@ -239,11 +236,7 @@ impl FromRequest for Context {
     type Future = Ready<Result<Self, Self::Error>>;
 
     fn from_request(req: &HttpRequest, _payload: &mut actix_web::dev::Payload) -> Self::Future {
-        let ctx = req
-            .extensions()
-            .get::<RequestContext>()
-            .cloned()
-            .unwrap_or_default();
+        let ctx = req.extensions().get::<RequestContext>().cloned().unwrap_or_default();
         ready(Ok(Context(ctx)))
     }
 }
@@ -251,7 +244,7 @@ impl FromRequest for Context {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{test, web, App, HttpResponse};
+    use actix_web::{App, HttpResponse, test, web};
 
     #[std::prelude::v1::test]
     fn first_language_picks_first_tag() {
@@ -264,10 +257,7 @@ mod tests {
 
     #[std::prelude::v1::test]
     fn header_str_trims_and_rejects_empty() {
-        assert_eq!(
-            header_str(Some(&HeaderValue::from_static("  acme "))),
-            Some("acme")
-        );
+        assert_eq!(header_str(Some(&HeaderValue::from_static("  acme "))), Some("acme"));
         assert_eq!(header_str(Some(&HeaderValue::from_static("   "))), None);
         assert_eq!(header_str(None), None);
     }
@@ -285,9 +275,7 @@ mod tests {
     #[actix_web::test]
     async fn middleware_propagates_headers_into_context() {
         let app = test::init_service(
-            App::new()
-                .wrap(RequestContextMiddleware::new())
-                .route("/", web::get().to(echo)),
+            App::new().wrap(RequestContextMiddleware::new()).route("/", web::get().to(echo)),
         )
         .await;
 
@@ -324,9 +312,7 @@ mod tests {
         let incoming = RequestId::new().to_string();
 
         let app = test::init_service(
-            App::new()
-                .wrap(RequestContextMiddleware::new())
-                .route("/", web::get().to(echo)),
+            App::new().wrap(RequestContextMiddleware::new()).route("/", web::get().to(echo)),
         )
         .await;
 
@@ -336,12 +322,7 @@ mod tests {
             .to_request();
 
         let resp = test::call_service(&app, req).await;
-        let echoed = resp
-            .headers()
-            .get(REQUEST_ID_HEADER)
-            .unwrap()
-            .to_str()
-            .unwrap();
+        let echoed = resp.headers().get(REQUEST_ID_HEADER).unwrap().to_str().unwrap();
         assert_eq!(echoed, incoming);
     }
 
@@ -371,9 +352,7 @@ mod tests {
         }
 
         let app = test::init_service(
-            App::new()
-                .wrap(RequestContextMiddleware::new())
-                .route("/", web::get().to(ambient)),
+            App::new().wrap(RequestContextMiddleware::new()).route("/", web::get().to(ambient)),
         )
         .await;
 
@@ -381,13 +360,7 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert!(resp.status().is_success());
 
-        let echoed = resp
-            .headers()
-            .get(REQUEST_ID_HEADER)
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_owned();
+        let echoed = resp.headers().get(REQUEST_ID_HEADER).unwrap().to_str().unwrap().to_owned();
         let body = test::read_body(resp).await;
         assert_eq!(String::from_utf8(body.to_vec()).unwrap(), echoed);
     }

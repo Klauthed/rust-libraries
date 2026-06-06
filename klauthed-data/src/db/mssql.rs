@@ -30,10 +30,7 @@ pub type MssqlPool = bb8::Pool<bb8_tiberius::ConnectionManager>;
 /// `config.url` must be an ADO.NET connection string; the pool is sized to
 /// `config.pool.max_connections`.
 pub async fn connect(config: &DatabaseConfig) -> Result<MssqlPool, DataError> {
-    let ado = config
-        .url
-        .as_deref()
-        .ok_or(DataError::MissingUrl("mssql"))?;
+    let ado = config.url.as_deref().ok_or(DataError::MissingUrl("mssql"))?;
 
     let tiberius_cfg = tiberius::Config::from_ado_string(ado)
         .map_err(|e| DataError::Outbox(format!("mssql config parse error: {e}")))?;
@@ -79,10 +76,7 @@ mod tests {
     #[ignore = "requires a live SQL Server at MSSQL_URL"]
     async fn connect_verified_and_ping() {
         let url = std::env::var("MSSQL_URL").expect("MSSQL_URL must be set");
-        let config = DatabaseConfig {
-            url: Some(url),
-            ..Default::default()
-        };
+        let config = DatabaseConfig { url: Some(url), ..Default::default() };
         let pool = connect_verified(&config).await.expect("connect+ping");
         ping(&pool).await.expect("second ping");
     }

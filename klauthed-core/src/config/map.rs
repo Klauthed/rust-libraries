@@ -73,10 +73,8 @@ impl ConfigMap {
             match key.split_once('.') {
                 None => merge_value(root.0.entry(key).or_insert(Value::Null), value),
                 Some((head, tail)) => {
-                    let entry = root
-                        .0
-                        .entry(head.to_owned())
-                        .or_insert_with(|| Value::Object(Map::new()));
+                    let entry =
+                        root.0.entry(head.to_owned()).or_insert_with(|| Value::Object(Map::new()));
                     insert_nested(entry, tail, value);
                 }
             }
@@ -138,9 +136,7 @@ fn insert_nested(target: &mut Value, path: &str, value: Value) {
     match path.split_once('.') {
         None => merge_value(obj.entry(path.to_owned()).or_insert(Value::Null), value),
         Some((head, tail)) => {
-            let child = obj
-                .entry(head.to_owned())
-                .or_insert_with(|| Value::Object(Map::new()));
+            let child = obj.entry(head.to_owned()).or_insert_with(|| Value::Object(Map::new()));
             insert_nested(child, tail, value);
         }
     }

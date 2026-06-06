@@ -52,19 +52,19 @@ pub mod cors;
 pub mod error;
 pub mod extract;
 pub mod health; // folder: health/{status,registry,routes,checks}.rs
-pub mod oauth;  // folder: oauth/{config,util,handlers}.rs
+pub mod oauth; // folder: oauth/{config,util,handlers}.rs
 pub mod ratelimit;
 pub mod server;
 
+pub use app::Components;
 pub use auth::{AuthenticatedUser, JwtAuth, OptionalAuthentication, TokenRevocationCheck};
-pub use cors::{
-    build_cors, CachedOriginRegistry, CorsConfig, CorsOriginRegistry, DynamicCors,
-    InMemoryOriginRegistry,
-};
 pub use context::{Context, RequestContextMiddleware};
+pub use cors::{
+    CachedOriginRegistry, CorsConfig, CorsOriginRegistry, DynamicCors, InMemoryOriginRegistry,
+    build_cors,
+};
 pub use error::{AppError, AppResult};
 pub use extract::{Json, Validated};
 pub use health::{HealthCheck, HealthRegistry, HealthStatus};
 pub use ratelimit::{KeyBy, RateLimit};
-pub use app::Components;
 pub use server::{serve, serve_with_components, serve_with_defaults};
