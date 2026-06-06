@@ -20,7 +20,7 @@ jobs:
     name: rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check formatting
         run: cargo fmt --all --check
 
@@ -28,7 +28,7 @@ jobs:
     name: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev pkg-config
       - uses: Swatinem/rust-cache@v2
@@ -39,7 +39,7 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev pkg-config
       - uses: Swatinem/rust-cache@v2
@@ -52,7 +52,7 @@ jobs:
     env:
       RUSTDOCFLAGS: -D warnings
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev pkg-config
       - uses: Swatinem/rust-cache@v2
