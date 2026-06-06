@@ -8,19 +8,19 @@
 //! [`Clock`] and [`Timestamp`] are re-exported here so tests can pull everything
 //! time-related from one place.
 
-pub use klauthed_core::time::{Clock, FixedClock, Timestamp};
+pub use klauthed_core::time::{Clock, Duration, FixedClock, Timestamp};
 
 /// A [`FixedClock`] pinned to `unix_millis` milliseconds since the Unix epoch.
 ///
 /// A terse alias for [`FixedClock::at_unix_millis`] so tests read clearly:
 ///
 /// ```
-/// use klauthed_testing::clock::{fixed_clock, Clock};
+/// use klauthed_testing::clock::{fixed_clock, Clock, Duration};
 ///
 /// let clock = fixed_clock(1_700_000_000_000);
 /// let t0 = clock.now();
-/// clock.advance(chrono::Duration::seconds(5));
-/// assert_eq!(clock.now().duration_since(t0).num_seconds(), 5);
+/// clock.advance(Duration::seconds(5));
+/// assert_eq!(clock.now().duration_since(t0).whole_seconds(), 5);
 /// ```
 pub fn fixed_clock(unix_millis: i64) -> FixedClock {
     FixedClock::at_unix_millis(unix_millis)
@@ -45,8 +45,8 @@ mod tests {
         assert_eq!(t0.unix_millis(), 1_000);
         assert_eq!(clock.now(), t0); // does not move on its own
 
-        clock.advance(chrono::Duration::seconds(2));
-        assert_eq!(clock.now().duration_since(t0).num_seconds(), 2);
+        clock.advance(Duration::seconds(2));
+        assert_eq!(clock.now().duration_since(t0).whole_seconds(), 2);
     }
 
     #[test]

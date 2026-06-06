@@ -59,7 +59,7 @@ mod tests {
     use actix_web::http::StatusCode;
     use actix_web::test as http_test;
     use actix_web::{web, App};
-    use klauthed_core::time::{FixedClock, Timestamp};
+    use klauthed_core::time::{Duration, FixedClock, Timestamp};
     use klauthed_security::{
         authz_code::{AuthCodeBuilder, PkceMethod},
         oauth2_client::{ClientGrantType, ClientType, InMemoryClientStore, OAuth2Client,
@@ -102,7 +102,7 @@ mod tests {
                 &klauthed_security::Claims::builder(
                     sub,
                     &klauthed_core::time::SystemClock,
-                    chrono::Duration::hours(1),
+                    Duration::hours(1),
                 )
                 .build(),
             )
@@ -235,7 +235,7 @@ mod tests {
         let code = AuthCodeBuilder::new("c2", "bob")
             .redirect_uri("https://app.example.com/cb")
             .scope(vec!["openid".into()])
-            .build(&*clock, chrono::Duration::minutes(5))
+            .build(&*clock, Duration::minutes(5))
             .unwrap();
         let code_str = code.code.clone();
         config.code_store.store(code).await.unwrap();
@@ -281,7 +281,7 @@ mod tests {
 
         let code = AuthCodeBuilder::new("c3", "carol")
             .redirect_uri("https://app.example.com/cb")
-            .build(&*clock, chrono::Duration::minutes(5))
+            .build(&*clock, Duration::minutes(5))
             .unwrap();
         let code_str = code.code.clone();
         config.code_store.store(code).await.unwrap();
@@ -330,7 +330,7 @@ mod tests {
         let code = AuthCodeBuilder::new("pkce-ok", "dave")
             .redirect_uri("https://app.example.com/cb")
             .pkce(&challenge, PkceMethod::S256)
-            .build(&*clock, chrono::Duration::minutes(5))
+            .build(&*clock, Duration::minutes(5))
             .unwrap();
         let code_str = code.code.clone();
         config.code_store.store(code).await.unwrap();
@@ -368,7 +368,7 @@ mod tests {
         let code = AuthCodeBuilder::new("pkce-bad", "eve")
             .redirect_uri("https://app.example.com/cb")
             .pkce(&challenge, PkceMethod::S256)
-            .build(&*clock, chrono::Duration::minutes(5))
+            .build(&*clock, Duration::minutes(5))
             .unwrap();
         let code_str = code.code.clone();
         config.code_store.store(code).await.unwrap();
@@ -440,7 +440,7 @@ mod tests {
         let code = AuthCodeBuilder::new("c-rt", "alice")
             .redirect_uri("https://app.example.com/cb")
             .scope(vec!["openid".into()])
-            .build(&*clock, chrono::Duration::minutes(5))
+            .build(&*clock, Duration::minutes(5))
             .unwrap();
         let code_str = code.code.clone();
         config.code_store.store(code).await.unwrap();
@@ -482,7 +482,7 @@ mod tests {
         use klauthed_security::refresh_token::RefreshTokenBuilder;
         let rt = RefreshTokenBuilder::new("c-rot", "bob")
             .scope(vec!["openid".into()])
-            .build(&*clock, chrono::Duration::days(30))
+            .build(&*clock, Duration::days(30))
             .unwrap();
         let rt_str = rt.token.clone();
         config.refresh_token_store.as_ref().unwrap().store(rt).await.unwrap();
@@ -523,7 +523,7 @@ mod tests {
         use klauthed_security::refresh_token::RefreshTokenBuilder;
         let rt = RefreshTokenBuilder::new("c-rep", "carol")
             .scope(vec!["openid".into()])
-            .build(&*clock, chrono::Duration::days(30))
+            .build(&*clock, Duration::days(30))
             .unwrap();
         let rt_str = rt.token.clone();
         config.refresh_token_store.as_ref().unwrap().store(rt).await.unwrap();

@@ -16,8 +16,6 @@ tracing.workspace = true
 async-trait.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-# Lock TTLs are chrono::Duration, matching klauthed_core::time's Clock API.
-chrono.workspace = true
 # base64 for cursor encoding; futures-util for BoxFuture in transact.
 base64.workspace = true
 futures-util.workspace = true
@@ -36,7 +34,7 @@ object_store = { version = "0.13", optional = true }
 # MongoDB official driver (async, uses tokio).
 mongodb    = { version = "3", optional = true }
 # SQL Server (MSSQL) via tiberius + bb8 connection pool.
-tiberius   = { version = "0.12", optional = true, default-features = false, features = ["rustls", "chrono"] }
+tiberius   = { version = "0.12", optional = true, default-features = false, features = ["rustls"] }
 tokio-util = { version = "0.7", optional = true, features = ["compat"] }
 bb8        = { version = "0.9", optional = true }
 bb8-tiberius = { version = "0.16", optional = true }

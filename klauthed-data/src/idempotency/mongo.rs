@@ -100,7 +100,7 @@ impl MongoIdempotencyStore {
     /// Compute the `expires_at` timestamp for a newly claimed key.
     fn expires_at(&self) -> Result<Timestamp, DataError> {
         let now = Timestamp::now();
-        let ttl = chrono::Duration::seconds(self.ttl_secs as i64);
+        let ttl = klauthed_core::time::Duration::seconds(self.ttl_secs as i64);
         now.checked_add(ttl)
             .ok_or_else(|| DataError::Idempotency("TTL overflow".to_owned()))
     }

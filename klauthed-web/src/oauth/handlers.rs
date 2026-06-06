@@ -320,7 +320,7 @@ pub async fn exchange_authorization_code(
     HttpResponse::Ok().json(TokenResponse {
         access_token,
         token_type: TokenType::default(),
-        expires_in: Some(config.access_token_ttl.num_seconds()),
+        expires_in: Some(config.access_token_ttl.whole_seconds()),
         scope: if scope_str.is_empty() { None } else { Some(scope_str) },
         refresh_token: refresh_token_value,
         id_token: None,
@@ -465,7 +465,7 @@ pub async fn exchange_refresh_token(req: TokenRequest, config: &OAuthConfig) -> 
     HttpResponse::Ok().json(TokenResponse {
         access_token,
         token_type: TokenType::default(),
-        expires_in: Some(config.access_token_ttl.num_seconds()),
+        expires_in: Some(config.access_token_ttl.whole_seconds()),
         scope: if scope_str.is_empty() { None } else { Some(scope_str) },
         refresh_token: new_refresh_token,
         id_token: None,

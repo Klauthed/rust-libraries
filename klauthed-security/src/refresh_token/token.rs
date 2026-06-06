@@ -1,6 +1,6 @@
 //! `RefreshToken` model and builder.
 
-use klauthed_core::time::{Clock, Timestamp};
+use klauthed_core::time::{Clock, Duration, Timestamp};
 
 use crate::error::SecurityError;
 use crate::token::random_token;
@@ -95,7 +95,7 @@ impl RefreshTokenBuilder {
     pub fn build<C: Clock + ?Sized>(
         self,
         clock: &C,
-        ttl: chrono::Duration,
+        ttl: Duration,
     ) -> Result<RefreshToken, SecurityError> {
         let token = random_token(REFRESH_TOKEN_BYTES)?;
         let family_id = match self.family_id {
@@ -131,7 +131,7 @@ mod tests {
         let clock = FixedClock::at_unix_millis(0);
         let token = RefreshTokenBuilder::new("client", "alice")
             .scope(vec!["openid".into()])
-            .build(&clock, chrono::Duration::days(30))
+            .build(&clock, Duration::days(30))
             .unwrap();
 
         assert_eq!(token.client_id, "client");
@@ -145,11 +145,11 @@ mod tests {
     fn rotation_preserves_family_id() {
         let clock = SystemClock;
         let first = RefreshTokenBuilder::new("c", "u")
-            .build(&clock, chrono::Duration::days(30))
+            .build(&clock, Duration::days(30))
             .unwrap();
         let rotated = RefreshTokenBuilder::new("c", "u")
             .family_id(&first.family_id)
-            .build(&clock, chrono::Duration::days(30))
+            .build(&clock, Duration::days(30))
             .unwrap();
 
         assert_eq!(first.family_id, rotated.family_id);
@@ -160,10 +160,10 @@ mod tests {
     fn tokens_are_unique() {
         let clock = SystemClock;
         let a = RefreshTokenBuilder::new("c", "u")
-            .build(&clock, chrono::Duration::days(30))
+            .build(&clock, Duration::days(30))
             .unwrap();
         let b = RefreshTokenBuilder::new("c", "u")
-            .build(&clock, chrono::Duration::days(30))
+            .build(&clock, Duration::days(30))
             .unwrap();
         assert_ne!(a.token, b.token);
         assert_ne!(a.family_id, b.family_id);
@@ -173,7 +173,7 @@ mod tests {
     fn is_expired_checks_expiry() {
         let clock = FixedClock::at_unix_millis(0);
         let token = RefreshTokenBuilder::new("c", "u")
-            .build(&clock, chrono::Duration::days(1))
+            .build(&clock, Duration::days(1))
             .unwrap();
 
         let before = Timestamp::from_unix_millis(1_000);

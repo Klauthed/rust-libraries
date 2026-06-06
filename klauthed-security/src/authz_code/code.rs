@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use klauthed_core::time::{Clock, Timestamp};
+use klauthed_core::time::{Clock, Duration, Timestamp};
 
 use crate::error::SecurityError;
 use crate::token::random_token;
@@ -127,7 +127,7 @@ impl AuthCodeBuilder {
     pub fn build<C: Clock + ?Sized>(
         self,
         clock: &C,
-        ttl: chrono::Duration,
+        ttl: Duration,
     ) -> Result<AuthCode, SecurityError> {
         let code = random_token(AUTH_CODE_BYTES)?;
         let now = clock.now();
@@ -164,7 +164,7 @@ mod tests {
             .scope(vec!["openid".into()])
             .nonce("n-xyz")
             .pkce("E9Melhoa2...", PkceMethod::S256)
-            .build(&clock, chrono::Duration::minutes(5))
+            .build(&clock, Duration::minutes(5))
             .unwrap();
 
         assert_eq!(code.client_id, "client");
@@ -181,10 +181,10 @@ mod tests {
     fn codes_are_unique_and_url_safe() {
         let clock = SystemClock;
         let a = AuthCodeBuilder::new("c", "u")
-            .build(&clock, chrono::Duration::minutes(5))
+            .build(&clock, Duration::minutes(5))
             .unwrap();
         let b = AuthCodeBuilder::new("c", "u")
-            .build(&clock, chrono::Duration::minutes(5))
+            .build(&clock, Duration::minutes(5))
             .unwrap();
         assert_ne!(a.code, b.code);
         assert!(a
@@ -197,7 +197,7 @@ mod tests {
     fn is_expired_checks_expiry() {
         let clock = FixedClock::at_unix_millis(0);
         let code = AuthCodeBuilder::new("c", "u")
-            .build(&clock, chrono::Duration::minutes(5))
+            .build(&clock, Duration::minutes(5))
             .unwrap();
         let before = klauthed_core::time::Timestamp::from_unix_millis(1_000);
         let after =

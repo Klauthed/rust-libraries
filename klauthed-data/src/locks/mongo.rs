@@ -26,7 +26,7 @@
 //! ```
 
 use async_trait::async_trait;
-use chrono::Duration;
+use klauthed_core::time::Duration;
 use klauthed_core::time::Timestamp;
 use mongodb::Collection;
 use mongodb::bson::{Document, doc};

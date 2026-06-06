@@ -174,7 +174,7 @@ impl TokenDenylist for InMemoryTokenDenylist {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use klauthed_core::time::FixedClock;
+    use klauthed_core::time::{Duration, FixedClock};
 
     fn denylist_at(millis: i64) -> (Arc<FixedClock>, InMemoryTokenDenylist) {
         let clock = Arc::new(FixedClock::at_unix_millis(millis));
@@ -182,7 +182,7 @@ mod tests {
         (clock, list)
     }
 
-    /// A timestamp roughly 10 years out — well within chrono's valid range.
+    /// A timestamp roughly 10 years out — well within the representable range.
     fn far_future() -> Timestamp {
         Timestamp::from_unix_millis(9_999_999_999_000) // ~year 2286
     }
@@ -211,14 +211,14 @@ mod tests {
     async fn expired_entry_is_evicted_and_reported_as_not_revoked() {
         let (clock, list) = denylist_at(0);
         // Revoke with an expiry 30 seconds from now.
-        let expires_at = clock.now().checked_add(chrono::Duration::seconds(30)).unwrap();
+        let expires_at = clock.now().checked_add(Duration::seconds(30)).unwrap();
         list.revoke("jti-x".into(), expires_at).await.unwrap();
 
         assert!(list.is_revoked("jti-x").await.unwrap());
         assert_eq!(list.len(), 1);
 
         // Advance past the entry's expiry.
-        clock.advance(chrono::Duration::seconds(31));
+        clock.advance(Duration::seconds(31));
 
         assert!(!list.is_revoked("jti-x").await.unwrap());
         assert!(list.is_empty()); // lazily evicted

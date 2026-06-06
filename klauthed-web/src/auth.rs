@@ -451,7 +451,7 @@ mod tests {
     use actix_web::http::StatusCode;
     use actix_web::test as http_test;
     use actix_web::{web, App, HttpResponse};
-    use klauthed_core::time::SystemClock;
+    use klauthed_core::time::{Duration, SystemClock};
     use klauthed_security::jwt::{Claims, JwtSigner};
     use klauthed_security::JwtVerifier;
 
@@ -469,7 +469,7 @@ mod tests {
     fn valid_token(subject: &str) -> String {
         signer()
             .encode(
-                &Claims::builder(subject, &SystemClock, chrono::Duration::hours(1)).build(),
+                &Claims::builder(subject, &SystemClock, Duration::hours(1)).build(),
             )
             .unwrap()
     }
@@ -478,7 +478,7 @@ mod tests {
     fn expired_token() -> String {
         signer()
             .encode(
-                &Claims::builder("u", &SystemClock, chrono::Duration::hours(-1)).build(),
+                &Claims::builder("u", &SystemClock, Duration::hours(-1)).build(),
             )
             .unwrap()
     }
@@ -590,7 +590,7 @@ mod tests {
         let app = auth_app!();
         let token = JwtSigner::hs256(b"wrong-secret")
             .encode(
-                &Claims::builder("eve", &SystemClock, chrono::Duration::hours(1)).build(),
+                &Claims::builder("eve", &SystemClock, Duration::hours(1)).build(),
             )
             .unwrap();
         let req = http_test::TestRequest::get()
@@ -709,17 +709,16 @@ mod tests {
         let jti = "unique-jti-abc123";
         let token = JwtSigner::hs256(SECRET)
             .encode(
-                &Claims::builder("alice", &SystemClock, chrono::Duration::hours(1))
+                &Claims::builder("alice", &SystemClock, Duration::hours(1))
                     .jwt_id(jti)
                     .build(),
             )
             .unwrap();
 
-        // Use a concrete far-future timestamp that's within chrono's valid range
-        // (i64::MAX / 2 overflows chrono and falls back to now, immediately evicting
-        // the entry). Year 2099 ≈ 4102444800000 ms, well within range.
+        // A concrete far-future expiry (~10 years out) so the denylist entry is
+        // not evicted during the test.
         let far_future = klauthed_core::time::Timestamp::now()
-            .checked_add(chrono::Duration::days(365 * 10))
+            .checked_add(Duration::days(365 * 10))
             .unwrap();
         denylist.revoke(jti.into(), far_future).await.unwrap();
 
@@ -749,7 +748,7 @@ mod tests {
 
         let token = JwtSigner::hs256(SECRET)
             .encode(
-                &Claims::builder("alice", &SystemClock, chrono::Duration::hours(1))
+                &Claims::builder("alice", &SystemClock, Duration::hours(1))
                     .jwt_id("not-revoked")
                     .build(),
             )

@@ -18,7 +18,7 @@
 //!
 //! ```
 //! use std::sync::Arc;
-//! use chrono::Duration;
+//! use klauthed_core::time::Duration;
 //! use klauthed_core::time::SystemClock;
 //! use klauthed_data::locks::{InMemoryLockManager, LockManager};
 //!
@@ -39,7 +39,7 @@ pub mod redis;
 pub mod mongo;
 
 use async_trait::async_trait;
-use chrono::Duration;
+use klauthed_core::time::Duration;
 use klauthed_core::id::Id;
 use klauthed_core::time::{Clock, SystemClock, Timestamp};
 use std::collections::HashMap;

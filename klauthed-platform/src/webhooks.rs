@@ -429,7 +429,7 @@ impl WebhookSender for HttpWebhookSender {
         })?;
 
         // 2. Compute HMAC-SHA256 signature.
-        let timestamp_secs = event.occurred_at().into_datetime().timestamp();
+        let timestamp_secs = event.occurred_at().unix_seconds();
         let signature = sign_payload(endpoint.secret().as_bytes(), timestamp_secs, &body_bytes);
 
         // 3. POST with Content-Type and signature header.

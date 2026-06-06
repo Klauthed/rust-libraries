@@ -18,7 +18,7 @@
 //! at `REDIS_URL` via `cargo test -p klauthed-data --features redis -- --ignored`.
 
 use async_trait::async_trait;
-use chrono::Duration;
+use klauthed_core::time::Duration;
 use redis::aio::ConnectionManager;
 use redis::{ExistenceCheck, SetExpiry, SetOptions};
 
@@ -72,7 +72,7 @@ impl RedisLockManager {
 impl LockManager for RedisLockManager {
     async fn acquire(&self, key: &str, ttl: Duration) -> Result<Option<LockGuard>, DataError> {
         let ttl_ms: u64 = ttl
-            .num_milliseconds()
+            .whole_milliseconds()
             .try_into()
             .map_err(|_| DataError::LockHeld(format!("invalid (non-positive) TTL for lock '{key}'")))?;
         if ttl_ms == 0 {

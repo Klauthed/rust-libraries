@@ -18,9 +18,6 @@ async-trait.workspace = true
 ring.workspace = true
 hex.workspace = true
 
-# Job scheduling/backoff arithmetic.
-chrono.workspace = true
-
 # For OutboxAuditSink: writes audit events to the SQL outbox.
 klauthed-data = { path = "../klauthed-data", optional = true, default-features = false, features = ["sql", "sqlite"] }
 

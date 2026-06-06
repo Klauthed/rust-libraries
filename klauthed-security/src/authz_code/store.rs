@@ -120,7 +120,7 @@ impl AuthCodeStore for InMemoryAuthCodeStore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use klauthed_core::time::FixedClock;
+    use klauthed_core::time::{Duration, FixedClock};
 
     use super::super::code::AuthCodeBuilder;
 
@@ -134,7 +134,7 @@ mod tests {
         AuthCodeBuilder::new(client, subject)
             .redirect_uri("https://app.example.com/cb")
             .scope(vec!["openid".into()])
-            .build(clock, chrono::Duration::minutes(5))
+            .build(clock, Duration::minutes(5))
             .unwrap()
     }
 
@@ -176,7 +176,7 @@ mod tests {
         let code_str = code.code.clone();
 
         store.store(code).await.unwrap();
-        clock.advance(chrono::Duration::minutes(6));
+        clock.advance(Duration::minutes(6));
 
         assert!(store.consume(&code_str).await.unwrap().is_none());
         assert!(store.is_empty());

@@ -388,7 +388,7 @@ mod tests {
                 &klauthed_security::Claims::builder(
                     "alice",
                     &klauthed_core::time::SystemClock,
-                    chrono::Duration::hours(1),
+                    klauthed_core::time::Duration::hours(1),
                 )
                 .build(),
             )

@@ -212,7 +212,7 @@ impl RefreshTokenStore for InMemoryRefreshTokenStore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use klauthed_core::time::FixedClock;
+    use klauthed_core::time::{Duration, FixedClock};
 
     use super::super::token::RefreshTokenBuilder;
 
@@ -225,7 +225,7 @@ mod tests {
     fn token_for(client: &str, subject: &str, clock: &dyn Clock) -> RefreshToken {
         RefreshTokenBuilder::new(client, subject)
             .scope(vec!["openid".into()])
-            .build(clock, chrono::Duration::days(30))
+            .build(clock, Duration::days(30))
             .unwrap()
     }
 
@@ -269,13 +269,13 @@ mod tests {
     async fn expired_token_returns_expired() {
         let (clock, store) = store_at(0);
         let rt = RefreshTokenBuilder::new("c", "carol")
-            .build(&*clock, chrono::Duration::seconds(10))
+            .build(&*clock, Duration::seconds(10))
             .unwrap();
         let token_str = rt.token.clone();
         store.store(rt).await.unwrap();
 
         // Advance past expiry.
-        clock.advance(chrono::Duration::seconds(11));
+        clock.advance(Duration::seconds(11));
 
         let result = store.consume(&token_str).await.unwrap();
         assert!(matches!(result, ConsumeResult::Expired(_)));
@@ -290,7 +290,7 @@ mod tests {
         let family_id = rt1.family_id.clone();
         let rt2 = RefreshTokenBuilder::new("c", "dave")
             .family_id(&family_id)
-            .build(&*clock, chrono::Duration::days(30))
+            .build(&*clock, Duration::days(30))
             .unwrap();
 
         let token1_str = rt1.token.clone();
@@ -318,7 +318,7 @@ mod tests {
         let family_id = rt1.family_id.clone();
         let rt2 = RefreshTokenBuilder::new("c", "eve")
             .family_id(&family_id)
-            .build(&*clock, chrono::Duration::days(30))
+            .build(&*clock, Duration::days(30))
             .unwrap();
         let token2_str = rt2.token.clone();
 

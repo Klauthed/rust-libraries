@@ -21,7 +21,7 @@
 //! let code = AuthCodeBuilder::new("client-id", "user-sub")
 //!     .redirect_uri("https://app.example.com/cb")
 //!     .scope(vec!["openid".into()])
-//!     .build(&*clock, chrono::Duration::minutes(5))
+//!     .build(&*clock, klauthed_core::time::Duration::minutes(5))
 //!     .unwrap();
 //!
 //! let code_str = code.code.clone();

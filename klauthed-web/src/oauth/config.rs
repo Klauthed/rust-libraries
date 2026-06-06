@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use klauthed_core::time::{Clock, SystemClock};
+use klauthed_core::time::{Clock, Duration, SystemClock};
 use klauthed_security::{
     authz_code::AuthCodeStore, oauth2_client::ClientStore, refresh_token::RefreshTokenStore,
     JwtSigner,
@@ -27,11 +27,11 @@ pub struct OAuthConfig {
     /// The `iss` claim placed in every access token.
     pub issuer: String,
     /// Access token lifetime (default: 1 hour).
-    pub access_token_ttl: chrono::Duration,
+    pub access_token_ttl: Duration,
     /// Authorization code lifetime (default: 5 minutes per RFC 6749).
-    pub code_ttl: chrono::Duration,
+    pub code_ttl: Duration,
     /// Refresh token lifetime (default: 30 days).
-    pub refresh_token_ttl: chrono::Duration,
+    pub refresh_token_ttl: Duration,
     /// Clock — injectable for deterministic tests.
     pub(crate) clock: Arc<dyn Clock>,
 }
@@ -53,9 +53,9 @@ pub struct OAuthConfigBuilder {
     refresh_token_store: Option<Arc<dyn RefreshTokenStore>>,
     signer: Option<JwtSigner>,
     issuer: Option<String>,
-    access_token_ttl: Option<chrono::Duration>,
-    code_ttl: Option<chrono::Duration>,
-    refresh_token_ttl: Option<chrono::Duration>,
+    access_token_ttl: Option<Duration>,
+    code_ttl: Option<Duration>,
+    refresh_token_ttl: Option<Duration>,
     clock: Option<Arc<dyn Clock>>,
 }
 
@@ -90,7 +90,7 @@ impl OAuthConfigBuilder {
 
     /// Set the access token lifetime (default: 1 hour).
     #[must_use]
-    pub fn access_token_ttl(mut self, ttl: chrono::Duration) -> Self {
+    pub fn access_token_ttl(mut self, ttl: Duration) -> Self {
         self.access_token_ttl = Some(ttl);
         self
     }
@@ -108,14 +108,14 @@ impl OAuthConfigBuilder {
 
     /// Set the authorization code lifetime (default: 5 minutes per RFC 6749).
     #[must_use]
-    pub fn code_ttl(mut self, ttl: chrono::Duration) -> Self {
+    pub fn code_ttl(mut self, ttl: Duration) -> Self {
         self.code_ttl = Some(ttl);
         self
     }
 
     /// Set the refresh token lifetime (default: 30 days).
     #[must_use]
-    pub fn refresh_token_ttl(mut self, ttl: chrono::Duration) -> Self {
+    pub fn refresh_token_ttl(mut self, ttl: Duration) -> Self {
         self.refresh_token_ttl = Some(ttl);
         self
     }
@@ -139,11 +139,11 @@ impl OAuthConfigBuilder {
             refresh_token_store: self.refresh_token_store,
             signer: self.signer.expect("OAuthConfig: signer is required"),
             issuer: self.issuer.expect("OAuthConfig: issuer is required"),
-            access_token_ttl: self.access_token_ttl.unwrap_or_else(|| chrono::Duration::hours(1)),
-            code_ttl: self.code_ttl.unwrap_or_else(|| chrono::Duration::minutes(5)),
+            access_token_ttl: self.access_token_ttl.unwrap_or_else(|| Duration::hours(1)),
+            code_ttl: self.code_ttl.unwrap_or_else(|| Duration::minutes(5)),
             refresh_token_ttl: self
                 .refresh_token_ttl
-                .unwrap_or_else(|| chrono::Duration::days(30)),
+                .unwrap_or_else(|| Duration::days(30)),
             clock: self.clock.unwrap_or_else(|| Arc::new(SystemClock)),
         }
     }

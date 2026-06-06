@@ -42,7 +42,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
-use chrono::Duration;
+use klauthed_core::time::Duration;
 use klauthed_core::id::Id;
 use klauthed_core::time::{Clock, Timestamp};
 use serde::{Deserialize, Serialize};
@@ -445,7 +445,7 @@ mod tests {
         assert_eq!(after1.last_error(), Some("boom-1"));
         // Backoff after 1 attempt = 1s.
         assert_eq!(
-            after1.run_at().duration_since(clock.now()).num_seconds(),
+            after1.run_at().duration_since(clock.now()).whole_seconds(),
             1
         );
 
@@ -459,7 +459,7 @@ mod tests {
         assert_eq!(after2.status(), JobStatus::Queued);
         // Backoff after 2 attempts = 2s.
         assert_eq!(
-            after2.run_at().duration_since(clock.now()).num_seconds(),
+            after2.run_at().duration_since(clock.now()).whole_seconds(),
             2
         );
 
@@ -505,7 +505,7 @@ mod tests {
         let (_clock, q) = queue(5);
         q.enqueue("k".into(), serde_json::json!(null)).await;
         // Still Queued — not Running — so it must not appear in stall recovery.
-        let recovered = q.dequeue_stalled(Duration::zero()).await;
+        let recovered = q.dequeue_stalled(Duration::ZERO).await;
         assert!(recovered.is_empty());
     }
 
@@ -571,7 +571,7 @@ mod tests {
 
         // Even past the stall window, Succeeded jobs must be ignored.
         clock.advance(Duration::seconds(999));
-        let recovered = q.dequeue_stalled(Duration::zero()).await;
+        let recovered = q.dequeue_stalled(Duration::ZERO).await;
         assert!(recovered.is_empty());
     }
 

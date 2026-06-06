@@ -178,8 +178,7 @@ impl Totp {
     fn unix_secs<C: Clock + ?Sized>(&self, clock: &C) -> u64 {
         clock
             .now()
-            .into_datetime()
-            .timestamp()
+            .unix_seconds()
             .max(0)
             .unsigned_abs()
     }

@@ -29,8 +29,9 @@
 
 use std::collections::BTreeMap;
 
-use chrono::Duration;
 use serde::{Deserialize, Serialize};
+
+use crate::time::Duration;
 
 use crate::id::Id;
 use crate::time::Timestamp;
@@ -274,8 +275,8 @@ mod tests {
 
         assert!(!ctx.is_expired(before));
         assert!(ctx.is_expired(after));
-        assert_eq!(ctx.time_remaining(before).unwrap().num_seconds(), 3);
-        assert_eq!(ctx.age(before).num_seconds(), 2);
+        assert_eq!(ctx.time_remaining(before).unwrap().whole_seconds(), 3);
+        assert_eq!(ctx.age(before).whole_seconds(), 2);
     }
 
     #[test]

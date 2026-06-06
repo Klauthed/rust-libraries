@@ -10,7 +10,6 @@ klauthed-error.workspace = true
 klauthed-macros.workspace = true
 
 async-trait.workspace = true
-chrono.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
 

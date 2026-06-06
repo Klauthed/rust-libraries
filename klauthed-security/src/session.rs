@@ -20,7 +20,7 @@
 //! ```
 //! use klauthed_security::session::{InMemorySessionStore, SessionStore};
 //! use klauthed_core::time::{FixedClock, Timestamp};
-//! use chrono::Duration;
+//! use klauthed_core::time::Duration;
 //! use std::sync::Arc;
 //!
 //! # async fn demo() {
@@ -44,7 +44,7 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 
-use klauthed_core::time::{Clock, SystemClock, Timestamp};
+use klauthed_core::time::{Clock, Duration, SystemClock, Timestamp};
 
 use crate::error::SecurityError;
 use crate::token::random_token;
@@ -135,7 +135,7 @@ pub trait SessionStore: Send + Sync {
     async fn create(
         &self,
         subject: &str,
-        ttl: chrono::Duration,
+        ttl: Duration,
         metadata: Option<HashMap<String, String>>,
     ) -> Result<Session, SecurityError>;
 
@@ -159,7 +159,7 @@ pub trait SessionStore: Send + Sync {
     ///
     /// # Errors
     /// As above, plus any backend failure.
-    async fn touch(&self, id: &SessionId, ttl: chrono::Duration) -> Result<Session, SecurityError>;
+    async fn touch(&self, id: &SessionId, ttl: Duration) -> Result<Session, SecurityError>;
 }
 
 /// A thread-safe, in-memory [`SessionStore`] driven by an injected [`Clock`].
@@ -222,7 +222,7 @@ impl InMemorySessionStore {
     }
 
     /// now + `ttl`, as a [`Timestamp`], erroring on overflow.
-    fn deadline(&self, ttl: chrono::Duration) -> Result<Timestamp, SecurityError> {
+    fn deadline(&self, ttl: Duration) -> Result<Timestamp, SecurityError> {
         self.clock
             .now()
             .checked_add(ttl)
@@ -235,7 +235,7 @@ impl SessionStore for InMemorySessionStore {
     async fn create(
         &self,
         subject: &str,
-        ttl: chrono::Duration,
+        ttl: Duration,
         metadata: Option<HashMap<String, String>>,
     ) -> Result<Session, SecurityError> {
         let now = self.clock.now();
@@ -269,7 +269,7 @@ impl SessionStore for InMemorySessionStore {
         Ok(())
     }
 
-    async fn touch(&self, id: &SessionId, ttl: chrono::Duration) -> Result<Session, SecurityError> {
+    async fn touch(&self, id: &SessionId, ttl: Duration) -> Result<Session, SecurityError> {
         let now = self.clock.now();
         let new_deadline = self.deadline(ttl)?;
         let mut map = self.lock();
@@ -303,7 +303,7 @@ mod tests {
     async fn create_then_get_returns_session() {
         let (_clock, store) = store_at(0);
         let s = store
-            .create("alice", chrono::Duration::minutes(30), None)
+            .create("alice", Duration::minutes(30), None)
             .await
             .unwrap();
         let got = store.get(&s.id).await.unwrap().unwrap();
@@ -315,12 +315,12 @@ mod tests {
     async fn get_returns_none_after_expiry() {
         let (clock, store) = store_at(0);
         let s = store
-            .create("bob", chrono::Duration::seconds(30), None)
+            .create("bob", Duration::seconds(30), None)
             .await
             .unwrap();
         assert!(store.get(&s.id).await.unwrap().is_some());
 
-        clock.advance(chrono::Duration::seconds(31));
+        clock.advance(Duration::seconds(31));
         assert!(store.get(&s.id).await.unwrap().is_none());
         // Lazily evicted.
         assert!(store.is_empty());
@@ -330,19 +330,19 @@ mod tests {
     async fn touch_extends_expiry() {
         let (clock, store) = store_at(0);
         let s = store
-            .create("carol", chrono::Duration::seconds(30), None)
+            .create("carol", Duration::seconds(30), None)
             .await
             .unwrap();
 
-        clock.advance(chrono::Duration::seconds(20));
+        clock.advance(Duration::seconds(20));
         let extended = store
-            .touch(&s.id, chrono::Duration::seconds(30))
+            .touch(&s.id, Duration::seconds(30))
             .await
             .unwrap();
         assert!(extended.expires_at > s.expires_at);
 
         // 25s after the original 30s deadline, but touch reset it.
-        clock.advance(chrono::Duration::seconds(25));
+        clock.advance(Duration::seconds(25));
         assert!(store.get(&s.id).await.unwrap().is_some());
     }
 
@@ -350,12 +350,12 @@ mod tests {
     async fn touch_expired_session_errors() {
         let (clock, store) = store_at(0);
         let s = store
-            .create("dave", chrono::Duration::seconds(10), None)
+            .create("dave", Duration::seconds(10), None)
             .await
             .unwrap();
-        clock.advance(chrono::Duration::seconds(11));
+        clock.advance(Duration::seconds(11));
         let err = store
-            .touch(&s.id, chrono::Duration::seconds(30))
+            .touch(&s.id, Duration::seconds(30))
             .await
             .unwrap_err();
         assert!(matches!(err, SecurityError::SessionExpired));
@@ -367,7 +367,7 @@ mod tests {
     async fn delete_is_idempotent_and_removes() {
         let (_clock, store) = store_at(0);
         let s = store
-            .create("erin", chrono::Duration::minutes(5), None)
+            .create("erin", Duration::minutes(5), None)
             .await
             .unwrap();
         store.delete(&s.id).await.unwrap();
@@ -381,7 +381,7 @@ mod tests {
         let (_clock, store) = store_at(0);
         let missing = SessionId::from_token("does-not-exist");
         let err = store
-            .touch(&missing, chrono::Duration::seconds(30))
+            .touch(&missing, Duration::seconds(30))
             .await
             .unwrap_err();
         assert!(matches!(err, SecurityError::SessionNotFound));
@@ -394,7 +394,7 @@ mod tests {
         let mut meta = HashMap::new();
         meta.insert("device".to_owned(), "cli".to_owned());
         let s = store
-            .create("frank", chrono::Duration::minutes(5), Some(meta))
+            .create("frank", Duration::minutes(5), Some(meta))
             .await
             .unwrap();
         let got = store.get(&s.id).await.unwrap().unwrap();

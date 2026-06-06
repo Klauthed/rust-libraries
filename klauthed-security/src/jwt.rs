@@ -12,7 +12,7 @@
 //! ```
 //! use klauthed_security::jwt::{Claims, JwtSigner, JwtVerifier};
 //! use klauthed_core::time::SystemClock;
-//! use chrono::Duration;
+//! use klauthed_core::time::Duration;
 //!
 //! let signer = JwtSigner::hs256(b"super-secret-signing-key");
 //! let verifier = JwtVerifier::hs256(b"super-secret-signing-key");
@@ -36,7 +36,7 @@ use jsonwebtoken::{
 };
 use serde::{Deserialize, Serialize};
 
-use klauthed_core::time::Clock;
+use klauthed_core::time::{Clock, Duration};
 
 use crate::error::SecurityError;
 use crate::token::random_token;
@@ -81,15 +81,15 @@ impl Claims {
     pub fn builder<C: Clock + ?Sized>(
         subject: impl Into<String>,
         clock: &C,
-        ttl: chrono::Duration,
+        ttl: Duration,
     ) -> ClaimsBuilder {
-        let now = clock.now().into_datetime().timestamp();
+        let now = clock.now().unix_seconds();
         ClaimsBuilder {
             claims: Claims {
                 sub: Some(subject.into()),
                 iss: None,
                 aud: None,
-                exp: now.checked_add(ttl.num_seconds()),
+                exp: now.checked_add(ttl.whole_seconds()),
                 iat: Some(now),
                 nbf: Some(now),
                 jti: None,
@@ -298,7 +298,7 @@ mod tests {
         let signer = JwtSigner::hs256(b"shared-secret");
         let verifier = JwtVerifier::hs256(b"shared-secret");
 
-        let claims = Claims::builder("user-1", &now_clock(), chrono::Duration::hours(1))
+        let claims = Claims::builder("user-1", &now_clock(), Duration::hours(1))
             .issuer("klauthed")
             .audience("api")
             .claim("role", "admin")
@@ -322,7 +322,7 @@ mod tests {
     #[test]
     fn wrong_secret_is_invalid_token() {
         let token = JwtSigner::hs256(b"key-a")
-            .encode(&Claims::builder("u", &now_clock(), chrono::Duration::hours(1)).build())
+            .encode(&Claims::builder("u", &now_clock(), Duration::hours(1)).build())
             .unwrap();
         let err = JwtVerifier::hs256(b"key-b").decode(&token).unwrap_err();
         assert!(matches!(err, SecurityError::InvalidToken(_)));
@@ -332,7 +332,7 @@ mod tests {
     fn expired_token_is_detected() {
         // exp one hour in the past relative to the signing clock.
         let token = JwtSigner::hs256(b"k")
-            .encode(&Claims::builder("u", &now_clock(), chrono::Duration::hours(-1)).build())
+            .encode(&Claims::builder("u", &now_clock(), Duration::hours(-1)).build())
             .unwrap();
         // Verifier uses the real wall clock, so the past `exp` is expired.
         let err = JwtVerifier::hs256(b"k").decode(&token).unwrap_err();
@@ -343,7 +343,7 @@ mod tests {
     fn wrong_issuer_is_invalid() {
         let token = JwtSigner::hs256(b"k")
             .encode(
-                &Claims::builder("u", &now_clock(), chrono::Duration::hours(1))
+                &Claims::builder("u", &now_clock(), Duration::hours(1))
                     .issuer("real")
                     .build(),
             )
@@ -365,7 +365,7 @@ mod tests {
     fn round_trips_with_system_clock() {
         let signer = JwtSigner::hs256(b"k");
         let token = signer
-            .encode(&Claims::builder("sys", &SystemClock, chrono::Duration::minutes(5)).build())
+            .encode(&Claims::builder("sys", &SystemClock, Duration::minutes(5)).build())
             .unwrap();
         let decoded = JwtVerifier::hs256(b"k").decode(&token).unwrap();
         assert_eq!(decoded.sub.as_deref(), Some("sys"));
@@ -374,7 +374,7 @@ mod tests {
 
     #[test]
     fn random_jwt_id_is_set() {
-        let claims = Claims::builder("u", &now_clock(), chrono::Duration::hours(1))
+        let claims = Claims::builder("u", &now_clock(), Duration::hours(1))
             .random_jwt_id()
             .unwrap()
             .build();
