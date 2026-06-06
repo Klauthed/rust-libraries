@@ -43,9 +43,34 @@ impl Timestamp {
         Self(dt)
     }
 
+    /// Construct from milliseconds since the Unix epoch, or `None` if `millis`
+    /// falls outside the representable range (roughly years ±262144).
+    ///
+    /// Mirrors chrono's `timestamp_millis_opt`. Prefer this over
+    /// [`from_unix_millis`](Self::from_unix_millis) when `millis` is untrusted
+    /// or computed and an out-of-range value should be treated as an error
+    /// rather than silently clamped.
+    pub fn from_unix_millis_opt(millis: i64) -> Option<Self> {
+        Utc.timestamp_millis_opt(millis).single().map(Self)
+    }
+
     /// Construct from milliseconds since the Unix epoch.
+    ///
+    /// **Saturating:** a `millis` value outside the representable range (roughly
+    /// years ±262144) is clamped to the earliest or latest representable
+    /// instant, *preserving order* — a far-future overflow stays in the far
+    /// future and a far-past underflow stays in the far past; neither collapses
+    /// to "now". Use [`from_unix_millis_opt`](Self::from_unix_millis_opt) to
+    /// detect out-of-range input instead of saturating.
     pub fn from_unix_millis(millis: i64) -> Self {
-        Self(Utc.timestamp_millis_opt(millis).single().unwrap_or_else(Utc::now))
+        // Saturate toward the sign of the input so the result keeps the same
+        // ordering relative to "now" that the caller intended.
+        let saturated = if millis >= 0 {
+            Self(DateTime::<Utc>::MAX_UTC)
+        } else {
+            Self(DateTime::<Utc>::MIN_UTC)
+        };
+        Self::from_unix_millis_opt(millis).unwrap_or(saturated)
     }
 
     /// The underlying [`DateTime<Utc>`](chrono::DateTime).
@@ -172,6 +197,30 @@ mod tests {
         let json = serde_json::to_string(&ts).unwrap();
         let back: Timestamp = serde_json::from_str(&json).unwrap();
         assert_eq!(ts, back);
+    }
+
+    #[test]
+    fn from_unix_millis_opt_rejects_out_of_range() {
+        assert!(Timestamp::from_unix_millis_opt(0).is_some());
+        assert!(Timestamp::from_unix_millis_opt(1_700_000_000_000).is_some());
+        // Beyond chrono's representable range.
+        assert!(Timestamp::from_unix_millis_opt(i64::MAX).is_none());
+        assert!(Timestamp::from_unix_millis_opt(i64::MIN).is_none());
+    }
+
+    #[test]
+    fn from_unix_millis_saturates_instead_of_collapsing_to_now() {
+        let now = Timestamp::now();
+
+        // A far-future overflow must stay in the far future, not become "now".
+        let future = Timestamp::from_unix_millis(i64::MAX);
+        assert!(future > now);
+        assert_eq!(future, Timestamp::from_datetime(DateTime::<Utc>::MAX_UTC));
+
+        // A far-past underflow saturates to the earliest representable instant.
+        let past = Timestamp::from_unix_millis(i64::MIN);
+        assert!(past < now);
+        assert_eq!(past, Timestamp::from_datetime(DateTime::<Utc>::MIN_UTC));
     }
 
     #[test]
