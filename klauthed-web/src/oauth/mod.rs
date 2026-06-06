@@ -7,6 +7,7 @@
 //! | [`config`] | [`OAuthConfig`] and its builder |
 //! | `util` (internal) | Redirect URL construction and OAuth error responses |
 //! | [`handlers`] | `/oauth/authorize` and `/oauth/token` handler functions |
+//! | [`manage`] | `/oauth/revoke` (RFC 7009) and `/oauth/introspect` (RFC 7662) |
 //! | [`discovery`] | `/.well-known/openid-configuration` |
 //! | [`jwks`] | `/oauth/jwks` — publishes app-registered public keys |
 //! | [`userinfo`] | `/oauth/userinfo` + the [`UserInfoProvider`](userinfo::UserInfoProvider) SPI |
@@ -38,6 +39,7 @@ pub mod config;
 pub mod discovery;
 pub mod handlers;
 pub mod jwks;
+pub mod manage;
 pub mod userinfo;
 pub(super) mod util;
 

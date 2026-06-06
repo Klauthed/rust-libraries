@@ -5,7 +5,7 @@ use std::sync::Arc;
 use klauthed_core::time::{Clock, Duration, SystemClock};
 use klauthed_security::{
     authz_code::AuthCodeStore, oauth2_client::ClientStore, refresh_token::RefreshTokenStore,
-    JwtSigner,
+    JwtSigner, JwtVerifier, TokenDenylist,
 };
 
 // ── OAuthConfig ───────────────────────────────────────────────────────────────
@@ -24,6 +24,16 @@ pub struct OAuthConfig {
     pub refresh_token_store: Option<Arc<dyn RefreshTokenStore>>,
     /// JWT signer used to mint access tokens.
     pub signer: JwtSigner,
+    /// Verifier for decoding access tokens at the revocation and introspection
+    /// endpoints. When `None`, those endpoints cannot inspect access tokens
+    /// (introspection reports `active: false`; access-token revocation is a
+    /// no-op). Not needed for the authorize/token flow.
+    pub verifier: Option<JwtVerifier>,
+    /// Denylist for revoked access-token `jti`s. When set, the revocation
+    /// endpoint records revoked access tokens here and introspection treats
+    /// denylisted tokens as inactive. Share the same instance with the
+    /// resource server's `TokenRevocationCheck` so revocations take effect.
+    pub token_denylist: Option<Arc<dyn TokenDenylist>>,
     /// The `iss` claim placed in every access token.
     pub issuer: String,
     /// Access token lifetime (default: 1 hour).
@@ -52,6 +62,8 @@ pub struct OAuthConfigBuilder {
     code_store: Option<Arc<dyn AuthCodeStore>>,
     refresh_token_store: Option<Arc<dyn RefreshTokenStore>>,
     signer: Option<JwtSigner>,
+    verifier: Option<JwtVerifier>,
+    token_denylist: Option<Arc<dyn TokenDenylist>>,
     issuer: Option<String>,
     access_token_ttl: Option<Duration>,
     code_ttl: Option<Duration>,
@@ -78,6 +90,23 @@ impl OAuthConfigBuilder {
     #[must_use]
     pub fn signer(mut self, signer: JwtSigner) -> Self {
         self.signer = Some(signer);
+        self
+    }
+
+    /// Set the verifier used to decode access tokens at the revocation and
+    /// introspection endpoints (optional; not needed for authorize/token).
+    #[must_use]
+    pub fn verifier(mut self, verifier: JwtVerifier) -> Self {
+        self.verifier = Some(verifier);
+        self
+    }
+
+    /// Set the denylist used to revoke access tokens and to mark them inactive
+    /// during introspection. Share the same instance with the resource server's
+    /// `TokenRevocationCheck`.
+    #[must_use]
+    pub fn token_denylist(mut self, denylist: Arc<dyn TokenDenylist>) -> Self {
+        self.token_denylist = Some(denylist);
         self
     }
 
@@ -138,6 +167,8 @@ impl OAuthConfigBuilder {
             code_store: self.code_store.expect("OAuthConfig: code_store is required"),
             refresh_token_store: self.refresh_token_store,
             signer: self.signer.expect("OAuthConfig: signer is required"),
+            verifier: self.verifier,
+            token_denylist: self.token_denylist,
             issuer: self.issuer.expect("OAuthConfig: issuer is required"),
             access_token_ttl: self.access_token_ttl.unwrap_or_else(|| Duration::hours(1)),
             code_ttl: self.code_ttl.unwrap_or_else(|| Duration::minutes(5)),

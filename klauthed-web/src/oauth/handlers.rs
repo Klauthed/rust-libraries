@@ -9,7 +9,7 @@ use klauthed_protocol::oauth2::{AuthorizationRequest, OAuth2ErrorCode, TokenRequ
 use klauthed_protocol::oidc::{GrantType, ResponseType};
 use klauthed_security::{
     authz_code::{verify_pkce, AuthCodeBuilder, PkceMethod},
-    oauth2_client::ClientGrantType,
+    oauth2_client::{ClientGrantType, OAuth2Client},
     refresh_token::{ConsumeResult, RefreshTokenBuilder},
     Claims,
 };
@@ -216,33 +216,8 @@ pub async fn exchange_authorization_code(
         None => return token_error(OAuth2ErrorCode::InvalidRequest, "client_id is required"),
     };
 
-    let client = match config.client_store.get(client_id).await {
-        Ok(Some(c)) => c,
-        Ok(None) => return token_error(OAuth2ErrorCode::InvalidClient, "unknown client_id"),
-        Err(e) => {
-            tracing::error!(error = %e, "client store lookup failed");
-            return AppError::internal("client store unavailable").error_response();
-        }
-    };
-
-    if let Some(secret_hash) = &client.client_secret_hash {
-        let submitted = match req.client_secret.as_deref() {
-            Some(s) => s,
-            None => {
-                return token_error(
-                    OAuth2ErrorCode::InvalidClient,
-                    "client_secret is required for confidential clients",
-                );
-            }
-        };
-        match klauthed_security::verify_password(submitted, secret_hash) {
-            Ok(true) => {}
-            Ok(false) => return token_error(OAuth2ErrorCode::InvalidClient, "invalid client_secret"),
-            Err(e) => {
-                tracing::error!(error = %e, "client secret verification failed");
-                return AppError::internal("could not verify client credentials").error_response();
-            }
-        }
+    if let Err(resp) = authenticate_client(client_id, req.client_secret.as_deref(), config).await {
+        return resp;
     }
 
     // ── 3. Consume the authorization code (single-use) ────────────────────────
@@ -367,34 +342,10 @@ pub async fn exchange_refresh_token(req: TokenRequest, config: &OAuthConfig) -> 
         None => return token_error(OAuth2ErrorCode::InvalidRequest, "client_id is required"),
     };
 
-    let client = match config.client_store.get(client_id).await {
-        Ok(Some(c)) => c,
-        Ok(None) => return token_error(OAuth2ErrorCode::InvalidClient, "unknown client_id"),
-        Err(e) => {
-            tracing::error!(error = %e, "client store lookup failed");
-            return AppError::internal("client store unavailable").error_response();
-        }
+    let client = match authenticate_client(client_id, req.client_secret.as_deref(), config).await {
+        Ok(c) => c,
+        Err(resp) => return resp,
     };
-
-    if let Some(secret_hash) = &client.client_secret_hash {
-        let submitted = match req.client_secret.as_deref() {
-            Some(s) => s,
-            None => {
-                return token_error(
-                    OAuth2ErrorCode::InvalidClient,
-                    "client_secret is required for confidential clients",
-                );
-            }
-        };
-        match klauthed_security::verify_password(submitted, secret_hash) {
-            Ok(true) => {}
-            Ok(false) => return token_error(OAuth2ErrorCode::InvalidClient, "invalid client_secret"),
-            Err(e) => {
-                tracing::error!(error = %e, "client secret verification failed");
-                return AppError::internal("could not verify client credentials").error_response();
-            }
-        }
-    }
 
     if !client.allows_grant(ClientGrantType::RefreshToken) {
         return token_error(
@@ -498,6 +449,53 @@ pub async fn exchange_refresh_token(req: TokenRequest, config: &OAuthConfig) -> 
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
+
+/// Authenticate a client by `client_id` and, for confidential clients, its
+/// `client_secret`. Shared by the token, revocation, and introspection
+/// endpoints.
+///
+/// Returns the resolved client on success, or `Err(HttpResponse)` carrying the
+/// appropriate `invalid_client` error.
+pub(super) async fn authenticate_client(
+    client_id: &str,
+    client_secret: Option<&str>,
+    config: &OAuthConfig,
+) -> Result<OAuth2Client, HttpResponse> {
+    let client = match config.client_store.get(client_id).await {
+        Ok(Some(c)) => c,
+        Ok(None) => return Err(token_error(OAuth2ErrorCode::InvalidClient, "unknown client_id")),
+        Err(e) => {
+            tracing::error!(error = %e, "client store lookup failed");
+            return Err(AppError::internal("client store unavailable").error_response());
+        }
+    };
+
+    if let Some(secret_hash) = &client.client_secret_hash {
+        let submitted = match client_secret {
+            Some(s) => s,
+            None => {
+                return Err(token_error(
+                    OAuth2ErrorCode::InvalidClient,
+                    "client_secret is required for confidential clients",
+                ));
+            }
+        };
+        match klauthed_security::verify_password(submitted, secret_hash) {
+            Ok(true) => {}
+            Ok(false) => {
+                return Err(token_error(OAuth2ErrorCode::InvalidClient, "invalid client_secret"));
+            }
+            Err(e) => {
+                tracing::error!(error = %e, "client secret verification failed");
+                return Err(
+                    AppError::internal("could not verify client credentials").error_response(),
+                );
+            }
+        }
+    }
+
+    Ok(client)
+}
 
 /// Mint a signed JWT access token, returning `Err(HttpResponse)` on failure.
 fn mint_access_token(

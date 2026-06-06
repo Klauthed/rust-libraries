@@ -329,6 +329,115 @@ impl TokenErrorResponse {
     }
 }
 
+/// A hint about which kind of token is being revoked or introspected
+/// (RFC 7009 section 2.1, RFC 7662 section 2.1).
+///
+/// Serializes to the snake_case wire strings `"access_token"` /
+/// `"refresh_token"`. The server treats it as advisory: it MAY ignore the hint
+/// and check both token types.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TokenTypeHint {
+    /// The token is an access token.
+    AccessToken,
+    /// The token is a refresh token.
+    RefreshToken,
+}
+
+/// A token revocation request (RFC 7009 section 2.1).
+///
+/// Sent `application/x-www-form-urlencoded` to the revocation endpoint. The
+/// client authenticates as it would at the token endpoint (HTTP Basic, or the
+/// `client_id` / `client_secret` form fields modeled here).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RevocationRequest {
+    /// REQUIRED. The token the client wants revoked.
+    pub token: String,
+
+    /// OPTIONAL. A hint about the type of `token`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub token_type_hint: Option<TokenTypeHint>,
+
+    /// The client identifier (when not sent via HTTP auth).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_id: Option<String>,
+
+    /// The client secret (for confidential clients using form-body auth).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_secret: Option<String>,
+}
+
+/// A token introspection request (RFC 7662 section 2.1).
+///
+/// Same wire shape as a [`RevocationRequest`]; modeled separately for clarity.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct IntrospectionRequest {
+    /// REQUIRED. The token to introspect.
+    pub token: String,
+
+    /// OPTIONAL. A hint about the type of `token`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub token_type_hint: Option<TokenTypeHint>,
+
+    /// The client identifier (when not sent via HTTP auth).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_id: Option<String>,
+
+    /// The client secret (for confidential clients using form-body auth).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_secret: Option<String>,
+}
+
+/// A token introspection response (RFC 7662 section 2.2).
+///
+/// `active` is the only REQUIRED member. For an inactive (or unknown) token the
+/// server returns `{"active": false}` and nothing else, to avoid leaking
+/// information. The remaining members are populated only for active tokens.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct IntrospectionResponse {
+    /// REQUIRED. Whether the token is currently active.
+    pub active: bool,
+
+    /// Space-delimited list of scopes associated with the token.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
+
+    /// The client the token was issued to.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_id: Option<String>,
+
+    /// Subject — the user the token was issued for.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sub: Option<String>,
+
+    /// Token type (typically `Bearer`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub token_type: Option<TokenType>,
+
+    /// Expiration time (seconds since the Unix epoch).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exp: Option<i64>,
+
+    /// Issued-at time (seconds since the Unix epoch).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub iat: Option<i64>,
+
+    /// Issuer of the token.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub iss: Option<String>,
+
+    /// The token's unique identifier (`jti`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jti: Option<String>,
+}
+
+impl IntrospectionResponse {
+    /// The canonical inactive response: `{"active": false}`.
+    pub fn inactive() -> Self {
+        Self::default()
+    }
+}
+
 /// Join a list of scope tokens into the space-delimited wire form
 /// (RFC 6749 section 3.3).
 pub fn scope_to_string<I, S>(scopes: I) -> String
