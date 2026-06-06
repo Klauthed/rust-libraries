@@ -317,13 +317,25 @@ pub async fn exchange_authorization_code(
         issue_refresh_token(client_id, &auth_code.subject, &auth_code.scope, None, config)
             .await;
 
+    // ── 9. Issue an OIDC ID token when the `openid` scope was granted ─────────
+    // The `nonce` from the original authorization request is echoed so the
+    // client can bind the ID token to its request (OIDC Core §3.1.3.6).
+    let id_token = if has_openid_scope(&auth_code.scope) {
+        match mint_id_token(&auth_code.subject, client_id, auth_code.nonce.as_deref(), config) {
+            Ok(t) => Some(t),
+            Err(resp) => return resp,
+        }
+    } else {
+        None
+    };
+
     HttpResponse::Ok().json(TokenResponse {
         access_token,
         token_type: TokenType::default(),
         expires_in: Some(config.access_token_ttl.whole_seconds()),
         scope: if scope_str.is_empty() { None } else { Some(scope_str) },
         refresh_token: refresh_token_value,
-        id_token: None,
+        id_token,
     })
 }
 
@@ -462,13 +474,26 @@ pub async fn exchange_refresh_token(req: TokenRequest, config: &OAuthConfig) -> 
     )
     .await;
 
+    // ── 9. Issue an OIDC ID token when the `openid` scope is still granted ────
+    // No `nonce` is echoed: the refresh exchange is decoupled from the original
+    // authorization request, so the original nonce is not available (OIDC Core
+    // §12.2 — nonce is only required when known).
+    let id_token = if has_openid_scope(&scope) {
+        match mint_id_token(&rt.subject, client_id, None, config) {
+            Ok(t) => Some(t),
+            Err(resp) => return resp,
+        }
+    } else {
+        None
+    };
+
     HttpResponse::Ok().json(TokenResponse {
         access_token,
         token_type: TokenType::default(),
         expires_in: Some(config.access_token_ttl.whole_seconds()),
         scope: if scope_str.is_empty() { None } else { Some(scope_str) },
         refresh_token: new_refresh_token,
-        id_token: None,
+        id_token,
     })
 }
 
@@ -497,6 +522,36 @@ fn mint_access_token(
     config.signer.encode(&claims).map_err(|e| {
         tracing::error!(error = %e, "jwt signing failed");
         AppError::internal("could not sign access token").error_response()
+    })
+}
+
+/// Whether the granted scope set includes the OIDC `openid` scope.
+fn has_openid_scope(scope: &[String]) -> bool {
+    scope.iter().any(|s| s == "openid")
+}
+
+/// Mint a signed OIDC ID token JWT, returning `Err(HttpResponse)` on failure.
+///
+/// Issued only when the granted scope includes `openid`. The audience (`aud`)
+/// is the requesting client, and `nonce` — when present — binds the token to
+/// the original authorization request. Reuses the access-token lifetime and
+/// signer; an RS256 deployment serves the public key via `jwks_uri`.
+fn mint_id_token(
+    subject: &str,
+    client_id: &str,
+    nonce: Option<&str>,
+    config: &OAuthConfig,
+) -> Result<String, HttpResponse> {
+    let mut builder = Claims::builder(subject, &*config.clock, config.access_token_ttl)
+        .issuer(config.issuer.as_str())
+        .audience(client_id);
+    if let Some(n) = nonce {
+        builder = builder.claim("nonce", n);
+    }
+
+    config.signer.encode(&builder.build()).map_err(|e| {
+        tracing::error!(error = %e, "id token signing failed");
+        AppError::internal("could not sign id token").error_response()
     })
 }
 

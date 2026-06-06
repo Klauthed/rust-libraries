@@ -274,6 +274,100 @@ mod tests {
     }
 
     #[actix_web::test]
+    async fn auth_code_exchange_with_openid_scope_returns_id_token() {
+        let clock = Arc::new(FixedClock::new(Timestamp::now()));
+        let config = make_config(clock.clone());
+        config.client_store.register(test_client("c-oidc")).await.unwrap();
+
+        let code = AuthCodeBuilder::new("c-oidc", "bob")
+            .redirect_uri("https://app.example.com/cb")
+            .scope(vec!["openid".into()])
+            .nonce("n-123")
+            .build(&*clock, Duration::minutes(5))
+            .unwrap();
+        let code_str = code.code.clone();
+        config.code_store.store(code).await.unwrap();
+
+        let app = http_test::init_service(
+            App::new()
+                .app_data(web::Data::new(JwtVerifier::hs256(SECRET)))
+                .app_data(web::Data::new(config))
+                .configure(configure),
+        )
+        .await;
+
+        let form = format!(
+            "grant_type=authorization_code&code={code_str}\
+             &client_id=c-oidc&redirect_uri=https%3A%2F%2Fapp.example.com%2Fcb"
+        );
+        let req = http_test::TestRequest::post()
+            .uri("/oauth/token")
+            .insert_header(("Content-Type", "application/x-www-form-urlencoded"))
+            .set_payload(form)
+            .to_request();
+        let resp = http_test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let body = http_test::read_body(resp).await;
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        let id_token = json["id_token"].as_str().expect("id_token present");
+        assert!(!id_token.is_empty());
+
+        // The ID token's audience is the client; consumers must validate it.
+        let decoded = JwtVerifier::hs256(SECRET)
+            .expecting_issuer("https://test.example.com")
+            .expecting_audience("c-oidc")
+            .decode(id_token)
+            .unwrap();
+        assert_eq!(decoded.sub.as_deref(), Some("bob"));
+        assert_eq!(decoded.aud.as_deref(), Some("c-oidc"));
+        assert_eq!(
+            decoded.custom.get("nonce").and_then(|v| v.as_str()),
+            Some("n-123")
+        );
+    }
+
+    #[actix_web::test]
+    async fn auth_code_exchange_without_openid_scope_omits_id_token() {
+        let clock = Arc::new(FixedClock::new(Timestamp::now()));
+        let config = make_config(clock.clone());
+        config.client_store.register(test_client("c-no-oidc")).await.unwrap();
+
+        let code = AuthCodeBuilder::new("c-no-oidc", "bob")
+            .redirect_uri("https://app.example.com/cb")
+            .scope(vec!["email".into()])
+            .build(&*clock, Duration::minutes(5))
+            .unwrap();
+        let code_str = code.code.clone();
+        config.code_store.store(code).await.unwrap();
+
+        let app = http_test::init_service(
+            App::new()
+                .app_data(web::Data::new(JwtVerifier::hs256(SECRET)))
+                .app_data(web::Data::new(config))
+                .configure(configure),
+        )
+        .await;
+
+        let form = format!(
+            "grant_type=authorization_code&code={code_str}\
+             &client_id=c-no-oidc&redirect_uri=https%3A%2F%2Fapp.example.com%2Fcb"
+        );
+        let req = http_test::TestRequest::post()
+            .uri("/oauth/token")
+            .insert_header(("Content-Type", "application/x-www-form-urlencoded"))
+            .set_payload(form)
+            .to_request();
+        let resp = http_test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let body = http_test::read_body(resp).await;
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        // No `openid` scope → no ID token.
+        assert!(json["id_token"].is_null());
+    }
+
+    #[actix_web::test]
     async fn token_exchange_rejects_replayed_code() {
         let clock = Arc::new(FixedClock::at_unix_millis(0));
         let config = make_config(clock.clone());
@@ -512,6 +606,48 @@ mod tests {
         assert!(!new_rt.is_empty());
         // The new token must be different from the consumed one.
         assert_ne!(new_rt, rt_str);
+    }
+
+    #[actix_web::test]
+    async fn refresh_grant_with_openid_scope_returns_id_token() {
+        let clock = Arc::new(FixedClock::new(Timestamp::now()));
+        let config = make_config_with_refresh(clock.clone());
+        config.client_store.register(test_client_with_refresh("c-rt-oidc")).await.unwrap();
+
+        use klauthed_security::refresh_token::RefreshTokenBuilder;
+        let rt = RefreshTokenBuilder::new("c-rt-oidc", "bob")
+            .scope(vec!["openid".into()])
+            .build(&*clock, Duration::days(30))
+            .unwrap();
+        let rt_str = rt.token.clone();
+        config.refresh_token_store.as_ref().unwrap().store(rt).await.unwrap();
+
+        let app = http_test::init_service(
+            App::new()
+                .app_data(web::Data::new(JwtVerifier::hs256(SECRET)))
+                .app_data(web::Data::new(config))
+                .configure(configure),
+        )
+        .await;
+
+        let form = format!("grant_type=refresh_token&refresh_token={rt_str}&client_id=c-rt-oidc");
+        let req = http_test::TestRequest::post()
+            .uri("/oauth/token")
+            .insert_header(("Content-Type", "application/x-www-form-urlencoded"))
+            .set_payload(form)
+            .to_request();
+        let resp = http_test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let body = http_test::read_body(resp).await;
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        let id_token = json["id_token"].as_str().expect("id_token present");
+        let decoded = JwtVerifier::hs256(SECRET)
+            .expecting_issuer("https://test.example.com")
+            .expecting_audience("c-rt-oidc")
+            .decode(id_token)
+            .unwrap();
+        assert_eq!(decoded.sub.as_deref(), Some("bob"));
     }
 
     #[actix_web::test]
