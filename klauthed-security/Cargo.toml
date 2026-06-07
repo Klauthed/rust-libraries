@@ -34,7 +34,7 @@ argon2 = { workspace = true, features = ["std"] }
 subtle = "2.6"
 
 # JWT. Not in the workspace; pinned to the vetted standard implementation.
-jsonwebtoken = "9.3"
+jsonwebtoken = "10.4"
 
 # Async session-store trait (object-safe async methods).
 async-trait = { workspace = true }
