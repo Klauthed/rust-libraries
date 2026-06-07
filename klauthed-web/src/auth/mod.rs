@@ -68,6 +68,3 @@ pub mod middleware;
 
 pub use extractors::{AuthenticatedUser, OptionalAuthentication};
 pub use middleware::{JwtAuth, JwtAuthService, TokenRevocationCheck};
-
-#[cfg(test)]
-mod tests;

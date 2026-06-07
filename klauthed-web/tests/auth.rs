@@ -1,7 +1,7 @@
-//! Integration tests for the auth middleware and extractors (exercised together
-//! through an actix `App` via the public API).
+//! Public-API integration tests for the auth middleware and extractors,
+//! exercised together through an actix `App` as a downstream consumer would.
 
-use super::*;
+use klauthed_web::auth::{AuthenticatedUser, JwtAuth, OptionalAuthentication, TokenRevocationCheck};
 use actix_web::http::StatusCode;
 use actix_web::test as http_test;
 use actix_web::{App, HttpResponse, web};
@@ -54,7 +54,7 @@ macro_rules! auth_app {
 }
 
 // Handler that reads RequestContext.principal() to verify propagation.
-async fn echo_principal(ctx: crate::context::Context) -> HttpResponse {
+async fn echo_principal(ctx: klauthed_web::context::Context) -> HttpResponse {
     HttpResponse::Ok().body(ctx.principal().unwrap_or("none").to_owned())
 }
 
@@ -64,7 +64,7 @@ async fn jwt_auth_propagates_sub_into_request_context() {
         App::new()
             .app_data(web::Data::new(verifier()))
             .wrap(JwtAuth::new())
-            .wrap(crate::context::RequestContextMiddleware::new())
+            .wrap(klauthed_web::context::RequestContextMiddleware::new())
             .route("/principal", web::get().to(echo_principal)),
     )
     .await;
