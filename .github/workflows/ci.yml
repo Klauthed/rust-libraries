@@ -88,3 +88,19 @@ jobs:
           tool: cargo-deny
       - name: cargo-deny (advisories, licenses, bans, sources)
         run: cargo deny check
+
+  feature-check:
+    name: feature-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev pkg-config
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hack
+      - uses: Swatinem/rust-cache@v2
+      # Build every crate under each feature in isolation (and with no / all
+      # features) so a feature gate that forgets a dep can't slip through.
+      - name: Check each feature
+        run: cargo hack check --each-feature --no-dev-deps --workspace
