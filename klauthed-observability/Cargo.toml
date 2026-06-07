@@ -25,6 +25,8 @@ tracing-opentelemetry = { workspace = true, optional = true }
 
 [dev-dependencies]
 serde_json.workspace = true
+# For the async `telemetry` example (init runs inside a tokio runtime).
+tokio = { workspace = true }
 
 [features]
 default = []

@@ -2462,6 +2462,7 @@ dependencies = [
  "opentelemetry_sdk",
  "serde",
  "serde_json",
+ "tokio",
  "tracing",
  "tracing-opentelemetry",
  "tracing-subscriber",
