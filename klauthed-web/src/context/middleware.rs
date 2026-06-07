@@ -1,50 +1,17 @@
-//! Per-request [`RequestContext`] plumbing for actix-web.
-//!
-//! This module provides two pieces that work together:
-//!
-//! * [`RequestContextMiddleware`] — an actix [`Transform`] that, for every
-//!   request, builds a [`RequestContext`] from inbound headers
-//!   (`x-request-id`, `x-correlation-id`, `x-tenant-id`, `Accept-Language`),
-//!   stores it in the request extensions, and echoes the resolved request id
-//!   back on the response as `x-request-id`. With the `context-scope` feature
-//!   enabled, it also installs the context as the ambient
-//!   [`RequestContext::current`](RequestContext) for the handler future.
-//! * [`Context`] — a [`FromRequest`] extractor that hands the stored
-//!   [`RequestContext`] to handlers (`async fn handler(ctx: Context)`),
-//!   falling back to a fresh default if, for some reason, none is present.
-//!
-//! ```no_run
-//! use actix_web::{web, App, HttpResponse};
-//! use klauthed_web::context::{Context, RequestContextMiddleware};
-//!
-//! async fn handler(ctx: Context) -> HttpResponse {
-//!     HttpResponse::Ok().body(ctx.request_id().to_string())
-//! }
-//!
-//! let app = App::new()
-//!     .wrap(RequestContextMiddleware::new())
-//!     .route("/", web::get().to(handler));
-//! ```
+//! The [`RequestContextMiddleware`] that builds a per-request
+//! [`RequestContext`] from inbound headers.
 
 use std::future::{Ready, ready};
-use std::ops::Deref;
 use std::rc::Rc;
 use std::task::{Context as TaskContext, Poll};
 
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::header::{HeaderName, HeaderValue};
-use actix_web::{Error, FromRequest, HttpMessage, HttpRequest};
+use actix_web::{Error, HttpMessage};
 use futures_util::future::LocalBoxFuture;
 use klauthed_core::context::{RequestContext, RequestId};
 
-/// Header carrying the request id (generated when absent).
-pub const REQUEST_ID_HEADER: &str = "x-request-id";
-/// Header carrying an inbound correlation / trace id.
-pub const CORRELATION_ID_HEADER: &str = "x-correlation-id";
-/// Header carrying the tenant identifier.
-pub const TENANT_ID_HEADER: &str = "x-tenant-id";
-/// Standard header used to derive the request locale.
-pub const ACCEPT_LANGUAGE_HEADER: &str = "accept-language";
+use super::{ACCEPT_LANGUAGE_HEADER, CORRELATION_ID_HEADER, REQUEST_ID_HEADER, TENANT_ID_HEADER};
 
 /// Build a [`RequestContext`] from a request's headers.
 ///
@@ -99,7 +66,7 @@ fn first_language(accept_language: &str) -> Option<&str> {
 /// actix [`Transform`] that establishes a [`RequestContext`] per request.
 ///
 /// Wrap it on an `App`/scope with `.wrap(RequestContextMiddleware::new())`. The
-/// context is placed in the request extensions (readable via the [`Context`]
+/// context is placed in the request extensions (readable via the [`Context`](super::Context)
 /// extractor) and the resolved request id is set on the response as
 /// `x-request-id`.
 #[derive(Debug, Clone, Default)]
@@ -197,53 +164,10 @@ where
     service.call(req).await
 }
 
-// ── Extractor ─────────────────────────────────────────────────────────────────
-
-/// Extractor handing the per-request [`RequestContext`] to handlers.
-///
-/// It reads the context the [`RequestContextMiddleware`] stored in the request
-/// extensions. If none is present (e.g. the middleware was not mounted), it
-/// yields a fresh default context rather than failing the request.
-///
-/// Deref to [`RequestContext`], so all of its accessors are available directly,
-/// and [`Context::into_inner`] takes ownership of the underlying context.
-#[derive(Debug, Clone)]
-pub struct Context(RequestContext);
-
-impl Context {
-    /// Consume the extractor and return the owned [`RequestContext`].
-    pub fn into_inner(self) -> RequestContext {
-        self.0
-    }
-}
-
-impl Deref for Context {
-    type Target = RequestContext;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<Context> for RequestContext {
-    fn from(ctx: Context) -> Self {
-        ctx.0
-    }
-}
-
-impl FromRequest for Context {
-    type Error = Error;
-    type Future = Ready<Result<Self, Self::Error>>;
-
-    fn from_request(req: &HttpRequest, _payload: &mut actix_web::dev::Payload) -> Self::Future {
-        let ctx = req.extensions().get::<RequestContext>().cloned().unwrap_or_default();
-        ready(Ok(Context(ctx)))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::context::Context;
     use actix_web::{App, HttpResponse, test, web};
 
     #[std::prelude::v1::test]

@@ -6,7 +6,7 @@
 //!
 //! * [`Json<T>`] — deserialize a JSON body, mapping any parse/content-type
 //!   problem to [`AppError::bad_request`].
-//! * [`Validated<T>`] — like [`Json`], then runs [`Validate`] on the value,
+//! * [`Validated<T>`] — like [`Json`], then runs [`Validate`](klauthed_core::validation::Validate) on the value,
 //!   surfacing [`ValidationErrors`](klauthed_core::validation::ValidationErrors)
 //!   (a `BadRequest` [`DomainError`](klauthed_error::DomainError)) as an
 //!   [`AppError`] when invalid.
@@ -33,107 +33,23 @@
 //! // `async fn handler(body: Validated<CreateUser>) -> ...`
 //! ```
 
-use std::ops::{Deref, DerefMut};
-
 use actix_web::dev::Payload;
 use actix_web::http::header;
 use actix_web::{FromRequest, HttpRequest};
 use futures_util::future::LocalBoxFuture;
-use klauthed_core::validation::Validate;
 use serde::de::DeserializeOwned;
 
 use crate::error::AppError;
 
-/// JSON body extractor that maps deserialization failures to
-/// [`AppError::bad_request`].
-///
-/// Deref to `T`; [`Json::into_inner`] takes ownership of the parsed value.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Json<T>(pub T);
+pub mod json;
+pub mod validated;
 
-impl<T> Json<T> {
-    /// Consume the wrapper and return the parsed value.
-    pub fn into_inner(self) -> T {
-        self.0
-    }
-}
-
-impl<T> Deref for Json<T> {
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for Json<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T> FromRequest for Json<T>
-where
-    T: DeserializeOwned + 'static,
-{
-    type Error = AppError;
-    type Future = LocalBoxFuture<'static, Result<Self, Self::Error>>;
-
-    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        let fut = parse_json::<T>(req, payload);
-        Box::pin(async move { fut.await.map(Json) })
-    }
-}
-
-/// JSON body extractor that deserializes then [`Validate`]s the value.
-///
-/// A malformed body yields the same `BadRequest` as [`Json`]; a well-formed but
-/// invalid body yields the type's [`ValidationErrors`](klauthed_core::validation::ValidationErrors)
-/// as a `BadRequest` [`AppError`].
-///
-/// Deref to `T`; [`Validated::into_inner`] takes ownership of the value.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Validated<T>(pub T);
-
-impl<T> Validated<T> {
-    /// Consume the wrapper and return the validated value.
-    pub fn into_inner(self) -> T {
-        self.0
-    }
-}
-
-impl<T> Deref for Validated<T> {
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for Validated<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T> FromRequest for Validated<T>
-where
-    T: DeserializeOwned + Validate + 'static,
-{
-    type Error = AppError;
-    type Future = LocalBoxFuture<'static, Result<Self, Self::Error>>;
-
-    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        let fut = parse_json::<T>(req, payload);
-        Box::pin(async move {
-            let value = fut.await?;
-            value.validate().map_err(AppError::from_domain)?;
-            Ok(Validated(value))
-        })
-    }
-}
+pub use json::Json;
+pub use validated::Validated;
 
 /// Read the full body and deserialize it as JSON, mapping every failure to a
 /// `BadRequest` [`AppError`]. Shared by both extractors.
-fn parse_json<T>(
+pub(crate) fn parse_json<T>(
     req: &HttpRequest,
     payload: &mut Payload,
 ) -> LocalBoxFuture<'static, Result<T, AppError>>
@@ -175,6 +91,7 @@ mod tests {
     use super::*;
     use actix_web::http::StatusCode;
     use actix_web::{App, HttpResponse, ResponseError, test, web};
+    use klauthed_core::validation::Validate;
     use klauthed_core::validation::ValidationErrors;
     use serde::Deserialize;
 
