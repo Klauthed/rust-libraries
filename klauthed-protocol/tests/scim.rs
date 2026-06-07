@@ -1,6 +1,6 @@
 //! Tests for the SCIM resource and PATCH types.
 
-use super::*;
+use klauthed_protocol::scim::*;
 
 #[test]
 fn user_uses_exact_scim_keys() {

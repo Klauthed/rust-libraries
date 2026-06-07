@@ -47,6 +47,3 @@ pub mod resource;
 
 pub use patch::{PatchOp, PatchOpType, PatchOperation};
 pub use resource::{Group, ListResponse, Member, Meta, MultiValued, Name, User};
-
-#[cfg(test)]
-mod tests;

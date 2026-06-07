@@ -1,7 +1,7 @@
 //! Tests for the OIDC data types and ID token claim validation.
 
-use super::*;
-use crate::ProtocolError;
+use klauthed_protocol::ProtocolError;
+use klauthed_protocol::oidc::*;
 
 fn base_claims() -> IdTokenClaims {
     IdTokenClaims {

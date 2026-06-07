@@ -40,6 +40,3 @@ pub mod set;
 
 pub use key::{JsonWebKey, KeyType, PublicKeyUse};
 pub use set::JsonWebKeySet;
-
-#[cfg(test)]
-mod tests;

@@ -54,6 +54,3 @@ pub use messages::{
 };
 pub use params::{CodeChallengeMethod, KnownTokenType, Prompt, TokenType};
 pub use scope::{scope_from_str, scope_to_string};
-
-#[cfg(test)]
-mod tests;

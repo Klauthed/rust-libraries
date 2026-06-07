@@ -1,8 +1,8 @@
 //! Tests for the JWK and JWK Set types.
 
-use crate::ProtocolError;
+use klauthed_protocol::ProtocolError;
 
-use super::*;
+use klauthed_protocol::jwks::*;
 
 const RSA_JWKS: &str = r#"{
         "keys": [

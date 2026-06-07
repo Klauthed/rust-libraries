@@ -1,8 +1,8 @@
 //! Tests for the OAuth 2.0 message and parameter types.
 
-use crate::oidc::{GrantType, ResponseType};
+use klauthed_protocol::oidc::{GrantType, ResponseType};
 
-use super::*;
+use klauthed_protocol::oauth2::*;
 
 #[test]
 fn authorization_request_uses_exact_spec_keys() {

@@ -38,6 +38,3 @@ pub mod validation;
 pub use claims::{AddressClaim, Audience, IdTokenClaims, StandardClaims};
 pub use metadata::{GrantType, KnownScope, ProviderMetadata, ResponseType, Scope, SubjectType};
 pub use validation::{IdTokenValidation, validate_id_token};
-
-#[cfg(test)]
-mod tests;
