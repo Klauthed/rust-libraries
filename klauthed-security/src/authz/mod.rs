@@ -35,17 +35,23 @@
 //! assert!(Authorizer::is_authorized(&admin_perms, &Permission::new("users:delete")));
 //! ```
 //!
-//! # Not (yet) included
+//! # Beyond RBAC
 //!
-//! This is deliberately plain RBAC. Attribute-based access control (ABAC),
-//! resource-instance scoping, role hierarchies/inheritance, and a general
-//! policy engine (e.g. Cedar/OPA-style) are future work that would layer on top
-//! of these types.
+//! The [`policy`] submodule adds attribute-based access control (ABAC): a
+//! [`PolicySet`] of [`Policy`] rules whose [`Condition`]s test request
+//! [`Attributes`] (subject/resource/action/env), combined with deny-overrides
+//! and default-deny. Use RBAC for "who holds permission X" and ABAC for
+//! contextual rules ("owners may edit their own resources", "not while
+//! suspended").
+//!
+//! Resource-instance scoping and role hierarchies/inheritance remain future work.
 
 pub mod authorizer;
 pub mod permission;
+pub mod policy;
 pub mod role;
 
 pub use authorizer::Authorizer;
 pub use permission::Permission;
+pub use policy::{AttrValue, Attributes, Condition, Decision, Effect, Policy, PolicySet};
 pub use role::{Role, RoleRegistry};

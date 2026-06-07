@@ -17,6 +17,10 @@ All crates share a single version and are released together.
   encrypt under a fresh per-message data key wrapped by a long-lived root key,
   with `Envelope::rewrap` for root-key rotation without re-encrypting payloads,
   and a self-contained byte/base64 wire format.
+- `klauthed-security`: **ABAC policy layer** (`authz::policy`) — a `PolicySet` of
+  `Allow`/`Deny` `Policy` rules whose `Condition`s test request `Attributes`
+  (subject/resource/action/env), evaluated with deny-overrides and default-deny,
+  complementing the existing RBAC `Authorizer`.
 - `klauthed-data`: new `rate_limit` module — a `RateLimiter` trait with a
   clock-injected `InMemoryRateLimiter` and a `RedisRateLimiter` (`redis` feature)
   for shared, cross-replica fixed-window limiting.
