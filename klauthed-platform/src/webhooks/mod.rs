@@ -43,6 +43,3 @@ pub use model::{
 pub use sender::HttpWebhookSender;
 pub use sender::{RecordingWebhookSender, WebhookDelivery, WebhookSender};
 pub use signing::{SIGNATURE_VERSION, sign_payload, verify_signature};
-
-#[cfg(test)]
-mod tests;

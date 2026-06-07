@@ -2,7 +2,7 @@
 
 use klauthed_core::context::RequestContext;
 
-use super::*;
+use klauthed_platform::audit::*;
 
 #[test]
 fn builder_defaults_and_overrides() {

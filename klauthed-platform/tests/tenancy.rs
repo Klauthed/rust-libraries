@@ -2,8 +2,8 @@
 
 use klauthed_core::context::RequestContext;
 
-use super::*;
 use klauthed_error::{DomainError, ErrorCategory};
+use klauthed_platform::tenancy::*;
 
 fn acme() -> Tenant {
     Tenant::new("acme").with_name("Acme, Inc.")

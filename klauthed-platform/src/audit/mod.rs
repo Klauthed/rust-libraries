@@ -27,6 +27,3 @@ pub use model::{Audit, AuditEvent, AuditEventBuilder, AuditId, AuditOutcome};
 #[cfg(feature = "audit-outbox")]
 pub use sink::OutboxAuditSink;
 pub use sink::{AuditSink, InMemoryAuditSink};
-
-#[cfg(test)]
-mod tests;

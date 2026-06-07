@@ -20,6 +20,3 @@ pub mod resolver;
 
 pub use model::{Tenant, TenantId, TenantStatus};
 pub use resolver::{InMemoryTenantResolver, TenantResolver, tenant_from_context};
-
-#[cfg(test)]
-mod tests;

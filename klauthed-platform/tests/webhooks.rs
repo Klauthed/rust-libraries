@@ -1,9 +1,9 @@
 //! Tests for the webhook model, signing, and senders.
 
-use crate::error::PlatformError;
 use klauthed_core::time::Timestamp;
+use klauthed_platform::PlatformError;
 
-use super::*;
+use klauthed_platform::webhooks::*;
 
 fn event() -> WebhookEvent {
     WebhookEvent::new(
