@@ -16,7 +16,6 @@ pub enum DbSystem {
     MySql,
     #[serde(rename = "mariadb")]
     MariaDb,
-    Mssql,
     Sqlite,
     /// NoSQL document store.
     #[serde(rename = "mongodb")]
@@ -29,7 +28,6 @@ impl DbSystem {
         match self {
             DbSystem::Postgres => Some(5432),
             DbSystem::MySql | DbSystem::MariaDb => Some(3306),
-            DbSystem::Mssql => Some(1433),
             DbSystem::MongoDb => Some(27017),
             DbSystem::Sqlite => None,
         }
@@ -40,7 +38,6 @@ impl DbSystem {
         match self {
             DbSystem::Postgres => "postgres",
             DbSystem::MySql | DbSystem::MariaDb => "mysql",
-            DbSystem::Mssql => "sqlserver",
             DbSystem::Sqlite => "sqlite",
             DbSystem::MongoDb => "mongodb",
         }
@@ -228,7 +225,6 @@ mod tests {
             ("postgres", DbSystem::Postgres),
             ("mysql", DbSystem::MySql),
             ("mariadb", DbSystem::MariaDb),
-            ("mssql", DbSystem::Mssql),
             ("sqlite", DbSystem::Sqlite),
             ("mongodb", DbSystem::MongoDb),
         ];

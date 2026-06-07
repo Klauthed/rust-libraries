@@ -7,10 +7,6 @@
 //! NoSQL and other backends live in sub-modules gated by their own features:
 //!
 //! * `mongo` — MongoDB client connector (`mongodb` feature)
-//! * `mssql`  — SQL Server connection pool via tiberius + bb8 (`mssql` feature)
-
-#[cfg(feature = "mssql")]
-pub mod mssql;
 
 #[cfg(feature = "mongodb")]
 pub mod mongo;

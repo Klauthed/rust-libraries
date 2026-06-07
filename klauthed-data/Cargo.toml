@@ -3,6 +3,13 @@ name = "klauthed-data"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Data-access building blocks for klauthed: pagination, transactional outbox, idempotency, locks, and caching."
+readme = "README.md"
+keywords = ["pagination", "outbox", "idempotency", "database", "klauthed"]
+categories = ["database"]
 
 [dependencies]
 # Config types only — no need for the Vault provider here. The workspace entry
@@ -33,11 +40,6 @@ rskafka    = { version = "0.6", optional = true }
 object_store = { version = "0.13", optional = true }
 # MongoDB official driver (async, uses tokio).
 mongodb    = { version = "3", optional = true }
-# SQL Server (MSSQL) via tiberius + bb8 connection pool.
-tiberius   = { version = "0.12", optional = true, default-features = false, features = ["rustls"] }
-tokio-util = { version = "0.7", optional = true, features = ["compat"] }
-bb8        = { version = "0.9", optional = true }
-bb8-tiberius = { version = "0.16", optional = true }
 
 [features]
 default = []
@@ -65,7 +67,6 @@ storage-azure = ["storage", "object_store/azure"]
 
 # ── NoSQL / alternative databases ────────────────────────────────────────────
 mongodb = ["dep:mongodb"]
-mssql   = ["dep:tiberius", "dep:tokio-util", "dep:bb8", "dep:bb8-tiberius"]
 
 [dev-dependencies]
 tokio = { workspace = true }

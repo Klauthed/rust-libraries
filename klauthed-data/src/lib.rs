@@ -27,7 +27,6 @@
 //! | `storage-gcs`  | `storage::connect` for Google Cloud Storage         |
 //! | `storage-azure`| `storage::connect` for Azure Blob Storage           |
 //! | `mongodb`      | `db::mongo::connect` for MongoDB                    |
-//! | `mssql`        | `db::mssql::connect` for SQL Server (via tiberius)  |
 //!
 //! ```no_run
 //! # async fn run() -> Result<(), Box<dyn std::error::Error>> {
@@ -54,9 +53,9 @@ pub mod locks;
 pub mod outbox;
 
 // The `db` module houses the relational connector (sql feature) and the
-// MongoDB + MSSQL sub-modules (mongodb / mssql features). It is compiled
-// whenever any of those features is active.
-#[cfg(any(feature = "sql", feature = "mongodb", feature = "mssql"))]
+// MongoDB sub-module (mongodb feature). It is compiled whenever any of those
+// features is active.
+#[cfg(any(feature = "sql", feature = "mongodb"))]
 pub mod db;
 
 #[cfg(any(feature = "redis", feature = "cache-memory"))]
