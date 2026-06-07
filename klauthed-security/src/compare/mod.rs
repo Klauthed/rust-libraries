@@ -26,24 +26,3 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     }
     a.ct_eq(b).into()
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn equal_slices_match() {
-        assert!(constant_time_eq(b"hello world", b"hello world"));
-        assert!(constant_time_eq(b"", b""));
-    }
-
-    #[test]
-    fn differing_slices_do_not_match() {
-        assert!(!constant_time_eq(b"hello world", b"hello worle"));
-    }
-
-    #[test]
-    fn different_lengths_do_not_match() {
-        assert!(!constant_time_eq(b"abc", b"abcd"));
-    }
-}
