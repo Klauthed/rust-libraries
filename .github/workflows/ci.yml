@@ -58,3 +58,30 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build docs (deny warnings)
         run: cargo doc --workspace --all-features --no-deps
+
+  msrv:
+    name: msrv (1.95)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev pkg-config
+      # The repo's rust-toolchain.toml pins `stable`; drop it so the MSRV
+      # toolchain is actually used for this job.
+      - name: Drop toolchain override
+        run: rm -f rust-toolchain.toml
+      - name: Install Rust 1.95.0
+        run: rustup toolchain install 1.95.0 --profile minimal --no-self-update
+      - uses: Swatinem/rust-cache@v2
+      - name: Check on MSRV
+        run: cargo +1.95.0 check --workspace --all-features --locked
+
+  deny:
+    name: cargo-deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: cargo-deny (advisories, licenses, bans, sources)
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
