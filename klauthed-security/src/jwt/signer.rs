@@ -1,0 +1,39 @@
+//! [`JwtSigner`] — encodes [`Claims`] into compact, signed JWTs (HS256 / RS256).
+
+use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
+
+use crate::error::SecurityError;
+
+use super::Claims;
+
+/// Signs [`Claims`] into compact JWTs.
+pub struct JwtSigner {
+    header: Header,
+    key: EncodingKey,
+}
+
+impl JwtSigner {
+    /// An HS256 signer using `secret` as the shared HMAC key.
+    #[must_use]
+    pub fn hs256(secret: &[u8]) -> Self {
+        Self { header: Header::new(Algorithm::HS256), key: EncodingKey::from_secret(secret) }
+    }
+
+    /// An RS256 signer from a PKCS#1/PKCS#8 RSA **private** key in PEM form.
+    ///
+    /// # Errors
+    /// Returns [`SecurityError::Key`] if the PEM cannot be parsed.
+    pub fn rs256_pem(private_key_pem: &[u8]) -> Result<Self, SecurityError> {
+        let key = EncodingKey::from_rsa_pem(private_key_pem)
+            .map_err(|e| SecurityError::Key(e.to_string()))?;
+        Ok(Self { header: Header::new(Algorithm::RS256), key })
+    }
+
+    /// Encode and sign `claims`, returning the compact JWT string.
+    ///
+    /// # Errors
+    /// Returns [`SecurityError::Encode`] if serialization/signing fails.
+    pub fn encode(&self, claims: &Claims) -> Result<String, SecurityError> {
+        encode(&self.header, claims, &self.key).map_err(|e| SecurityError::Encode(e.to_string()))
+    }
+}
