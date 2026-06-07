@@ -51,6 +51,7 @@ pub mod error;
 pub mod idempotency;
 pub mod locks;
 pub mod outbox;
+pub mod rate_limit;
 
 // The `db` module houses the relational connector (sql feature) and the
 // MongoDB sub-module (mongodb feature). It is compiled whenever any of those

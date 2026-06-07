@@ -1,15 +1,23 @@
-//! In-memory fixed-window rate limiting middleware.
+//! Fixed-window rate limiting middleware with a pluggable backend.
 //!
-//! [`RateLimit`] is an actix [`Transform`](actix_web::dev::Transform) that caps how many requests a given
-//! client may make within a rolling fixed window. Clients are keyed by a
-//! configurable strategy ([`KeyBy`]) — peer IP by default, or the value of a
-//! header such as `x-api-key`. When a client exceeds its budget the request is
-//! rejected with `429 Too Many Requests` (via [`AppError`](crate::AppError), category
-//! `RateLimited`) and a `Retry-After` header indicating when the window resets.
+//! [`RateLimit`] is an actix [`Transform`](actix_web::dev::Transform) that caps
+//! how many requests a given client may make within a rolling fixed window.
+//! Clients are keyed by a configurable strategy ([`KeyBy`]) — peer IP by default,
+//! or the value of a header such as `x-api-key`. When a client exceeds its budget
+//! the request is rejected with `429 Too Many Requests` (via
+//! [`AppError`](crate::AppError), category `RateLimited`) and a `Retry-After`
+//! header indicating when the window resets.
 //!
-//! State is held in a `Mutex<HashMap>` shared across workers; counters reset
-//! lazily when a window elapses, so memory is bounded by the number of distinct
-//! active keys.
+//! Counting is delegated to a [`RateLimiter`] store:
+//!
+//! * [`RateLimit::new`] uses an in-process [`InMemoryRateLimiter`] — each replica
+//!   counts independently.
+//! * [`RateLimit::with_store`] takes any `Arc<dyn RateLimiter>`, e.g. a
+//!   `RedisRateLimiter`, so a fleet shares one global budget per key.
+//!
+//! If the backing store errors (e.g. Redis is unreachable) the middleware **fails
+//! open** — it logs and lets the request through, so a limiter outage cannot take
+//! the service down.
 //!
 //! ```no_run
 //! use std::time::Duration;
@@ -25,12 +33,17 @@
 //!
 //! # Out of scope (future passes)
 //!
-//! Distributed limiting (shared store), token-bucket smoothing, and per-route
-//! budgets are intentionally not handled here yet.
+//! Token-bucket smoothing and per-route budgets are intentionally not handled
+//! here yet.
 
 pub mod key;
 pub mod middleware;
-pub(crate) mod state;
 
 pub use key::KeyBy;
 pub use middleware::{RateLimit, RateLimitService};
+
+#[cfg(feature = "data-redis")]
+#[doc(no_inline)]
+pub use klauthed_data::rate_limit::RedisRateLimiter;
+#[doc(no_inline)]
+pub use klauthed_data::rate_limit::{InMemoryRateLimiter, RateLimitOutcome, RateLimiter};
