@@ -45,3 +45,7 @@ totp-rs = { version = "5.7", default-features = false, features = ["otpauth", "g
 
 [dev-dependencies]
 tokio = { workspace = true }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

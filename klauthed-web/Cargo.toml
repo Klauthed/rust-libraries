@@ -48,3 +48,7 @@ redis = { workspace = true, optional = true }
 serde_json.workspace = true
 base64.workspace = true
 ring.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

@@ -3,6 +3,7 @@ use thiserror::Error;
 
 /// Errors produced while loading, merging, or reading configuration.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum ConfigError {
     #[error("config file not found: {0}")]
     FileNotFound(std::path::PathBuf),

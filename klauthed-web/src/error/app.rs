@@ -106,6 +106,9 @@ fn default_code(category: ErrorCategory) -> ErrorCode {
         ErrorCategory::Timeout => "request.timeout",
         ErrorCategory::Unavailable => "request.unavailable",
         ErrorCategory::Internal => "request.internal",
+        // `ErrorCategory` is non-exhaustive; a future category falls back to a
+        // generic internal code until it gets a dedicated one here.
+        _ => "request.internal",
     })
 }
 

@@ -86,3 +86,27 @@ async fn principal_key_uses_jwt_sub_when_present() {
         .to_request();
     assert_eq!(test::call_service(&app, req2).await.status(), StatusCode::TOO_MANY_REQUESTS);
 }
+
+#[actix_web::test]
+async fn with_store_injects_a_shared_clock_driven_limiter() {
+    use std::sync::Arc;
+
+    use klauthed_core::time::{Duration as CoreDuration, FixedClock};
+    use klauthed_web::ratelimit::InMemoryRateLimiter;
+
+    // Inject a clock-driven store so we can deterministically cross the window.
+    let clock = Arc::new(FixedClock::at_unix_millis(0));
+    let limiter = Arc::new(InMemoryRateLimiter::new(clock.clone()));
+    let rl = RateLimit::with_store(limiter, 1, Duration::from_secs(60))
+        .key_by(KeyBy::header("x-api-key"));
+    let app = test::init_service(App::new().wrap(rl).route("/", web::get().to(ok))).await;
+
+    let make = || test::TestRequest::get().uri("/").insert_header(("x-api-key", "c")).to_request();
+
+    assert_eq!(test::call_service(&app, make()).await.status(), StatusCode::OK);
+    assert_eq!(test::call_service(&app, make()).await.status(), StatusCode::TOO_MANY_REQUESTS);
+
+    // Advancing past the window refreshes the budget.
+    clock.advance(CoreDuration::seconds(61));
+    assert_eq!(test::call_service(&app, make()).await.status(), StatusCode::OK);
+}

@@ -65,3 +65,7 @@ storage       = ["data", "klauthed-data/storage"]
 storage-s3    = ["data", "klauthed-data/storage-s3"]
 storage-gcs   = ["data", "klauthed-data/storage-gcs"]
 storage-azure = ["data", "klauthed-data/storage-azure"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

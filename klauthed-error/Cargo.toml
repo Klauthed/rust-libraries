@@ -20,3 +20,7 @@ serde = { workspace = true, optional = true }
 [features]
 default = []
 serde = ["dep:serde"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

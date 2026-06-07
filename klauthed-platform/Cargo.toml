@@ -39,3 +39,7 @@ webhook-http  = ["dep:reqwest"]
 tokio = { workspace = true }
 # Required only by the `audit-outbox` SQLite integration tests; harmless otherwise.
 sqlx = { workspace = true, features = ["sqlite"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

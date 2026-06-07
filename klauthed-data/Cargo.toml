@@ -78,3 +78,7 @@ required-features = ["cache-memory"]
 [[example]]
 name = "local_storage"
 required-features = ["storage"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

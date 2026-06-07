@@ -24,7 +24,7 @@ const REFRESH_TOKEN_BYTES: usize = 32;
 /// The `token` field is the raw secret bearer value. Treat it like a password
 /// — never log it. Only compare it via
 /// [`RefreshTokenStore::consume`](super::RefreshTokenStore::consume).
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct RefreshToken {
     /// The opaque bearer value (URL-safe base64, 256 bits of entropy).
     pub token: String,
@@ -41,6 +41,21 @@ pub struct RefreshToken {
     pub issued_at: Timestamp,
     /// When this token expires.
     pub expires_at: Timestamp,
+}
+
+impl std::fmt::Debug for RefreshToken {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Redact the raw bearer value; show everything else for diagnostics.
+        f.debug_struct("RefreshToken")
+            .field("token", &"***")
+            .field("family_id", &self.family_id)
+            .field("client_id", &self.client_id)
+            .field("subject", &self.subject)
+            .field("scope", &self.scope)
+            .field("issued_at", &self.issued_at)
+            .field("expires_at", &self.expires_at)
+            .finish()
+    }
 }
 
 impl RefreshToken {

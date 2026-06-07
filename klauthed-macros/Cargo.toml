@@ -23,3 +23,7 @@ heck.workspace = true
 [dev-dependencies]
 # The generated code references `::klauthed_error`; tests need it to compile.
 klauthed-error.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

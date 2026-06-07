@@ -16,8 +16,16 @@ const SESSION_ID_BYTES: usize = 32;
 /// *is* the secret bearer credential, so it carries full CSPRNG entropy rather
 /// than a structured/sortable id. Treat it like a password — compare it only via
 /// the store, never log it.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SessionId(String);
+
+impl std::fmt::Debug for SessionId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // The id is a bearer credential — never print it (even via a derived
+        // Debug on a containing type such as `Session`).
+        f.write_str("SessionId(***)")
+    }
+}
 
 impl SessionId {
     /// Mint a fresh random session id (256 bits of entropy).

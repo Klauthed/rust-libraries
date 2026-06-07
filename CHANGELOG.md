@@ -34,8 +34,19 @@ All crates share a single version and are released together.
 - crates.io publish metadata on every member crate (`description`, `keywords`,
   `categories`, workspace-inherited `license`/`repository`/`authors`, `readme`).
 
+### Security
+
+- `klauthed-security`: `SessionId` and `RefreshToken` no longer expose their raw
+  bearer token via `Debug` — `{:?}` now redacts the secret (e.g. `SessionId(***)`),
+  so an accidental `tracing::debug!(?session)` can't leak a live credential.
+
 ### Changed
 
+- `klauthed-error::ErrorCategory` and `klauthed-core::error::ConfigError` are now
+  `#[non_exhaustive]` (forward-compatibility). Downstream `match`es on them must
+  add a `_` arm.
+- All crates now publish docs with `all-features` on docs.rs, so feature-gated
+  APIs (database/cache/messaging backends, Redis rate limiter, …) are documented.
 - Restructured every crate into folder modules (one concept per file), with
   integration tests under each crate's `tests/` and unit tests inline.
 - Datetime handling moved from `chrono` to the `time` crate, encapsulated behind
