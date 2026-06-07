@@ -3,6 +3,13 @@ name = "klauthed-web"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "actix-web HTTP layer for klauthed: extractors, middleware, uniform error rendering, and OAuth2/OIDC endpoints."
+readme = "README.md"
+keywords = ["actix-web", "oauth2", "middleware", "http", "klauthed"]
+categories = ["web-programming::http-server"]
 
 [features]
 # Install the per-request RequestContext as the ambient context (core's

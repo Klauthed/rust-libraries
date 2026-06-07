@@ -3,6 +3,13 @@ name = "klauthed-macros"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Procedural macros for klauthed, including #[derive(DomainError)]."
+readme = "README.md"
+keywords = ["derive", "macro", "proc-macro", "klauthed"]
+categories = ["development-tools::procedural-macro-helpers"]
 
 [lib]
 proc-macro = true

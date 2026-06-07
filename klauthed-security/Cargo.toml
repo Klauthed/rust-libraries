@@ -3,6 +3,13 @@ name = "klauthed-security"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Security primitives for klauthed: JWT, sessions, authorization, AEAD, MFA/TOTP, password and key derivation, API keys."
+readme = "README.md"
+keywords = ["jwt", "authentication", "authorization", "cryptography", "klauthed"]
+categories = ["authentication", "cryptography"]
 
 [dependencies]
 klauthed-error.workspace = true

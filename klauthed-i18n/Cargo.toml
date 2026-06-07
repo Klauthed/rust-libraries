@@ -3,6 +3,13 @@ name = "klauthed-i18n"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Internationalized messages for klauthed: per-locale catalogs with dotted-key message resolution."
+readme = "README.md"
+keywords = ["i18n", "l10n", "translation", "locale", "klauthed"]
+categories = ["internationalization"]
 
 [dependencies]
 klauthed-error.workspace = true

@@ -3,6 +3,13 @@ name = "klauthed-testing"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Test utilities for klauthed services, used as a dev-dependency."
+readme = "README.md"
+keywords = ["testing", "test-utils", "klauthed"]
+categories = ["development-tools::testing"]
 
 [dependencies]
 klauthed-core.workspace = true

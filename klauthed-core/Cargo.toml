@@ -3,6 +3,13 @@ name = "klauthed-core"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Core primitives for klauthed: typed config, clock/time, request context, CQRS, domain, and validation."
+readme = "README.md"
+keywords = ["config", "cqrs", "clock", "context", "klauthed"]
+categories = ["config", "data-structures"]
 
 [dependencies]
 klauthed-error.workspace = true

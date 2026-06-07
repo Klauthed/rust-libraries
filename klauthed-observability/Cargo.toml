@@ -3,6 +3,13 @@ name = "klauthed-observability"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Observability for klauthed: tracing spans, metrics, and OpenTelemetry wiring."
+readme = "README.md"
+keywords = ["tracing", "metrics", "opentelemetry", "logging", "klauthed"]
+categories = ["development-tools::debugging"]
 
 [dependencies]
 klauthed-core.workspace = true

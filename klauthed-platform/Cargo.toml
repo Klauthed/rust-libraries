@@ -3,6 +3,13 @@ name = "klauthed-platform"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Platform services for klauthed: multi-tenancy, audit logging, webhooks, background jobs, and feature flags."
+readme = "README.md"
+keywords = ["tenancy", "audit", "webhooks", "jobs", "klauthed"]
+categories = ["web-programming"]
 
 [dependencies]
 klauthed-core.workspace = true

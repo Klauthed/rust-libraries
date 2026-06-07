@@ -3,6 +3,13 @@ name = "klauthed-protocol"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Protocol types for klauthed: OAuth2, OpenID Connect, JWKS, and SCIM."
+readme = "README.md"
+keywords = ["oauth2", "oidc", "jwks", "scim", "klauthed"]
+categories = ["authentication"]
 
 [features]
 default = ["oidc", "scim"]

@@ -3,6 +3,13 @@ name = "klauthed-error"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Error kernel for klauthed: the DomainError trait with stable, serializable error codes and categories."
+readme = "README.md"
+keywords = ["error", "error-handling", "domain", "klauthed"]
+categories = ["rust-patterns"]
 
 [dependencies]
 # Intentionally dependency-free by default. `serde` is opt-in so error codes and
