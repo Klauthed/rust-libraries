@@ -1,13 +1,15 @@
 //! Public-API integration tests for the auth middleware and extractors,
 //! exercised together through an actix `App` as a downstream consumer would.
 
-use klauthed_web::auth::{AuthenticatedUser, JwtAuth, OptionalAuthentication, TokenRevocationCheck};
 use actix_web::http::StatusCode;
 use actix_web::test as http_test;
 use actix_web::{App, HttpResponse, web};
 use klauthed_core::time::{Duration, SystemClock};
 use klauthed_security::JwtVerifier;
 use klauthed_security::jwt::{Claims, JwtSigner};
+use klauthed_web::auth::{
+    AuthenticatedUser, JwtAuth, OptionalAuthentication, TokenRevocationCheck,
+};
 
 const SECRET: &[u8] = b"test-signing-secret";
 
