@@ -6,8 +6,9 @@
 //! * [`JwtSigner`] — encodes [`Claims`] into a compact JWT.
 //! * [`JwtVerifier`] — decodes + validates a JWT back into [`Claims`].
 //!
-//! Both HS256 (a shared secret) and RS256 (an RSA key pair, PEM-encoded) are
-//! supported. Expiry is computed from a [`Clock`](klauthed_core::time::Clock) so it stays testable.
+//! HS256 (shared secret), RS256 (RSA), ES256 (ECDSA P-256), and EdDSA (Ed25519)
+//! are supported; asymmetric keys load from PEM or DER. Expiry is computed from a
+//! [`Clock`](klauthed_core::time::Clock) so it stays testable.
 //!
 //! ```
 //! use klauthed_security::jwt::{Claims, JwtSigner, JwtVerifier};

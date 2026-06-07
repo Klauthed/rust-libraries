@@ -10,6 +10,9 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-security`: JWT signing/verification now supports **ES256** (ECDSA
+  P-256) and **EdDSA** (Ed25519) in addition to HS256/RS256. Asymmetric keys load
+  from PEM or DER (`{rs256,es256,eddsa}_{pem,der}` on `JwtSigner`/`JwtVerifier`).
 - Supply-chain CI gates: `cargo-deny` (RustSec advisories + license allow-list +
   source policy) and an MSRV (Rust 1.95) build job.
 - crates.io publish metadata on every member crate (`description`, `keywords`,

@@ -1,4 +1,7 @@
 //! [`JwtVerifier`] — validates and decodes JWTs back into [`Claims`].
+//!
+//! Supports HS256, RS256, ES256 (ECDSA P-256), and EdDSA (Ed25519). Asymmetric
+//! public keys can be supplied as PEM or DER.
 
 use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 
@@ -36,6 +39,53 @@ impl JwtVerifier {
         let key = DecodingKey::from_rsa_pem(public_key_pem)
             .map_err(|e| SecurityError::Key(e.to_string()))?;
         Ok(Self { key, validation: default_validation(Algorithm::RS256) })
+    }
+
+    /// An RS256 verifier from a DER-encoded RSA **public** key.
+    #[must_use]
+    pub fn rs256_der(public_key_der: &[u8]) -> Self {
+        Self {
+            key: DecodingKey::from_rsa_der(public_key_der),
+            validation: default_validation(Algorithm::RS256),
+        }
+    }
+
+    /// An ES256 (ECDSA P-256) verifier from an EC **public** key in PEM form.
+    ///
+    /// # Errors
+    /// Returns [`SecurityError::Key`] if the PEM cannot be parsed.
+    pub fn es256_pem(public_key_pem: &[u8]) -> Result<Self, SecurityError> {
+        let key = DecodingKey::from_ec_pem(public_key_pem)
+            .map_err(|e| SecurityError::Key(e.to_string()))?;
+        Ok(Self { key, validation: default_validation(Algorithm::ES256) })
+    }
+
+    /// An ES256 verifier from the raw EC **public** key point (`0x04 ‖ X ‖ Y`).
+    #[must_use]
+    pub fn es256_der(public_key_der: &[u8]) -> Self {
+        Self {
+            key: DecodingKey::from_ec_der(public_key_der),
+            validation: default_validation(Algorithm::ES256),
+        }
+    }
+
+    /// An EdDSA (Ed25519) verifier from a **public** key in PEM form.
+    ///
+    /// # Errors
+    /// Returns [`SecurityError::Key`] if the PEM cannot be parsed.
+    pub fn eddsa_pem(public_key_pem: &[u8]) -> Result<Self, SecurityError> {
+        let key = DecodingKey::from_ed_pem(public_key_pem)
+            .map_err(|e| SecurityError::Key(e.to_string()))?;
+        Ok(Self { key, validation: default_validation(Algorithm::EdDSA) })
+    }
+
+    /// An EdDSA verifier from the raw 32-byte Ed25519 **public** key.
+    #[must_use]
+    pub fn eddsa_der(public_key_der: &[u8]) -> Self {
+        Self {
+            key: DecodingKey::from_ed_der(public_key_der),
+            validation: default_validation(Algorithm::EdDSA),
+        }
     }
 
     /// Require the token's `iss` to equal `issuer`.

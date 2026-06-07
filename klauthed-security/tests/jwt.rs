@@ -122,3 +122,69 @@ fn leeway_admits_recently_expired_token() {
     let decoded = JwtVerifier::hs256(b"k").leeway_seconds(120).decode(&token).unwrap();
     assert_eq!(decoded.sub.as_deref(), Some("u"));
 }
+
+// ── ES256 / EdDSA ───────────────────────────────────────────────────────────
+//
+// Keys are generated at runtime with `ring` (already a dependency) so no private
+// key material is committed to the repo. jsonwebtoken's *_der constructors take
+// the same formats ring produces: PKCS#8 for private keys, the raw public point
+// / 32-byte Ed25519 public key for verification.
+
+use ring::rand::SystemRandom;
+use ring::signature::{ECDSA_P256_SHA256_FIXED_SIGNING, EcdsaKeyPair, Ed25519KeyPair, KeyPair};
+
+/// (PKCS#8 private DER, raw 32-byte public key) for a fresh Ed25519 keypair.
+fn ed25519_keypair() -> (Vec<u8>, Vec<u8>) {
+    let rng = SystemRandom::new();
+    let pkcs8 = Ed25519KeyPair::generate_pkcs8(&rng).unwrap();
+    let kp = Ed25519KeyPair::from_pkcs8(pkcs8.as_ref()).unwrap();
+    (pkcs8.as_ref().to_vec(), kp.public_key().as_ref().to_vec())
+}
+
+/// (PKCS#8 private DER, raw public point) for a fresh P-256 keypair.
+fn p256_keypair() -> (Vec<u8>, Vec<u8>) {
+    let rng = SystemRandom::new();
+    let pkcs8 = EcdsaKeyPair::generate_pkcs8(&ECDSA_P256_SHA256_FIXED_SIGNING, &rng).unwrap();
+    let kp =
+        EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_FIXED_SIGNING, pkcs8.as_ref(), &rng).unwrap();
+    (pkcs8.as_ref().to_vec(), kp.public_key().as_ref().to_vec())
+}
+
+#[test]
+fn eddsa_der_round_trip() {
+    let (priv_der, pub_der) = ed25519_keypair();
+    let token = JwtSigner::eddsa_der(&priv_der)
+        .encode(&Claims::builder("ed-user", &now_clock(), Duration::hours(1)).build())
+        .unwrap();
+    let decoded = JwtVerifier::eddsa_der(&pub_der).decode(&token).unwrap();
+    assert_eq!(decoded.sub.as_deref(), Some("ed-user"));
+}
+
+#[test]
+fn es256_der_round_trip() {
+    let (priv_der, pub_der) = p256_keypair();
+    let token = JwtSigner::es256_der(&priv_der)
+        .encode(&Claims::builder("ec-user", &now_clock(), Duration::hours(1)).build())
+        .unwrap();
+    let decoded = JwtVerifier::es256_der(&pub_der).decode(&token).unwrap();
+    assert_eq!(decoded.sub.as_deref(), Some("ec-user"));
+}
+
+#[test]
+fn eddsa_wrong_public_key_is_invalid() {
+    let (priv_a, _) = ed25519_keypair();
+    let (_, pub_b) = ed25519_keypair();
+    let token = JwtSigner::eddsa_der(&priv_a)
+        .encode(&Claims::builder("u", &now_clock(), Duration::hours(1)).build())
+        .unwrap();
+    let err = JwtVerifier::eddsa_der(&pub_b).decode(&token).unwrap_err();
+    assert!(matches!(err, SecurityError::InvalidToken(_)));
+}
+
+#[test]
+fn es256_and_eddsa_pem_reject_invalid_input() {
+    assert!(matches!(JwtSigner::es256_pem(b"nope"), Err(SecurityError::Key(_))));
+    assert!(matches!(JwtVerifier::es256_pem(b"nope"), Err(SecurityError::Key(_))));
+    assert!(matches!(JwtSigner::eddsa_pem(b"nope"), Err(SecurityError::Key(_))));
+    assert!(matches!(JwtVerifier::eddsa_pem(b"nope"), Err(SecurityError::Key(_))));
+}

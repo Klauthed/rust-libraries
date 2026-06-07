@@ -5,7 +5,7 @@ cryptographic crates (no hand-rolled primitives).
 
 - **Password hashing** (`password`) — Argon2id PHC strings: `hash_password` /
   `verify_password`.
-- **JWTs** (`jwt`) — `Claims` with `JwtSigner` / `JwtVerifier` (HS256 and RS256), with
+- **JWTs** (`jwt`) — `Claims` with `JwtSigner` / `JwtVerifier` (HS256, RS256, ES256, EdDSA), with
   `exp`/`iss`/`aud`/`nbf` validation driven by an injected `Clock`.
 - **Secure random tokens** (`token`) — `random_token` / `random_bytes` from the OS CSPRNG.
 - **Constant-time comparison** (`compare`) — `constant_time_eq` for secret/MAC equality.

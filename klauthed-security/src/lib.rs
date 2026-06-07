@@ -11,7 +11,7 @@
 //!   [`hash_password`] /
 //!   [`verify_password`].
 //! * **JWTs** ([`jwt`]) — [`Claims`] with a [`JwtSigner`]
-//!   and [`JwtVerifier`] supporting HS256 and RS256, with
+//!   and [`JwtVerifier`] supporting HS256, RS256, ES256, and EdDSA, with
 //!   `exp`/`iss`/`aud`/`nbf` validation and `exp` derived from a
 //!   [`Clock`](klauthed_core::time::Clock).
 //! * **Secure random tokens** ([`token`]) —
