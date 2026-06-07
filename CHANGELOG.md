@@ -13,6 +13,10 @@ All crates share a single version and are released together.
 - `klauthed-security`: JWT signing/verification now supports **ES256** (ECDSA
   P-256) and **EdDSA** (Ed25519) in addition to HS256/RS256. Asymmetric keys load
   from PEM or DER (`{rs256,es256,eddsa}_{pem,der}` on `JwtSigner`/`JwtVerifier`).
+- `klauthed-security`: **AEAD envelope encryption** (`aead::seal` / `Envelope`) —
+  encrypt under a fresh per-message data key wrapped by a long-lived root key,
+  with `Envelope::rewrap` for root-key rotation without re-encrypting payloads,
+  and a self-contained byte/base64 wire format.
 - `klauthed-data`: new `rate_limit` module — a `RateLimiter` trait with a
   clock-injected `InMemoryRateLimiter` and a `RedisRateLimiter` (`redis` feature)
   for shared, cross-replica fixed-window limiting.

@@ -39,13 +39,23 @@
 //! assert!(decrypt(&key, &sealed, b"record:99").is_err());
 //! ```
 //!
+//! # Envelope encryption
+//!
+//! For encryption-at-rest, prefer [`envelope::seal`] over using a single key
+//! directly: it encrypts each message under a fresh per-message *data key*, then
+//! wraps that data key under a long-lived *root key*. Rotating the root key only
+//! requires re-wrapping data keys ([`Envelope::rewrap`]), never re-encrypting the
+//! data itself.
+//!
 //! # Future work
 //!
-//! Envelope encryption / KMS integration (wrapping these data keys under a
-//! root key) and asymmetric encryption are intentionally out of scope.
+//! Direct KMS/HSM integration (root keys that never leave the boundary) and
+//! asymmetric encryption are intentionally out of scope.
 
 pub mod cipher;
+pub mod envelope;
 pub mod key;
 
 pub use cipher::{decrypt, decrypt_from_base64, encrypt, encrypt_to_base64};
+pub use envelope::{Envelope, seal};
 pub use key::{EncryptionKey, KEY_LEN};
