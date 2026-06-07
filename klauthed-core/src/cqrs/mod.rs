@@ -27,6 +27,3 @@ pub use command::{Command, CommandBus, CommandHandler};
 pub use error::CqrsError;
 pub use event::{Event, EventBus, EventHandler};
 pub use query::{Query, QueryBus, QueryHandler};
-
-#[cfg(test)]
-mod tests;

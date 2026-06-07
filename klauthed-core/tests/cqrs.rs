@@ -1,10 +1,13 @@
-//! Tests for the CQRS traits and buses.
+//! Public-API integration tests for the CQRS traits and buses.
 
-use klauthed_error::{DomainError, ErrorCategory, ErrorCode};
 use std::sync::Arc;
-
-use super::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
+
+use klauthed_core::cqrs::{
+    Command, CommandBus, CommandHandler, CqrsError, Event, EventBus, EventHandler, Query, QueryBus,
+    QueryHandler,
+};
+use klauthed_error::{DomainError, ErrorCategory, ErrorCode};
 
 // A minimal DomainError for handlers to return.
 #[derive(Debug)]
