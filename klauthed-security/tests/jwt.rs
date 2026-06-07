@@ -80,3 +80,45 @@ fn random_jwt_id_is_set() {
         Claims::builder("u", &now_clock(), Duration::hours(1)).random_jwt_id().unwrap().build();
     assert!(claims.jti.is_some());
 }
+
+#[test]
+fn rs256_signer_rejects_invalid_pem() {
+    // A non-PEM blob can't be parsed as an RSA private key. (JwtSigner isn't
+    // Debug, so match the Result rather than unwrap_err.)
+    assert!(matches!(
+        JwtSigner::rs256_pem(b"-----BEGIN PRIVATE KEY-----\nnope\n-----END PRIVATE KEY-----"),
+        Err(SecurityError::Key(_))
+    ));
+}
+
+#[test]
+fn rs256_verifier_rejects_invalid_pem() {
+    assert!(matches!(JwtVerifier::rs256_pem(b"not a public key"), Err(SecurityError::Key(_))));
+}
+
+#[test]
+fn audience_mismatch_is_invalid() {
+    let token = JwtSigner::hs256(b"k")
+        .encode(&Claims::builder("u", &now_clock(), Duration::hours(1)).audience("api").build())
+        .unwrap();
+    let err = JwtVerifier::hs256(b"k").expecting_audience("other").decode(&token).unwrap_err();
+    assert!(matches!(err, SecurityError::InvalidToken(_)));
+}
+
+#[test]
+fn leeway_admits_recently_expired_token() {
+    // `exp` is 90s in the past — beyond jsonwebtoken's default 60s leeway.
+    let token = JwtSigner::hs256(b"k")
+        .encode(&Claims::builder("u", &now_clock(), Duration::seconds(-90)).build())
+        .unwrap();
+
+    // Default verifier (60s leeway) rejects it as expired...
+    assert!(matches!(
+        JwtVerifier::hs256(b"k").decode(&token).unwrap_err(),
+        SecurityError::ExpiredToken
+    ));
+
+    // ...but a wider leeway window accepts it.
+    let decoded = JwtVerifier::hs256(b"k").leeway_seconds(120).decode(&token).unwrap();
+    assert_eq!(decoded.sub.as_deref(), Some("u"));
+}

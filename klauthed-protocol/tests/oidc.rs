@@ -235,3 +235,52 @@ fn audience_supports_array_form() {
     let reser = serde_json::to_value(&claims).unwrap();
     assert_eq!(reser["aud"], serde_json::json!(["a", "b"]));
 }
+
+#[test]
+fn provider_metadata_round_trips_and_skips_empty_fields() {
+    let meta = ProviderMetadata {
+        issuer: "https://issuer.example.com".into(),
+        authorization_endpoint: Some("https://issuer.example.com/authorize".into()),
+        token_endpoint: Some("https://issuer.example.com/token".into()),
+        jwks_uri: Some("https://issuer.example.com/jwks".into()),
+        response_types_supported: vec![ResponseType::Code, ResponseType::IdToken],
+        grant_types_supported: vec![GrantType::AuthorizationCode, GrantType::RefreshToken],
+        subject_types_supported: vec![SubjectType::Public],
+        id_token_signing_alg_values_supported: vec!["RS256".into()],
+        scopes_supported: vec![Scope::Known(KnownScope::OpenId), Scope::Other("custom".into())],
+        code_challenge_methods_supported: vec!["S256".into()],
+        ..Default::default()
+    };
+
+    let json = serde_json::to_value(&meta).unwrap();
+    // Required field + spec-named serializations.
+    assert_eq!(json["issuer"], "https://issuer.example.com");
+    assert_eq!(json["response_types_supported"][1], "id_token");
+    assert_eq!(json["grant_types_supported"][0], "authorization_code");
+    assert_eq!(json["subject_types_supported"][0], "public");
+    assert_eq!(json["scopes_supported"][0], "openid");
+    assert_eq!(json["scopes_supported"][1], "custom");
+    // Absent/empty fields are skipped, not emitted as null / [].
+    assert!(json.get("userinfo_endpoint").is_none());
+    assert!(json.get("claims_supported").is_none());
+
+    // Round-trips back to an equal value.
+    let back: ProviderMetadata = serde_json::from_value(json).unwrap();
+    assert_eq!(back, meta);
+}
+
+#[test]
+fn provider_metadata_minimal_serializes_only_issuer() {
+    let meta = ProviderMetadata { issuer: "https://i".into(), ..Default::default() };
+    let json = serde_json::to_value(&meta).unwrap();
+    assert_eq!(json.as_object().unwrap().len(), 1, "only the required issuer is emitted");
+    assert_eq!(json["issuer"], "https://i");
+}
+
+#[test]
+fn scope_as_str_covers_known_and_custom() {
+    assert_eq!(Scope::Known(KnownScope::OpenId).as_str(), "openid");
+    assert_eq!(Scope::Known(KnownScope::Email).as_str(), "email");
+    assert_eq!(Scope::Known(KnownScope::OfflineAccess).as_str(), "offline_access");
+    assert_eq!(Scope::Other("custom".into()).as_str(), "custom");
+}
