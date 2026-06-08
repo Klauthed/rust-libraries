@@ -10,6 +10,8 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **`CAPABILITIES.md`** — a single, guided tour of every crate's capabilities,
+  feature flags, and entry points (linked from the README).
 - `klauthed-core`: **`wiring::AppContext`** — a small, explicit application wiring
   container: a type-keyed registry of shared singletons (`register` / `get` /
   `require`), framework-agnostic, paired with `FromConfig` via

@@ -10,6 +10,9 @@ plumbing, and observability — so each service writes domain logic instead of b
 > **Status:** pre-1.0 and under active development. APIs may change between releases.
 > Built for [actix-web](https://actix.rs/) services.
 
+📖 **[CAPABILITIES.md](CAPABILITIES.md)** — a single, guided tour of every crate's
+capabilities, features, and entry points.
+
 ## Crates
 
 | Crate | What it provides |
@@ -22,7 +25,8 @@ plumbing, and observability — so each service writes domain logic instead of b
 | [`klauthed-observability`](klauthed-observability/) | Structured logging/tracing, Prometheus metrics, and OpenTelemetry export from one `TelemetryConfig`. |
 | [`klauthed-protocol`](klauthed-protocol/) | Spec-accurate serde wire types for OIDC, JWKS, OAuth 2.0, and SCIM (typed data modeling — no I/O). |
 | [`klauthed-security`](klauthed-security/) | Crypto & auth primitives: Argon2id password hashing, JWT (HS256/RS256), AEAD, HKDF, MFA/TOTP, sessions, RBAC, and the OAuth2/OIDC building blocks. |
-| [`klauthed-data`](klauthed-data/) | Connected resources from typed config: SQL/Mongo/MSSQL pools, Redis/in-memory cache, NATS/RabbitMQ/Kafka, object storage, plus outbox, idempotency, locks, sagas, pagination & event bus. |
+| [`klauthed-data`](klauthed-data/) | Connected resources from typed config: SQL/Mongo pools, Redis/in-memory cache, NATS/RabbitMQ/Kafka, object storage, plus outbox, idempotency, locks, sagas, pagination & event bus. |
+| [`klauthed-discovery`](klauthed-discovery/) | Service discovery: a `ServiceRegistry` (in-memory, Consul, Eureka) with a self-registering agent and round-robin client-side load balancing. |
 | [`klauthed-platform`](klauthed-platform/) | Cross-cutting concerns: tenancy, feature flags, audit, background-job stores, and webhooks (SPI traits + in-memory impls). |
 | [`klauthed-web`](klauthed-web/) | The actix-web layer: `AppError`, request-context middleware, health probes, server builder, rate limiting, extractors, JWT auth, CORS, and the OAuth2/OIDC endpoints. |
 | [`klauthed-testing`](klauthed-testing/) | Dev-dependency test utilities (fixed clock, assertions, deterministic ids, context/repository helpers). |
