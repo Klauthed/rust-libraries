@@ -21,6 +21,7 @@
 //! # }
 //! ```
 
+pub mod binding;
 pub mod builder;
 #[allow(clippy::module_inception)]
 pub mod config;
@@ -31,6 +32,7 @@ pub mod provider;
 pub mod reload;
 pub mod schema;
 
+pub use binding::FromConfig;
 pub use builder::ConfigBuilder;
 pub use config::Config;
 pub use map::ConfigMap;

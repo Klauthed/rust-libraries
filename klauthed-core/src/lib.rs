@@ -14,6 +14,10 @@
 //! * [`validation`] — the [`Validate`](validation::Validate) trait.
 //! * [`error`] — re-exports the error kernel plus `ConfigError`.
 
+// Lets the `#[derive(FromConfig)]` macro's `::klauthed_core::…` paths resolve
+// when the derive is used inside this crate (e.g. its own tests).
+extern crate self as klauthed_core;
+
 pub mod config;
 pub mod context;
 pub mod cqrs;

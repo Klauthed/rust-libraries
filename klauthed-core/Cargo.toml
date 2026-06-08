@@ -13,6 +13,7 @@ categories = ["config", "data-structures"]
 
 [dependencies]
 klauthed-error.workspace = true
+klauthed-macros.workspace = true
 
 async-trait.workspace = true
 serde.workspace = true

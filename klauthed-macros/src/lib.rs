@@ -12,6 +12,7 @@ use syn::{DeriveInput, parse_macro_input};
 use expand::expand;
 
 mod expand;
+mod from_config;
 mod parse;
 
 /// Derive `klauthed_error::DomainError`.
@@ -61,4 +62,26 @@ mod parse;
 pub fn derive_domain_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     expand(input).unwrap_or_else(syn::Error::into_compile_error).into()
+}
+
+/// Derive `klauthed_core::config::FromConfig`.
+///
+/// Binds a struct to a section of the resolved configuration, generating a
+/// `from_config(&Config)` that reads (and deserializes) it — the klauthed analog
+/// of Spring's `@ConfigurationProperties`. The type must also implement
+/// `serde::Deserialize`.
+///
+/// ```text
+/// #[derive(serde::Deserialize, FromConfig)]
+/// #[config(key = "database")]        // defaults to the snake_cased type name
+/// struct DatabaseSettings { /* … */ }
+///
+/// #[derive(Default, serde::Deserialize, FromConfig)]
+/// #[config(key = "cache", default)]  // a missing section binds to `Default`
+/// struct CacheSettings { /* … */ }
+/// ```
+#[proc_macro_derive(FromConfig, attributes(config))]
+pub fn derive_from_config(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    from_config::expand(input).unwrap_or_else(syn::Error::into_compile_error).into()
 }

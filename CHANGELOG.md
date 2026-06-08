@@ -10,6 +10,12 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-core` / `klauthed-macros`: **`#[derive(FromConfig)]`** — bind a typed
+  struct to a config section (`#[config(key = "database")]`, defaulting to the
+  snake-cased type name; `#[config(default)]` binds a missing section to
+  `Default`). The klauthed analog of Spring's `@ConfigurationProperties`:
+  `MyConfig::from_config(&config)?` instead of a hand-written `config.get(...)`.
+  New `config::FromConfig` trait + derive.
 - `klauthed-core`: **hot-reloading config** (`config::ReloadableConfig`, feature
   `hot-reload`) — re-resolves the provider chain on an interval (and on demand
   via `reload_now`), atomically swapping in the new `Config` and notifying
