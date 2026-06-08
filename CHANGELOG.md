@@ -10,6 +10,12 @@ All crates share a single version and are released together.
 
 ### Added
 
+- CI: an **`integration` job** that runs the `#[ignore]`d live-infra tests
+  against real Postgres, Redis, and MongoDB service containers (`cargo test
+  -- --ignored`), so the data-layer (outbox, idempotency, locks, Mongo repo)
+  and web health-check paths are actually exercised, not just compiled. Locally:
+  start the three backends and run with `DB_URL` / `REDIS_URL` / `MONGODB_URL`
+  set.
 - `klauthed-security`: **WebAuthn / passkeys** (`passkey` module, feature
   `webauthn`) — a `PasskeyAuthenticator` relying-party wrapper over `webauthn-rs`
   driving the registration and authentication ceremonies (`start`/`finish` for
