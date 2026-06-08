@@ -10,11 +10,12 @@ description = "Runnable feature tour for the klauthed libraries (not published).
 publish = false
 
 [dependencies]
-klauthed-core = { workspace = true, features = ["tz"] }
+klauthed-core = { workspace = true, features = ["tz", "config-server"] }
 klauthed-error.workspace = true
 klauthed-macros.workspace = true
 klauthed-security = { workspace = true, features = ["sealed"] }
 klauthed-data.workspace = true
+klauthed-discovery = { workspace = true, features = ["agent"] }
 klauthed-protocol.workspace = true
 klauthed-i18n.workspace = true
 

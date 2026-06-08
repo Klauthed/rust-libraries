@@ -8,8 +8,10 @@
 //! ```
 
 mod authz_demo;
+mod config_server_demo;
 mod core_demo;
 mod data_demo;
+mod discovery_demo;
 mod error_demo;
 mod i18n_demo;
 mod protocol_demo;
@@ -44,6 +46,12 @@ async fn main() {
 
     section("i18n: catalogs + interpolation");
     i18n_demo::run();
+
+    section("config: remote config-server provider");
+    config_server_demo::run().await;
+
+    section("discovery: registry, round-robin, self-registering agent");
+    discovery_demo::run().await;
 
     println!("\n\x1b[32m✓ all feature demos ran successfully\x1b[0m");
 }

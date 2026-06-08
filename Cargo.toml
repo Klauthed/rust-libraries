@@ -126,6 +126,7 @@ dashmap      = "6"
 klauthed               = { path = "klauthed",               version = "0.1.0" }
 klauthed-core          = { path = "klauthed-core",          version = "0.1.0", default-features = false }
 klauthed-data          = { path = "klauthed-data",          version = "0.1.0" }
+klauthed-discovery     = { path = "klauthed-discovery",     version = "0.1.0" }
 klauthed-error         = { path = "klauthed-error",         version = "0.1.0" }
 klauthed-i18n          = { path = "klauthed-i18n",          version = "0.1.0" }
 klauthed-macros        = { path = "klauthed-macros",        version = "0.1.0" }

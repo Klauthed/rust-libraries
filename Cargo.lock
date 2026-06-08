@@ -2512,6 +2512,7 @@ version = "0.1.0"
 dependencies = [
  "klauthed-core",
  "klauthed-data",
+ "klauthed-discovery",
  "klauthed-error",
  "klauthed-i18n",
  "klauthed-macros",
