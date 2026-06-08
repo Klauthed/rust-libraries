@@ -2450,6 +2450,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "klauthed-discovery"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "klauthed-error",
+ "klauthed-macros",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "klauthed-error"
 version = "0.1.0"
 dependencies = [

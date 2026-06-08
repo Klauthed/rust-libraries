@@ -3,6 +3,7 @@
 # klauthed                  ← umbrella with feature-flag re-exports
 # klauthed-core             ← errors, ids, time, validation, config, cqrs, domain, context
 # klauthed-data             ← db, storage, cache, outbox, idempotency, locks, sagas, pagination, eventbus
+# klauthed-discovery        ← service registry abstraction (in-memory, Consul, Eureka)
 # klauthed-i18n             ← locales, message bundles, formatting
 # klauthed-macros           ← proc-macros (leaf)
 # klauthed-observability    ← tracing, metrics, OpenTelemetry
@@ -19,6 +20,7 @@ members = [
     "klauthed",
     "klauthed-core",
     "klauthed-data",
+    "klauthed-discovery",
     "klauthed-error",
     "klauthed-i18n",
     "klauthed-macros",

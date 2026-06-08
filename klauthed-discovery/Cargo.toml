@@ -1,0 +1,38 @@
+[package]
+name = "klauthed-discovery"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Service discovery for klauthed: a registry abstraction with in-memory, Consul, and Eureka backends."
+readme = "README.md"
+keywords = ["service-discovery", "consul", "eureka", "registry", "klauthed"]
+categories = ["web-programming", "network-programming"]
+
+[dependencies]
+klauthed-error.workspace = true
+klauthed-macros.workspace = true
+
+async-trait.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true
+tracing.workspace = true
+
+# HTTP backends (Consul / Eureka) — pulled in only with the matching feature.
+reqwest = { workspace = true, optional = true }
+
+[features]
+default = []
+# Consul agent backend (HTTP).
+consul = ["dep:reqwest"]
+# Netflix Eureka backend (HTTP).
+eureka = ["dep:reqwest"]
+
+[dev-dependencies]
+tokio = { workspace = true }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
