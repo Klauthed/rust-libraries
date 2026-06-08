@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
       - uses: Swatinem/rust-cache@v2
       - name: Clippy (all features, deny warnings)
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
       - uses: Swatinem/rust-cache@v2
       - name: Test (all features)
         run: cargo test --workspace --all-features
@@ -54,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
       - uses: Swatinem/rust-cache@v2
       - name: Build docs (deny warnings)
         run: cargo doc --workspace --all-features --no-deps
@@ -65,7 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
       # The repo's rust-toolchain.toml pins `stable`; drop it so the MSRV
       # toolchain is actually used for this job.
       - name: Drop toolchain override
@@ -95,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-hack

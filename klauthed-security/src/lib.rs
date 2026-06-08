@@ -81,6 +81,8 @@ pub mod jwt;
 pub mod kdf;
 pub mod mfa;
 pub mod oauth2_client; // folder: oauth2_client/{client,store}.rs
+#[cfg(feature = "webauthn")]
+pub mod passkey; // folder: passkey/{authenticator}.rs — feature = "webauthn"
 pub mod password;
 pub mod refresh_token; // folder: refresh_token/{token,store}.rs
 pub mod revocation;
@@ -102,6 +104,8 @@ pub use oauth2_client::{
     ClientGrantType, ClientStore, ClientType, InMemoryClientStore, OAuth2Client,
     TokenEndpointAuthMethod,
 };
+#[cfg(feature = "webauthn")]
+pub use passkey::PasskeyAuthenticator;
 pub use password::{hash_password, verify_password};
 pub use refresh_token::{
     ConsumeResult, InMemoryRefreshTokenStore, RefreshToken, RefreshTokenBuilder, RefreshTokenStore,

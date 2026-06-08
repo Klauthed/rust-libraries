@@ -50,10 +50,21 @@ totp-rs = { version = "5.7", default-features = false, features = ["otpauth", "g
 # X25519 for sealed-box (public-key) encryption — optional (`sealed` feature).
 x25519-dalek = { workspace = true, optional = true }
 
+# WebAuthn / passkeys — optional (`webauthn` feature). The de-facto standard
+# server-side implementation; MPL-2.0 (allow-listed in deny.toml) and links
+# OpenSSL, so it is gated off by default. `danger-allow-state-serialisation`
+# lets the registration/authentication ceremony state be persisted between the
+# two HTTP round-trips.
+webauthn-rs = { version = "0.5.5", features = [
+    "danger-allow-state-serialisation",
+], optional = true }
+
 [features]
 default = []
 # Sealed-box (recipient public-key) encryption in `aead::asymmetric`.
 sealed = ["dep:x25519-dalek"]
+# WebAuthn / passkey registration + authentication ceremonies (`passkey` module).
+webauthn = ["dep:webauthn-rs"]
 
 [dev-dependencies]
 tokio = { workspace = true }

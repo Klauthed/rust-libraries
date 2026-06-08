@@ -91,6 +91,16 @@ pub enum SecurityError {
     /// HKDF's `255 * HashLen` ceiling).
     #[domain(category = "internal", code = "key_derivation")]
     KeyDerivation,
+
+    /// A WebAuthn relying-party could not be configured (e.g. an invalid RP id
+    /// or origin URL). A server misconfiguration, not caller input.
+    #[domain(category = "internal", code = "webauthn_config")]
+    WebauthnConfig(String),
+
+    /// A WebAuthn registration or authentication ceremony failed to verify
+    /// (bad client response, challenge mismatch, failed attestation, …).
+    #[domain(category = "unauthorized", code = "webauthn")]
+    Webauthn(String),
 }
 
 impl std::fmt::Display for SecurityError {
@@ -117,6 +127,10 @@ impl std::fmt::Display for SecurityError {
                 f.write_str("authenticated decryption failed (tampered, wrong key, or wrong AAD)")
             }
             SecurityError::KeyDerivation => f.write_str("HKDF key derivation failed"),
+            SecurityError::WebauthnConfig(msg) => {
+                write!(f, "invalid WebAuthn configuration: {msg}")
+            }
+            SecurityError::Webauthn(msg) => write!(f, "WebAuthn ceremony failed: {msg}"),
         }
     }
 }

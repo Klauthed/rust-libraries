@@ -18,8 +18,8 @@ ignore = []
 [licenses]
 version = 2
 # Permissive licenses present in the dependency tree. Each crate's SPDX
-# expression must resolve to an allowed set; copyleft (LGPL/GPL) is only ever
-# reached via `OR` with a permissive option, so it is never selected.
+# expression must resolve to an allowed set; strong copyleft (LGPL/GPL) is only
+# ever reached via `OR` with a permissive option, so it is never selected.
 allow = [
     "MIT",
     "MIT-0",
@@ -35,6 +35,10 @@ allow = [
     "Unlicense",
     "CC0-1.0",
     "CDLA-Permissive-2.0",
+    # Weak, file-level copyleft. Reached only via `webauthn-rs` (the `webauthn`
+    # feature of klauthed-security), which we use unmodified, so the per-file
+    # share-alike obligation does not extend to our own sources.
+    "MPL-2.0",
 ]
 confidence-threshold = 0.8
 

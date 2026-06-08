@@ -10,6 +10,14 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-security`: **WebAuthn / passkeys** (`passkey::PasskeyAuthenticator`,
+  feature `webauthn`) — a relying-party wrapper over `webauthn-rs` driving the
+  registration and authentication ceremonies (`start`/`finish` for each), with
+  the challenge/state/credential types re-exported so callers need no direct
+  `webauthn-rs` dependency. The feature is **off by default**: it pulls
+  `webauthn-rs` (MPL-2.0, now allow-listed in `deny.toml`) and links OpenSSL
+  (CI installs `libssl-dev`). New `SecurityError::WebauthnConfig` / `Webauthn`
+  variants.
 - `klauthed-security`: **MFA recovery codes** (`mfa::RecoveryCodeSet`) — generate
   a set of single-use backup codes, shown to the user once and persisted only as
   SHA-256 hashes (serializes to a JSON hash list). `verify_and_consume` is
