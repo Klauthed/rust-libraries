@@ -42,8 +42,10 @@ pub mod middleware;
 pub use key::KeyBy;
 pub use middleware::{RateLimit, RateLimitService};
 
+#[doc(no_inline)]
+pub use klauthed_data::rate_limit::{
+    InMemoryRateLimiter, InMemoryTokenBucket, RateLimitOutcome, RateLimiter,
+};
 #[cfg(feature = "data-redis")]
 #[doc(no_inline)]
-pub use klauthed_data::rate_limit::RedisRateLimiter;
-#[doc(no_inline)]
-pub use klauthed_data::rate_limit::{InMemoryRateLimiter, RateLimitOutcome, RateLimiter};
+pub use klauthed_data::rate_limit::{RedisRateLimiter, RedisTokenBucket};

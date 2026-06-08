@@ -1,17 +1,23 @@
-//! Fixed-window rate limiting with a pluggable backend.
+//! Rate limiting with a pluggable backend and algorithm.
 //!
 //! A [`RateLimiter`] records requests against a string key and reports whether
 //! each is [`Allowed`](RateLimitOutcome::Allowed) or
-//! [`Limited`](RateLimitOutcome::Limited) within a rolling fixed window of
-//! `max` requests per `window`.
+//! [`Limited`](RateLimitOutcome::Limited), permitting up to `max` per `window`.
+//! All implementations share that `(max, window)` API, so they're
+//! interchangeable behind `Arc<dyn RateLimiter>`.
 //!
-//! Two backends are provided:
+//! **Fixed-window** (hard reset each window):
 //!
 //! * [`InMemoryRateLimiter`] — a clock-injected `Mutex<HashMap>`, per-process
 //!   (each replica counts independently). Ideal for single-node deployments and
 //!   tests (drive it with a `FixedClock`).
 //! * [`RedisRateLimiter`] (`redis` feature) — a shared counter in Redis, so a
 //!   fleet of replicas enforces one global budget per key.
+//!
+//! **Token-bucket** (continuous refill — smooths traffic, allows short bursts up
+//! to `max`): [`InMemoryTokenBucket`] and [`RedisTokenBucket`] (`redis`),
+//! with the same `(max, window)` parameters (`max` = burst capacity, refilled at
+//! `max / window`).
 //!
 //! ```
 //! use std::sync::Arc;
@@ -44,9 +50,9 @@ pub mod memory;
 #[cfg(feature = "redis")]
 pub mod redis;
 
-pub use memory::InMemoryRateLimiter;
+pub use memory::{InMemoryRateLimiter, InMemoryTokenBucket};
 #[cfg(feature = "redis")]
-pub use redis::RedisRateLimiter;
+pub use redis::{RedisRateLimiter, RedisTokenBucket};
 
 /// The result of recording one request against a key in its current window.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -29,7 +29,9 @@ All crates share a single version and are released together.
   complementing the existing RBAC `Authorizer`.
 - `klauthed-data`: new `rate_limit` module — a `RateLimiter` trait with a
   clock-injected `InMemoryRateLimiter` and a `RedisRateLimiter` (`redis` feature)
-  for shared, cross-replica fixed-window limiting.
+  for shared, cross-replica fixed-window limiting. Token-bucket variants
+  (`InMemoryTokenBucket`, `RedisTokenBucket`) add continuous-refill smoothing with
+  the same `(max, window)` API, interchangeable behind `Arc<dyn RateLimiter>`.
 - `klauthed-web`: the rate-limit middleware now uses a pluggable `RateLimiter`
   store. `RateLimit::new` keeps the per-process in-memory limiter;
   `RateLimit::with_store` accepts any `Arc<dyn RateLimiter>` (e.g. Redis) for one
