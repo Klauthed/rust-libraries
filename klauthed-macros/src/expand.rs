@@ -157,6 +157,7 @@ fn transparent_pattern(
             Ok((quote! { (__inner) }, quote! { __inner }))
         }
         Fields::Named(f) if f.named.len() == 1 => {
+            #[allow(clippy::unwrap_used, reason = "the match guard proves exactly one named field")]
             let field = f.named.first().unwrap().ident.as_ref().unwrap();
             Ok((quote! { { #field: __inner } }, quote! { __inner }))
         }
@@ -172,6 +173,7 @@ fn transparent_field_access(fields: &Fields, span: proc_macro2::Span) -> syn::Re
     match fields {
         Fields::Unnamed(f) if f.unnamed.len() == 1 => Ok(quote! { self.0 }),
         Fields::Named(f) if f.named.len() == 1 => {
+            #[allow(clippy::unwrap_used, reason = "the match guard proves exactly one named field")]
             let field = f.named.first().unwrap().ident.as_ref().unwrap();
             Ok(quote! { self.#field })
         }

@@ -136,7 +136,7 @@ impl InMemoryOutbox {
 
     /// The total number of entries held (published or not).
     pub fn len(&self) -> usize {
-        self.entries.lock().expect("outbox mutex poisoned").len()
+        self.entries.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len()
     }
 
     /// Whether the outbox holds no entries at all.
@@ -148,12 +148,12 @@ impl InMemoryOutbox {
 #[async_trait]
 impl Outbox for InMemoryOutbox {
     async fn enqueue(&self, entries: Vec<OutboxEntry>) -> Result<(), DataError> {
-        self.entries.lock().expect("outbox mutex poisoned").extend(entries);
+        self.entries.lock().unwrap_or_else(std::sync::PoisonError::into_inner).extend(entries);
         Ok(())
     }
 
     async fn fetch_unpublished(&self, limit: usize) -> Result<Vec<OutboxEntry>, DataError> {
-        let guard = self.entries.lock().expect("outbox mutex poisoned");
+        let guard = self.entries.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let mut unpublished: Vec<OutboxEntry> =
             guard.iter().filter(|e| !e.published).cloned().collect();
         // Oldest first by id (UUID v7 is time-sortable), then truncate.
@@ -164,7 +164,7 @@ impl Outbox for InMemoryOutbox {
 
     async fn mark_published(&self, ids: &[OutboxId]) -> Result<(), DataError> {
         let now = Timestamp::now();
-        let mut guard = self.entries.lock().expect("outbox mutex poisoned");
+        let mut guard = self.entries.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         for entry in guard.iter_mut() {
             if !entry.published && ids.contains(&entry.id) {
                 entry.published = true;

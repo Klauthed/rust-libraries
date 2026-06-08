@@ -66,7 +66,7 @@ impl InMemoryTenantResolver {
 
     /// Insert (or replace, by id) a tenant.
     pub fn insert(&self, tenant: Tenant) {
-        let mut guard = self.tenants.lock().expect("tenant lock poisoned");
+        let mut guard = self.tenants.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         if let Some(slot) = guard.iter_mut().find(|t| t.id() == tenant.id()) {
             *slot = tenant;
         } else {
@@ -76,7 +76,7 @@ impl InMemoryTenantResolver {
 
     /// The number of registered tenants.
     pub fn len(&self) -> usize {
-        self.tenants.lock().expect("tenant lock poisoned").len()
+        self.tenants.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len()
     }
 
     /// Whether there are no registered tenants.
@@ -88,7 +88,7 @@ impl InMemoryTenantResolver {
 #[async_trait]
 impl TenantResolver for InMemoryTenantResolver {
     async fn resolve(&self, id_or_slug: &str) -> Result<Option<Tenant>, PlatformError> {
-        let guard = self.tenants.lock().expect("tenant lock poisoned");
+        let guard = self.tenants.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let found = guard
             .iter()
             .find(|t| t.slug() == id_or_slug || t.id().to_string() == id_or_slug)

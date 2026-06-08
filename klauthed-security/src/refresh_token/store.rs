@@ -138,21 +138,21 @@ impl InMemoryRefreshTokenStore {
     /// Number of active (live, unconsumed) tokens.
     #[must_use]
     pub fn active_count(&self) -> usize {
-        self.state.lock().expect("mutex poisoned").active.len()
+        self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner).active.len()
     }
 }
 
 #[async_trait]
 impl RefreshTokenStore for InMemoryRefreshTokenStore {
     async fn store(&self, token: RefreshToken) -> Result<(), SecurityError> {
-        let mut s = self.state.lock().expect("mutex poisoned");
+        let mut s = self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         s.active.insert(token.token.clone(), token);
         Ok(())
     }
 
     async fn consume(&self, token: &str) -> Result<ConsumeResult, SecurityError> {
         let now = self.clock.now();
-        let mut s = self.state.lock().expect("mutex poisoned");
+        let mut s = self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
 
         // ── 1. Is the family already revoked? ─────────────────────────────────
         // We need to find the family from the active map first.
@@ -192,7 +192,7 @@ impl RefreshTokenStore for InMemoryRefreshTokenStore {
     }
 
     async fn revoke_family(&self, family_id: &str) -> Result<(), SecurityError> {
-        let mut s = self.state.lock().expect("mutex poisoned");
+        let mut s = self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         s.revoked_families.insert(family_id.to_owned());
         s.active.retain(|_, rt| rt.family_id != family_id);
         Ok(())

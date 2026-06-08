@@ -79,26 +79,29 @@ impl InMemoryAuthCodeStore {
     /// Number of stored codes (including expired ones not yet evicted).
     #[must_use]
     pub fn len(&self) -> usize {
-        self.codes.lock().expect("auth code store mutex poisoned").len()
+        self.codes.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len()
     }
 
     /// Whether the store holds no codes.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.codes.lock().expect("auth code store mutex poisoned").is_empty()
+        self.codes.lock().unwrap_or_else(std::sync::PoisonError::into_inner).is_empty()
     }
 }
 
 #[async_trait]
 impl AuthCodeStore for InMemoryAuthCodeStore {
     async fn store(&self, code: AuthCode) -> Result<(), SecurityError> {
-        self.codes.lock().expect("auth code store mutex poisoned").insert(code.code.clone(), code);
+        self.codes
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .insert(code.code.clone(), code);
         Ok(())
     }
 
     async fn consume(&self, code: &str) -> Result<Option<AuthCode>, SecurityError> {
         let now = self.clock.now();
-        let mut map = self.codes.lock().expect("auth code store mutex poisoned");
+        let mut map = self.codes.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         match map.remove(code) {
             // Expired: discard without re-inserting.
             Some(c) if c.is_expired(now) => Ok(None),

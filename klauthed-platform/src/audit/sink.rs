@@ -32,12 +32,12 @@ impl InMemoryAuditSink {
 
     /// A snapshot of all recorded events, in record order.
     pub fn events(&self) -> Vec<AuditEvent> {
-        self.events.lock().expect("audit lock poisoned").clone()
+        self.events.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clone()
     }
 
     /// The number of recorded events.
     pub fn len(&self) -> usize {
-        self.events.lock().expect("audit lock poisoned").len()
+        self.events.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len()
     }
 
     /// Whether no events have been recorded.
@@ -49,7 +49,7 @@ impl InMemoryAuditSink {
 #[async_trait]
 impl AuditSink for InMemoryAuditSink {
     async fn record(&self, event: AuditEvent) -> Result<(), PlatformError> {
-        self.events.lock().expect("audit lock poisoned").push(event);
+        self.events.lock().unwrap_or_else(std::sync::PoisonError::into_inner).push(event);
         Ok(())
     }
 }

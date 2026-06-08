@@ -92,6 +92,10 @@ impl Timestamp {
     }
 
     /// RFC 3339 / ISO 8601 representation (millisecond precision, `Z` suffix).
+    #[allow(
+        clippy::expect_used,
+        reason = "formatting an in-range UTC value with a static format description is infallible"
+    )]
     pub fn to_rfc3339(&self) -> String {
         // Fixed format matches the historical wire contract: UTC `Z` designator
         // with exactly three subsecond digits.

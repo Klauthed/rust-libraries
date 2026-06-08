@@ -54,13 +54,13 @@ impl InMemoryRateLimiter {
     /// elapsed but not yet been overwritten).
     #[must_use]
     pub fn len(&self) -> usize {
-        self.windows.lock().expect("rate-limit mutex poisoned").len()
+        self.windows.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len()
     }
 
     /// Whether no keys are currently tracked.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.windows.lock().expect("rate-limit mutex poisoned").is_empty()
+        self.windows.lock().unwrap_or_else(std::sync::PoisonError::into_inner).is_empty()
     }
 }
 
@@ -76,7 +76,7 @@ impl RateLimiter for InMemoryRateLimiter {
         let window_core = Duration::milliseconds(window.as_millis().min(i64::MAX as u128) as i64);
         let now = self.clock.now();
 
-        let mut windows = self.windows.lock().expect("rate-limit mutex poisoned");
+        let mut windows = self.windows.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let entry = windows.entry(key.to_owned()).or_insert(Window { started: now, count: 0 });
 
         // Reset the window if it has elapsed.
@@ -158,7 +158,7 @@ impl RateLimiter for InMemoryTokenBucket {
         let refill_per_sec = capacity / window.as_secs_f64().max(f64::MIN_POSITIVE);
         let now = self.clock.now();
 
-        let mut buckets = self.buckets.lock().expect("token-bucket mutex poisoned");
+        let mut buckets = self.buckets.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         // New keys start full, permitting an initial burst up to `capacity`.
         let bucket =
             buckets.entry(key.to_owned()).or_insert(Bucket { tokens: capacity, refilled_at: now });

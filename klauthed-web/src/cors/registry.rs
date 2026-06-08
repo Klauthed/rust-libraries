@@ -89,17 +89,20 @@ impl InMemoryOriginRegistry {
 
     /// Add an origin at runtime (e.g. from an admin endpoint).
     pub fn insert(&self, origin: impl Into<String>) {
-        self.origins.write().expect("InMemoryOriginRegistry lock poisoned").insert(origin.into());
+        self.origins
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .insert(origin.into());
     }
 
     /// Remove an origin at runtime.
     pub fn remove(&self, origin: &str) -> bool {
-        self.origins.write().expect("InMemoryOriginRegistry lock poisoned").remove(origin)
+        self.origins.write().unwrap_or_else(std::sync::PoisonError::into_inner).remove(origin)
     }
 
     /// How many origins are currently allowed.
     pub fn len(&self) -> usize {
-        self.origins.read().expect("InMemoryOriginRegistry lock poisoned").len()
+        self.origins.read().unwrap_or_else(std::sync::PoisonError::into_inner).len()
     }
 
     /// Whether no origins are allowed.
@@ -111,7 +114,7 @@ impl InMemoryOriginRegistry {
 #[async_trait]
 impl CorsOriginRegistry for InMemoryOriginRegistry {
     async fn is_allowed(&self, origin: &str) -> bool {
-        self.origins.read().expect("InMemoryOriginRegistry lock poisoned").contains(origin)
+        self.origins.read().unwrap_or_else(std::sync::PoisonError::into_inner).contains(origin)
     }
 }
 
@@ -148,12 +151,12 @@ impl<R: CorsOriginRegistry> CachedOriginRegistry<R> {
 
     /// Clear the entire cache (useful after bulk origin updates).
     pub fn invalidate_all(&self) {
-        self.cache.lock().expect("CachedOriginRegistry lock poisoned").clear();
+        self.cache.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clear();
     }
 
     /// Remove a single origin from the cache so the next request re-checks.
     pub fn invalidate(&self, origin: &str) {
-        self.cache.lock().expect("CachedOriginRegistry lock poisoned").remove(origin);
+        self.cache.lock().unwrap_or_else(std::sync::PoisonError::into_inner).remove(origin);
     }
 }
 
@@ -162,7 +165,7 @@ impl<R: CorsOriginRegistry> CorsOriginRegistry for CachedOriginRegistry<R> {
     async fn is_allowed(&self, origin: &str) -> bool {
         // Fast path: cache hit inside a scoped lock (released before the await).
         {
-            let cache = self.cache.lock().expect("cache lock poisoned");
+            let cache = self.cache.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
             if let Some(&(allowed, cached_at)) = cache.get(origin)
                 && cached_at.elapsed() < self.ttl
             {
@@ -174,7 +177,7 @@ impl<R: CorsOriginRegistry> CorsOriginRegistry for CachedOriginRegistry<R> {
         let allowed = self.inner.is_allowed(origin).await;
         self.cache
             .lock()
-            .expect("cache lock poisoned")
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
             .insert(origin.to_owned(), (allowed, Instant::now()));
         allowed
     }

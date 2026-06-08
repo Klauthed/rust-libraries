@@ -95,12 +95,12 @@ impl InMemoryJobQueue {
 
     /// A snapshot of the job with `id`, if present.
     pub fn get(&self, id: JobId) -> Option<EnqueuedJob> {
-        self.jobs.lock().expect("jobs lock poisoned").get(&id).cloned()
+        self.jobs.lock().unwrap_or_else(std::sync::PoisonError::into_inner).get(&id).cloned()
     }
 
     /// The number of jobs currently held (in any state).
     pub fn len(&self) -> usize {
-        self.jobs.lock().expect("jobs lock poisoned").len()
+        self.jobs.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len()
     }
 
     /// Whether the queue holds no jobs.
@@ -122,7 +122,7 @@ impl InMemoryJobQueue {
             created_at: now,
             last_error: None,
         };
-        self.jobs.lock().expect("jobs lock poisoned").insert(id, job.clone());
+        self.jobs.lock().unwrap_or_else(std::sync::PoisonError::into_inner).insert(id, job.clone());
         job
     }
 }
@@ -145,7 +145,7 @@ impl JobQueue for InMemoryJobQueue {
 
     async fn dequeue_due(&self, limit: Option<usize>) -> Vec<EnqueuedJob> {
         let now = self.clock.now();
-        let mut guard = self.jobs.lock().expect("jobs lock poisoned");
+        let mut guard = self.jobs.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
 
         // Collect ids of due, queued jobs, oldest run_at first (id breaks ties
         // deterministically).
@@ -162,6 +162,7 @@ impl JobQueue for InMemoryJobQueue {
 
         due.into_iter()
             .map(|(_, id)| {
+                #[allow(clippy::expect_used, reason = "id was just collected from this same guard")]
                 let job = guard.get_mut(&id).expect("job present");
                 job.status = JobStatus::Running;
                 job.attempts += 1;
@@ -171,7 +172,7 @@ impl JobQueue for InMemoryJobQueue {
     }
 
     async fn mark_succeeded(&self, id: JobId) -> Result<(), PlatformError> {
-        let mut guard = self.jobs.lock().expect("jobs lock poisoned");
+        let mut guard = self.jobs.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let job =
             guard.get_mut(&id).ok_or_else(|| PlatformError::JobNotFound { id: id.to_string() })?;
         job.status = JobStatus::Succeeded;
@@ -181,7 +182,7 @@ impl JobQueue for InMemoryJobQueue {
 
     async fn mark_failed(&self, id: JobId, reason: String) -> Result<(), PlatformError> {
         let now = self.clock.now();
-        let mut guard = self.jobs.lock().expect("jobs lock poisoned");
+        let mut guard = self.jobs.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let job =
             guard.get_mut(&id).ok_or_else(|| PlatformError::JobNotFound { id: id.to_string() })?;
 
@@ -200,7 +201,7 @@ impl JobQueue for InMemoryJobQueue {
 
     async fn dequeue_stalled(&self, stall_after: Duration) -> Vec<EnqueuedJob> {
         let now = self.clock.now();
-        let mut guard = self.jobs.lock().expect("jobs lock poisoned");
+        let mut guard = self.jobs.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
 
         let mut recovered = Vec::new();
         for job in guard.values_mut() {

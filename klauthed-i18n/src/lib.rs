@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
+#![cfg_attr(not(test), warn(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 
 //! Internationalized messages for klauthed services.
 //!
@@ -68,6 +69,10 @@ impl I18n {
     }
 
     /// Build with the embedded framework catalogs and default locale `en`.
+    #[allow(
+        clippy::expect_used,
+        reason = "the embedded catalogs are compile-time constants validated by a test"
+    )]
     pub fn with_embedded_defaults() -> Self {
         I18nBuilder::new().embedded_defaults().expect("embedded catalogs are valid TOML").build()
     }

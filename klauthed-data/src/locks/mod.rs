@@ -167,7 +167,7 @@ impl LockGuard {
 
     /// Synchronous compare-and-delete against the in-memory table.
     fn release_in_memory(table: &LockTable, key: &str, token: LockToken) {
-        let mut guard = table.lock().expect("lock table mutex poisoned");
+        let mut guard = table.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         // Compare-and-delete: only remove if we still own the key.
         if let Some((holder, _)) = guard.get(key)
             && *holder == token
@@ -239,7 +239,7 @@ impl LockManager for InMemoryLockManager {
             .checked_add(ttl)
             .ok_or_else(|| DataError::LockHeld(format!("invalid TTL for lock '{key}'")))?;
 
-        let mut guard = self.table.lock().expect("lock table mutex poisoned");
+        let mut guard = self.table.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
 
         // A key is takeable if absent or if its current holder has expired.
         let live_holder = guard.get(key).is_some_and(|(_, holder_expiry)| now < *holder_expiry);

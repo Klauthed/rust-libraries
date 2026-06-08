@@ -125,7 +125,7 @@ where
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, Inner<A>> {
-        self.inner.lock().expect("repository mutex poisoned")
+        self.inner.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 }
 

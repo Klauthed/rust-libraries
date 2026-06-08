@@ -58,12 +58,12 @@ impl RecordingWebhookSender {
 
     /// A snapshot of all recorded deliveries, in delivery order.
     pub fn deliveries(&self) -> Vec<WebhookDelivery> {
-        self.deliveries.lock().expect("webhook lock poisoned").clone()
+        self.deliveries.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clone()
     }
 
     /// The number of recorded deliveries.
     pub fn len(&self) -> usize {
-        self.deliveries.lock().expect("webhook lock poisoned").len()
+        self.deliveries.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len()
     }
 
     /// Whether nothing has been delivered yet.
@@ -89,13 +89,15 @@ impl WebhookSender for RecordingWebhookSender {
         let timestamp_secs = event.occurred_at().unix_millis() / 1_000;
         let signature = sign_payload(endpoint.secret().as_bytes(), timestamp_secs, body.as_bytes());
 
-        self.deliveries.lock().expect("webhook lock poisoned").push(WebhookDelivery {
-            endpoint_id: endpoint.id(),
-            url: endpoint.url().to_owned(),
-            event: event.clone(),
-            body,
-            signature,
-        });
+        self.deliveries.lock().unwrap_or_else(std::sync::PoisonError::into_inner).push(
+            WebhookDelivery {
+                endpoint_id: endpoint.id(),
+                url: endpoint.url().to_owned(),
+                event: event.clone(),
+                body,
+                signature,
+            },
+        );
         Ok(())
     }
 }

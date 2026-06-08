@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![cfg_attr(not(test), warn(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 //! Procedural macros for klauthed.
 //!
 //! Currently: [`macro@DomainError`], a derive that generates the

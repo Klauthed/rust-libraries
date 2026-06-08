@@ -57,26 +57,29 @@ impl InMemoryTokenDenylist {
     /// yet evicted).
     #[must_use]
     pub fn len(&self) -> usize {
-        self.entries.lock().expect("denylist mutex poisoned").len()
+        self.entries.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len()
     }
 
     /// Whether the denylist has no entries.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.entries.lock().expect("denylist mutex poisoned").is_empty()
+        self.entries.lock().unwrap_or_else(std::sync::PoisonError::into_inner).is_empty()
     }
 }
 
 #[async_trait]
 impl TokenDenylist for InMemoryTokenDenylist {
     async fn revoke(&self, jti: String, expires_at: Timestamp) -> Result<(), SecurityError> {
-        self.entries.lock().expect("denylist mutex poisoned").insert(jti, expires_at);
+        self.entries
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .insert(jti, expires_at);
         Ok(())
     }
 
     async fn is_revoked(&self, jti: &str) -> Result<bool, SecurityError> {
         let now = self.clock.now();
-        let mut map = self.entries.lock().expect("denylist mutex poisoned");
+        let mut map = self.entries.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         match map.get(jti).copied() {
             Some(expires_at) if expires_at <= now => {
                 // The entry has expired — lazily evict and report as not revoked.

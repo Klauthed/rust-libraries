@@ -50,12 +50,16 @@ impl FixedClock {
 
     /// Reset the clock to `at`.
     pub fn set(&self, at: Timestamp) {
-        *self.now.lock().expect("clock mutex poisoned") = at;
+        *self.now.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = at;
     }
 
     /// Move the clock forward (or backward, for a negative delta) by `delta`.
+    #[allow(
+        clippy::expect_used,
+        reason = "advancing this fixed test clock past the representable range is a caller error"
+    )]
     pub fn advance(&self, delta: Duration) {
-        let mut guard = self.now.lock().expect("clock mutex poisoned");
+        let mut guard = self.now.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         *guard =
             guard.checked_add(delta).expect("clock advance overflowed the representable range");
     }
@@ -63,6 +67,6 @@ impl FixedClock {
 
 impl Clock for FixedClock {
     fn now(&self) -> Timestamp {
-        *self.now.lock().expect("clock mutex poisoned")
+        *self.now.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 }

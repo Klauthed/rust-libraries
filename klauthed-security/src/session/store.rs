@@ -105,7 +105,7 @@ impl InMemorySessionStore {
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, HashMap<SessionId, Session>> {
-        self.sessions.lock().expect("session store mutex poisoned")
+        self.sessions.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
     /// now + `ttl`, as a [`Timestamp`], erroring on overflow.

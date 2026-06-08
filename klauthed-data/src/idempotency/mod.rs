@@ -117,7 +117,7 @@ impl InMemoryIdempotencyStore {
 impl IdempotencyStore for InMemoryIdempotencyStore {
     async fn begin(&self, key: &str) -> Result<Outcome, DataError> {
         let now = Timestamp::now();
-        let mut guard = self.records.lock().expect("idempotency mutex poisoned");
+        let mut guard = self.records.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         match guard.get(key) {
             Some(record) => match record.status {
                 IdempotencyStatus::InProgress => Ok(Outcome::InProgress),
@@ -145,7 +145,7 @@ impl IdempotencyStore for InMemoryIdempotencyStore {
 
     async fn complete(&self, key: &str, response: serde_json::Value) -> Result<(), DataError> {
         let now = Timestamp::now();
-        let mut guard = self.records.lock().expect("idempotency mutex poisoned");
+        let mut guard = self.records.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         match guard.get_mut(key) {
             Some(record) => {
                 record.status = IdempotencyStatus::Completed;
@@ -160,7 +160,7 @@ impl IdempotencyStore for InMemoryIdempotencyStore {
     }
 
     async fn get(&self, key: &str) -> Result<Option<IdempotencyRecord>, DataError> {
-        Ok(self.records.lock().expect("idempotency mutex poisoned").get(key).cloned())
+        Ok(self.records.lock().unwrap_or_else(std::sync::PoisonError::into_inner).get(key).cloned())
     }
 }
 

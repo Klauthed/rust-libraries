@@ -131,6 +131,7 @@ fn insert_nested(target: &mut Value, path: &str, value: Value) {
     if !target.is_object() {
         *target = Value::Object(Map::new());
     }
+    #[allow(clippy::expect_used, reason = "target was set to an Object on the lines above")]
     let obj = target.as_object_mut().expect("ensured object above");
 
     match path.split_once('.') {

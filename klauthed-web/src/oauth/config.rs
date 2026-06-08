@@ -161,6 +161,7 @@ impl OAuthConfigBuilder {
     /// # Panics
     /// Panics if `client_store`, `code_store`, `signer`, or `issuer` was not set.
     #[must_use]
+    #[allow(clippy::expect_used, reason = "documented builder precondition; see # Panics")]
     pub fn build(self) -> OAuthConfig {
         OAuthConfig {
             client_store: self.client_store.expect("OAuthConfig: client_store is required"),

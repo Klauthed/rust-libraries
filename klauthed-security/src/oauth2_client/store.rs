@@ -58,32 +58,37 @@ impl InMemoryClientStore {
     /// Number of registered clients.
     #[must_use]
     pub fn len(&self) -> usize {
-        self.clients.lock().expect("client store mutex poisoned").len()
+        self.clients.lock().unwrap_or_else(std::sync::PoisonError::into_inner).len()
     }
 
     /// Whether no clients are registered.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.clients.lock().expect("client store mutex poisoned").is_empty()
+        self.clients.lock().unwrap_or_else(std::sync::PoisonError::into_inner).is_empty()
     }
 }
 
 #[async_trait]
 impl ClientStore for InMemoryClientStore {
     async fn get(&self, client_id: &str) -> Result<Option<OAuth2Client>, SecurityError> {
-        Ok(self.clients.lock().expect("client store mutex poisoned").get(client_id).cloned())
+        Ok(self
+            .clients
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .get(client_id)
+            .cloned())
     }
 
     async fn register(&self, client: OAuth2Client) -> Result<(), SecurityError> {
         self.clients
             .lock()
-            .expect("client store mutex poisoned")
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
             .insert(client.client_id.clone(), client);
         Ok(())
     }
 
     async fn delete(&self, client_id: &str) -> Result<(), SecurityError> {
-        self.clients.lock().expect("client store mutex poisoned").remove(client_id);
+        self.clients.lock().unwrap_or_else(std::sync::PoisonError::into_inner).remove(client_id);
         Ok(())
     }
 }

@@ -37,6 +37,7 @@ impl KeyBy {
     /// # Panics
     ///
     /// Panics if `name` is not a valid HTTP header name.
+    #[allow(clippy::expect_used, reason = "documented precondition; see # Panics")]
     pub fn header(name: &str) -> Self {
         KeyBy::Header(HeaderName::from_bytes(name.as_bytes()).expect("valid header name"))
     }

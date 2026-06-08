@@ -80,6 +80,14 @@ All crates share a single version and are released together.
 
 ### Changed
 
+- Every library crate now warns on `clippy::unwrap_used`, `expect_used`, and
+  `panic` in non-test code (enforced as errors in CI), so panicking on a fallible
+  operation in shipping code is caught at review time. As part of the sweep, the
+  in-memory stores, caches, and registries (token denylist, sessions, OAuth
+  client/code/refresh stores, idempotency, locks, outbox, rate limiter, job
+  queue, audit/webhook sinks, tenancy resolver, CORS registries) now **recover
+  from lock poisoning** instead of propagating a panic — a single panicked
+  request can no longer wedge a shared in-memory store for the whole process.
 - Every library crate now sets `#![deny(missing_docs)]`, so documentation of all
   public items (modules, types, fields, variants, traits, and functions) is
   CI-enforced workspace-wide. Previously only `klauthed-security` enforced this;
