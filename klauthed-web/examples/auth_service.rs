@@ -24,6 +24,16 @@
 //!
 //! # Liveness/readiness:
 //! curl -s localhost:8080/health
+//!
+//! # Every response carries hardening headers (CSP, X-Frame-Options, …):
+//! curl -si localhost:8080/health | grep -i -E 'content-security|x-frame|x-content'
+//!
+//! # CSRF (cookie-based scope): fetch a token cookie, then use it on a write.
+//! curl -s -c jar.txt localhost:8080/session/new
+//! TOKEN=$(awk '$6=="csrf_token"{print $7}' jar.txt)
+//! curl -s  -b jar.txt -X POST localhost:8080/session/action -H "x-csrf-token: $TOKEN"
+//! # Missing/!matching header -> 403:
+//! curl -si -b jar.txt -X POST localhost:8080/session/action | head -1
 //! ```
 
 use std::collections::HashMap;
@@ -37,7 +47,9 @@ use klauthed_security::{Claims, JwtSigner, JwtVerifier, hash_password, verify_pa
 use klauthed_web::AppError;
 use klauthed_web::auth::{AuthenticatedUser, JwtAuth};
 use klauthed_web::context::RequestContextMiddleware;
+use klauthed_web::csrf::{Csrf, CsrfConfig};
 use klauthed_web::extract::Json;
+use klauthed_web::headers::{SecurityHeaders, SecurityHeadersConfig};
 use klauthed_web::health::{HealthRegistry, configure as configure_health};
 use klauthed_web::ratelimit::{KeyBy, RateLimit};
 
@@ -90,6 +102,22 @@ async fn me(user: AuthenticatedUser) -> HttpResponse {
     HttpResponse::Ok().json(serde_json::json!({ "subject": user.sub() }))
 }
 
+/// `GET /session/new` — a safe request, so the [`Csrf`] middleware auto-issues a
+/// `csrf_token` cookie. A browser client then echoes that value in the
+/// `x-csrf-token` header on subsequent writes.
+async fn session_new() -> HttpResponse {
+    HttpResponse::Ok().json(serde_json::json!({
+        "message": "csrf_token cookie set; echo it in the x-csrf-token header on writes"
+    }))
+}
+
+/// `POST /session/action` — a state-changing, cookie-authenticated request. The
+/// [`Csrf`] middleware rejects it with `403` unless the `csrf_token` cookie and
+/// the `x-csrf-token` header are both present and equal.
+async fn session_action() -> HttpResponse {
+    HttpResponse::Ok().json(serde_json::json!({ "status": "ok" }))
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Seed one demo user (hash the password once at startup).
@@ -109,14 +137,27 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(HealthRegistry::new()))
             // Tag every request with a RequestContext (request id, etc.).
             .wrap(RequestContextMiddleware::new())
+            // Outermost: hardening headers on every response (incl. errors).
+            // HSTS is dropped because this demo serves plain HTTP on localhost.
+            .wrap(SecurityHeaders::from_config(&SecurityHeadersConfig::default().without_hsts()))
             .configure(configure_health)
             .route("/login", web::post().to(login))
-            // Protected API: JWT required + 60 requests/min per peer IP.
+            // Protected API: JWT required + 60 requests/min per peer IP. CSRF is
+            // not needed here — these requests authenticate with a Bearer token,
+            // not an ambient cookie.
             .service(
                 web::scope("/api")
                     .wrap(RateLimit::new(60, StdDuration::from_secs(60)).key_by(KeyBy::PeerIp))
                     .wrap(JwtAuth::new())
                     .route("/me", web::get().to(me)),
+            )
+            // Cookie-based "browser session" scope: CSRF-protected. `secure(false)`
+            // lets the cookie ride plain HTTP for this localhost demo.
+            .service(
+                web::scope("/session")
+                    .wrap(Csrf::from_config(CsrfConfig::default().secure(false)))
+                    .route("/new", web::get().to(session_new))
+                    .route("/action", web::post().to(session_action)),
             )
     })
     .bind(("127.0.0.1", 8080))?
