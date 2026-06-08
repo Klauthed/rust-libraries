@@ -2340,6 +2340,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "klauthed-examples"
+version = "0.1.0"
+dependencies = [
+ "klauthed-core",
+ "klauthed-data",
+ "klauthed-error",
+ "klauthed-i18n",
+ "klauthed-macros",
+ "klauthed-protocol",
+ "klauthed-security",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "klauthed-i18n"
 version = "0.1.0"
 dependencies = [

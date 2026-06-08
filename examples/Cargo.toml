@@ -1,0 +1,22 @@
+[package]
+name = "klauthed-examples"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Runnable feature tour for the klauthed libraries (not published)."
+publish = false
+
+[dependencies]
+klauthed-core = { workspace = true, features = ["tz"] }
+klauthed-error.workspace = true
+klauthed-macros.workspace = true
+klauthed-security = { workspace = true, features = ["sealed"] }
+klauthed-data.workspace = true
+klauthed-protocol.workspace = true
+klauthed-i18n.workspace = true
+
+tokio = { workspace = true }
+serde_json.workspace = true
