@@ -27,13 +27,15 @@
 //! [`finish_authentication`]: PasskeyAuthenticator::finish_authentication
 
 pub mod authenticator;
+pub mod store;
 
 pub use authenticator::PasskeyAuthenticator;
+pub use store::{InMemoryPasskeyStore, PasskeyStore};
 
 // Re-export the `webauthn-rs` types that appear in this module's public API, so
 // callers don't need a direct dependency on `webauthn-rs`.
 pub use webauthn_rs::prelude::{
     AuthenticationResult, CreationChallengeResponse, Passkey, PasskeyAuthentication,
     PasskeyRegistration, PublicKeyCredential, RegisterPublicKeyCredential,
-    RequestChallengeResponse, Uuid,
+    RequestChallengeResponse, Url, Uuid,
 };
