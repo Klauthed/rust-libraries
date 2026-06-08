@@ -13,6 +13,10 @@ All crates share a single version and are released together.
 - `klauthed-security`: JWT signing/verification now supports **ES256** (ECDSA
   P-256) and **EdDSA** (Ed25519) in addition to HS256/RS256. Asymmetric keys load
   from PEM or DER (`{rs256,es256,eddsa}_{pem,der}` on `JwtSigner`/`JwtVerifier`).
+- `klauthed-security`: **sealed-box (public-key) encryption** (`aead::asymmetric`,
+  feature `sealed`) — `seal_to` a recipient's X25519 public key with no pre-shared
+  key (ECIES-style: ephemeral X25519 ECDH -> HKDF -> AES-256-GCM); only the
+  matching `SecretKey` can `open`. New optional dep: x25519-dalek.
 - `klauthed-security`: **AEAD envelope encryption** (`aead::seal` / `Envelope`) —
   encrypt under a fresh per-message data key wrapped by a long-lived root key,
   with `Envelope::rewrap` for root-key rotation without re-encrypting payloads,

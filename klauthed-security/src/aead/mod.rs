@@ -47,11 +47,19 @@
 //! requires re-wrapping data keys ([`Envelope::rewrap`]), never re-encrypting the
 //! data itself.
 //!
+//! # Asymmetric (public-key) encryption
+//!
+//! With the `sealed` feature, [`asymmetric::seal_to`] encrypts to a recipient's
+//! X25519 public key with no pre-shared secret (an ECIES-style sealed box over
+//! the same AES-256-GCM primitives).
+//!
 //! # Future work
 //!
-//! Direct KMS/HSM integration (root keys that never leave the boundary) and
-//! asymmetric encryption are intentionally out of scope.
+//! Direct KMS/HSM integration (root keys that never leave the boundary) is
+//! intentionally out of scope.
 
+#[cfg(feature = "sealed")]
+pub mod asymmetric;
 pub mod cipher;
 pub mod envelope;
 pub mod key;

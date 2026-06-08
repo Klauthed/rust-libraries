@@ -91,6 +91,8 @@ zeroize  = { version = "1", features = ["derive"] }
 secrecy  = "0.10"
 ring     = "0.17"
 argon2   = "0.5"
+# X25519 for sealed-box (public-key) encryption (klauthed-security `sealed` feature).
+x25519-dalek = { version = "2", default-features = false, features = ["static_secrets", "zeroize"] }
 
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 actix-web         = "4"

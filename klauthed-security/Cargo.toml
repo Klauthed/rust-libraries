@@ -43,6 +43,14 @@ async-trait = { workspace = true }
 # fields; `gen_secret` enables CSPRNG secret generation.
 totp-rs = { version = "5.7", default-features = false, features = ["otpauth", "gen_secret"] }
 
+# X25519 for sealed-box (public-key) encryption — optional (`sealed` feature).
+x25519-dalek = { workspace = true, optional = true }
+
+[features]
+default = []
+# Sealed-box (recipient public-key) encryption in `aead::asymmetric`.
+sealed = ["dep:x25519-dalek"]
+
 [dev-dependencies]
 tokio = { workspace = true }
 
