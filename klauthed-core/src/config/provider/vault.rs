@@ -31,7 +31,9 @@ pub enum VaultAuth {
 
     /// AppRole login (`auth/{mount}/login`).
     AppRole {
+        /// The AppRole role identifier.
         role_id: String,
+        /// The AppRole secret identifier.
         secret_id: SecretString,
         /// Auth mount path, usually `"approle"`.
         mount: String,
@@ -39,7 +41,9 @@ pub enum VaultAuth {
 
     /// Kubernetes login (`auth/{mount}/login`) using a service-account JWT.
     Kubernetes {
+        /// The Vault role to authenticate as.
         role: String,
+        /// The service-account JWT presented to Vault.
         jwt: SecretString,
         /// Auth mount path, usually `"kubernetes"`.
         mount: String,

@@ -61,6 +61,10 @@ All crates share a single version and are released together.
 
 ### Changed
 
+- Every library crate now sets `#![deny(missing_docs)]`, so documentation of all
+  public items (modules, types, fields, variants, traits, and functions) is
+  CI-enforced workspace-wide. Previously only `klauthed-security` enforced this;
+  the remaining gaps have been filled.
 - `klauthed-error::ErrorCategory` and `klauthed-core::error::ConfigError` are now
   `#[non_exhaustive]` (forward-compatibility). Downstream `match`es on them must
   add a `_` arm.

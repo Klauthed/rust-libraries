@@ -5,9 +5,19 @@ use klauthed_macros::DomainError;
 #[domain(prefix = "i18n", category = "internal")]
 pub enum I18nError {
     /// A catalog's TOML could not be parsed.
-    Parse { locale: String, message: String },
+    Parse {
+        /// The locale whose catalog failed to parse.
+        locale: String,
+        /// The underlying parser message.
+        message: String,
+    },
     /// A catalog file could not be read.
-    Io { path: String, message: String },
+    Io {
+        /// Path of the catalog file that could not be read.
+        path: String,
+        /// The underlying I/O error message.
+        message: String,
+    },
 }
 
 impl std::fmt::Display for I18nError {

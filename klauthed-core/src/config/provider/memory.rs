@@ -1,3 +1,5 @@
+//! An in-memory config provider (programmatic / test config).
+
 use std::collections::BTreeMap;
 
 use serde_json::Value;

@@ -1,3 +1,5 @@
+//! The deployment `Profile` (local / dev / test / staging / prod).
+
 use std::fmt;
 use std::str::FromStr;
 
@@ -44,6 +46,7 @@ impl Profile {
         !self.requires_vault()
     }
 
+    /// The lowercase canonical name of the profile (e.g. `"prod"`).
     pub fn as_str(&self) -> &'static str {
         match self {
             Profile::Local => "local",

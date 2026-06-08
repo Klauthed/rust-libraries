@@ -52,10 +52,13 @@ impl MessagingConfig {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum MessagingBackend {
+    /// NATS (the default).
     #[default]
     Nats,
+    /// RabbitMQ (AMQP 0-9-1).
     #[serde(rename = "rabbitmq")]
     RabbitMq,
+    /// Apache Kafka.
     Kafka,
 }
 
@@ -72,13 +75,27 @@ pub enum NatsCredentials {
     #[default]
     None,
     /// Token auth.
-    Token { token: String },
+    Token {
+        /// The bearer token.
+        token: String,
+    },
     /// User/password auth.
-    UserPassword { username: String, password: String },
+    UserPassword {
+        /// The NATS username.
+        username: String,
+        /// The NATS password.
+        password: String,
+    },
     /// Path to a NATS `.creds` file (JWT + nkey seed).
-    CredsFile { path: PathBuf },
+    CredsFile {
+        /// Filesystem path to the `.creds` file.
+        path: PathBuf,
+    },
     /// Raw nkey seed.
-    NKey { seed: String },
+    NKey {
+        /// The nkey seed string.
+        seed: String,
+    },
 }
 
 /// NATS connection settings (core NATS and, optionally, JetStream).
@@ -142,20 +159,25 @@ pub struct RabbitMqConfig {
     /// Full AMQP URI; when set it overrides the component fields.
     #[serde(default)]
     pub url: Option<String>,
+    /// Broker hostname.
     #[serde(default = "default_rabbit_host")]
     pub host: String,
+    /// Broker port.
     #[serde(default = "default_rabbit_port")]
     pub port: u16,
     /// Virtual host (default `/`).
     #[serde(default = "default_vhost")]
     pub vhost: String,
+    /// Username for authentication.
     #[serde(default)]
     pub username: Option<String>,
     /// Password. Prefer sourcing this from Vault in staging/prod.
     #[serde(default)]
     pub password: Option<String>,
+    /// Use TLS (`amqps://`).
     #[serde(default)]
     pub tls: bool,
+    /// Connection timeout in seconds.
     #[serde(default = "default_connect_timeout_secs")]
     pub connect_timeout_secs: u64,
 }
@@ -220,6 +242,7 @@ impl RabbitMqConfig {
 pub struct KafkaSasl {
     /// SASL mechanism, e.g. `PLAIN`, `SCRAM-SHA-256`, `SCRAM-SHA-512`.
     pub mechanism: String,
+    /// SASL username.
     pub username: String,
     /// Password. Prefer sourcing this from Vault in staging/prod.
     pub password: String,
@@ -237,6 +260,7 @@ pub struct KafkaConfig {
     /// Consumer group id (for consumers).
     #[serde(default)]
     pub group_id: Option<String>,
+    /// Use TLS for broker connections.
     #[serde(default)]
     pub tls: bool,
     /// SASL credentials, if the cluster requires them.

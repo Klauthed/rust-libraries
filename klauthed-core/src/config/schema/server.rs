@@ -1,3 +1,5 @@
+//! HTTP server configuration (`ServerConfig`).
+
 use serde::{Deserialize, Serialize};
 
 /// HTTP server binding and runtime settings (e.g. for an actix-web service).

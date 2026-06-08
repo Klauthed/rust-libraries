@@ -1,3 +1,5 @@
+//! Error type for the testing utilities (`TestingError`).
+
 use klauthed_macros::DomainError;
 
 /// Errors raised by the testing utilities themselves.

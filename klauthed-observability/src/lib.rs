@@ -1,4 +1,5 @@
 #![deny(unsafe_code)]
+#![deny(missing_docs)]
 
 //! Observability for klauthed services: structured logging/tracing, Prometheus
 //! metrics, and OpenTelemetry trace export — from one [`TelemetryConfig`].

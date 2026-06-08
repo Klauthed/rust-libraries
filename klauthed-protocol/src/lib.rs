@@ -1,4 +1,5 @@
 #![deny(unsafe_code)]
+#![deny(missing_docs)]
 
 //! Spec-accurate serde data types for the identity protocols klauthed speaks.
 //!

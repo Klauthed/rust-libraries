@@ -1,4 +1,17 @@
 #![deny(unsafe_code)]
+#![deny(missing_docs)]
+
+//! Core primitives shared across the klauthed libraries.
+//!
+//! * [`config`] — typed, layered configuration (files, env, Vault) with profiles.
+//! * [`time`] — an injectable [`Clock`](time::Clock) and the canonical UTC
+//!   [`Timestamp`](time::Timestamp) / [`Duration`](time::Duration).
+//! * [`context`] — the per-request [`RequestContext`](context::RequestContext).
+//! * [`id`] — phantom-typed 128-bit [`Id`](id::Id)s.
+//! * [`cqrs`] — command/query/event buses.
+//! * [`domain`] — domain-event / aggregate building blocks.
+//! * [`validation`] — the [`Validate`](validation::Validate) trait.
+//! * [`error`] — re-exports the error kernel plus `ConfigError`.
 
 pub mod config;
 pub mod context;

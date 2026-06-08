@@ -1,4 +1,5 @@
 #![deny(unsafe_code)]
+#![deny(missing_docs)]
 
 //! HTTP layer for klauthed services (actix-web).
 //!

@@ -1,3 +1,5 @@
+//! Object-storage configuration (`StorageConfig`).
+
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
@@ -15,17 +17,21 @@ use serde::{Deserialize, Serialize};
 pub enum StorageConfig {
     /// Local filesystem storage.
     Local {
+        /// Root directory under which files are stored.
         #[serde(default = "default_local_root")]
         root: PathBuf,
     },
     /// Amazon S3 (or S3-compatible endpoints such as MinIO).
     S3 {
+        /// Bucket name.
         bucket: String,
+        /// AWS region.
         #[serde(default = "default_s3_region")]
         region: String,
         /// Custom endpoint for S3-compatible stores (e.g. MinIO).
         #[serde(default)]
         endpoint: Option<String>,
+        /// Access key ID. Prefer sourcing this from Vault in staging/prod.
         #[serde(default)]
         access_key_id: Option<String>,
         /// Secret key. Prefer sourcing this from Vault in staging/prod.
@@ -37,6 +43,7 @@ pub enum StorageConfig {
     },
     /// Google Cloud Storage.
     Gcs {
+        /// Bucket name.
         bucket: String,
         /// Path to a service-account credentials JSON file.
         #[serde(default)]
@@ -44,7 +51,9 @@ pub enum StorageConfig {
     },
     /// Azure Blob Storage.
     Azure {
+        /// Storage account name.
         account: String,
+        /// Blob container name.
         container: String,
         /// Access key. Prefer sourcing this from Vault in staging/prod.
         #[serde(default)]

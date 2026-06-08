@@ -1,3 +1,5 @@
+//! File-based (TOML / JSON) config provider.
+
 use std::path::{Path, PathBuf};
 
 use serde_json::Value;

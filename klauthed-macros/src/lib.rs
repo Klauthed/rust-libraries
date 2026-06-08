@@ -1,3 +1,4 @@
+#![deny(missing_docs)]
 //! Procedural macros for klauthed.
 //!
 //! Currently: [`macro@DomainError`], a derive that generates the

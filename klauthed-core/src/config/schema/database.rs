@@ -1,3 +1,5 @@
+//! Database configuration (`DatabaseConfig`).
+
 use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
@@ -10,12 +12,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum DbSystem {
+    /// PostgreSQL (the default).
     #[default]
     Postgres,
+    /// MySQL.
     #[serde(rename = "mysql")]
     MySql,
+    /// MariaDB.
     #[serde(rename = "mariadb")]
     MariaDb,
+    /// SQLite (file-based; no host/port).
     Sqlite,
     /// NoSQL document store.
     #[serde(rename = "mongodb")]
@@ -106,6 +112,7 @@ pub struct DatabaseConfig {
     /// Database / catalog name (or file path for SQLite).
     #[serde(default)]
     pub database: String,
+    /// Username (ignored when `url` is set).
     #[serde(default)]
     pub username: Option<String>,
     /// Password. Prefer sourcing this from Vault in staging/prod.

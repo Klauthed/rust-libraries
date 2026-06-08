@@ -12,63 +12,81 @@ pub enum DataError {
     #[error("configuration error: {0}")]
     Config(#[from] ConfigError),
 
+    /// The configured database system has no connector in this build.
     #[error("database system '{0:?}' is not supported by this connector")]
     UnsupportedSystem(DbSystem),
 
+    /// The configured cache backend has no connector in this build.
     #[error("cache backend '{0:?}' is not supported by this connector")]
     UnsupportedCacheBackend(CacheBackend),
 
+    /// The configured messaging backend has no connector in this build.
     #[error("messaging backend '{0:?}' is not supported by this connector")]
     UnsupportedMessagingBackend(MessagingBackend),
 
+    /// No connection URL could be derived from the provided configuration.
     #[error("no connection URL could be derived for {0}")]
     MissingUrl(&'static str),
 
+    /// A messaging client failed to set up or connect.
     #[error("messaging setup error: {0}")]
     Messaging(String),
 
+    /// The transactional outbox encountered an error.
     #[error("transactional outbox error: {0}")]
     Outbox(String),
 
+    /// The idempotency store encountered an error.
     #[error("idempotency store error: {0}")]
     Idempotency(String),
 
+    /// A named distributed lock is already held by another holder.
     #[error("lock '{0}' is already held")]
     LockHeld(String),
 
+    /// The requested backend needs a cargo feature that is not enabled.
     #[error("this backend requires the '{0}' cargo feature to be enabled")]
     FeatureDisabled(&'static str),
 
+    /// An underlying I/O error.
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// A SQL driver error (`sql` feature).
     #[cfg(feature = "sql")]
     #[error("database error: {0}")]
     Sqlx(#[from] sqlx::Error),
 
+    /// A Redis client error (`redis` feature).
     #[cfg(feature = "redis")]
     #[error("redis error: {0}")]
     Redis(#[from] ::redis::RedisError),
 
+    /// A NATS connection error (`nats` feature).
     #[cfg(feature = "nats")]
     #[error("nats connection error: {0}")]
     Nats(#[from] async_nats::ConnectError),
 
+    /// A RabbitMQ connection error (`rabbitmq` feature).
     #[cfg(feature = "rabbitmq")]
     #[error("rabbitmq connection error: {0}")]
     RabbitMq(#[from] lapin::Error),
 
+    /// A Kafka connection error (`kafka` feature).
     #[cfg(feature = "kafka")]
     #[error("kafka connection error: {0}")]
     Kafka(#[from] rskafka::client::error::Error),
 
+    /// An object-storage error (`storage` feature).
     #[cfg(feature = "storage")]
     #[error("storage error: {0}")]
     Storage(#[from] object_store::Error),
 
+    /// A pagination request was malformed (e.g. an out-of-range page size).
     #[error("invalid pagination request: {0}")]
     InvalidPage(String),
 
+    /// A pagination cursor was invalid or could not be decoded.
     #[error("invalid or corrupted cursor: {0}")]
     InvalidCursor(String),
 }

@@ -1,3 +1,5 @@
+//! The resolved `Config` and its typed-section accessors.
+
 use std::collections::BTreeMap;
 
 use serde_json::Value;

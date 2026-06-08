@@ -1,3 +1,5 @@
+//! Cache configuration (`CacheConfig`).
+
 use serde::{Deserialize, Serialize};
 
 use super::database::PoolConfig;
@@ -19,18 +21,22 @@ pub enum CacheBackend {
 /// backend only `default_ttl_secs` / `max_entries` are meaningful.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CacheConfig {
+    /// Which cache backend to use.
     #[serde(default)]
     pub backend: CacheBackend,
     /// Full Redis URL; when set it overrides the component fields.
     #[serde(default)]
     pub url: Option<String>,
+    /// Redis hostname (ignored for the in-memory backend).
     #[serde(default = "default_cache_host")]
     pub host: String,
+    /// Redis port.
     #[serde(default = "default_redis_port")]
     pub port: u16,
     /// Redis logical database index.
     #[serde(default)]
     pub db: u32,
+    /// Username for authenticated Redis (Redis 6+ ACLs).
     #[serde(default)]
     pub username: Option<String>,
     /// Password. Prefer sourcing this from Vault in staging/prod.

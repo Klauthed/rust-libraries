@@ -1,4 +1,5 @@
 #![deny(unsafe_code)]
+#![deny(missing_docs)]
 
 //! Data-layer connectors for klauthed services.
 //!

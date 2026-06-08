@@ -1,3 +1,5 @@
+//! The `ConfigError` type for the config layer.
+
 use klauthed_error::{DomainError, ErrorCategory, ErrorCode};
 use thiserror::Error;
 
@@ -5,53 +7,98 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum ConfigError {
+    /// A referenced config file does not exist.
     #[error("config file not found: {0}")]
     FileNotFound(std::path::PathBuf),
 
+    /// A config file's extension is neither `.toml` nor `.json`.
     #[error("unsupported config file format for '{0}' (expected .toml or .json)")]
     UnsupportedFormat(std::path::PathBuf),
 
+    /// A config file could not be parsed.
     #[error("config parse error in '{path}': {message}")]
-    ParseError { path: String, message: String },
+    ParseError {
+        /// Path of the file that failed to parse.
+        path: String,
+        /// The underlying parser message.
+        message: String,
+    },
 
+    /// A required configuration key was absent.
     #[error("required config key is missing: {0}")]
     MissingRequired(String),
 
+    /// A secret must be Vault-sourced in this profile but came from elsewhere.
     #[error(
         "secret '{key}' must be sourced from Vault in profile '{profile}', \
          not from files or environment"
     )]
-    VaultRequired { key: String, profile: String },
+    VaultRequired {
+        /// The secret key that must be Vault-sourced.
+        key: String,
+        /// The active profile enforcing the requirement.
+        profile: String,
+    },
 
+    /// The configured provider chain is invalid for the profile.
     #[error("invalid provider chain for profile '{profile}': {message}")]
-    InvalidProviderChain { profile: String, message: String },
+    InvalidProviderChain {
+        /// The profile whose provider chain is invalid.
+        profile: String,
+        /// What is wrong with the chain.
+        message: String,
+    },
 
+    /// A value could not be deserialized into the requested type.
     #[error("deserialization error for key '{key}': {source}")]
-    Deserialization { key: String, source: serde_json::Error },
+    Deserialization {
+        /// The config key being deserialized.
+        key: String,
+        /// The underlying serde error.
+        source: serde_json::Error,
+    },
 
     // ── Vault provider (feature = "vault") ────────────────────────────────────
+    /// Authentication to Vault failed.
     #[error("vault authentication failed via {method}: {message}")]
-    VaultAuth { method: String, message: String },
+    VaultAuth {
+        /// The auth method attempted (token / AppRole / Kubernetes).
+        method: String,
+        /// The failure detail.
+        message: String,
+    },
 
+    /// A Vault request failed (reachable but errored) — typically transient.
     #[error("vault request to '{path}' failed: {message}")]
-    VaultRequest { path: String, message: String },
+    VaultRequest {
+        /// The Vault path requested.
+        path: String,
+        /// The failure detail.
+        message: String,
+    },
 
+    /// No secret exists at the given Vault path.
     #[error("vault secret not found at path: {0}")]
     VaultSecretNotFound(String),
 
+    /// A required environment variable was not set.
     #[error("missing required environment variable: {0}")]
     MissingEnv(String),
 
     // ── Wrapped sources ───────────────────────────────────────────────────────
+    /// An underlying I/O error.
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// A TOML deserialization error.
     #[error("TOML error: {0}")]
     Toml(#[from] toml::de::Error),
 
+    /// A JSON deserialization error.
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
 
+    /// A Vault HTTP transport error (`vault` feature).
     #[cfg(feature = "vault")]
     #[error("vault HTTP transport error: {0}")]
     Http(#[from] reqwest::Error),
