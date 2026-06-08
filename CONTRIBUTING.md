@@ -13,7 +13,7 @@ Some optional backends compile native or driver crates; on Debian/Ubuntu you may
 need:
 
 ```sh
-sudo apt-get install -y libsqlite3-dev pkg-config
+sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
 ```
 
 ## Local checks
@@ -34,6 +34,15 @@ style automatically. To keep `git blame` clean across the one-time reformat, set
 git config blame.ignoreRevsFile .git-blame-ignore-revs
 ```
 
+CI runs a few more gates you can reproduce locally: `cargo deny check`
+(advisories/licenses/bans), `osv-scanner scan source --lockfile=Cargo.lock`
+(GHSA + RustSec), and an MSRV build. Library code is held to
+`deny(missing_docs)` and denies `clippy::{unwrap_used, expect_used, panic,
+indexing_slicing}` in non-test code — shipping code must not panic on a fallible
+path. The live-infra integration tests are `#[ignore]`d; run them against local
+Postgres/Redis/Mongo with `DB_URL` / `REDIS_URL` / `MONGODB_URL` set and
+`cargo test --workspace --all-features -- --ignored`.
+
 ## Project layout
 
 This is a Cargo workspace of `klauthed-*` crates; see the
@@ -48,6 +57,35 @@ error type). New public items should carry doc comments and tests.
 - Document public API changes and cover them with tests.
 - Never commit secrets, credentials, or real keys (test fixtures use obvious
   throwaway values).
+
+## Versioning & releases
+
+All `klauthed-*` crates **share a single version** and are released together,
+following SemVer. While the suite is **pre-1.0**, a minor bump (`0.x`) may carry
+breaking changes and a patch bump (`0.x.y`) is backward-compatible. The **MSRV**
+(`rust-version` in the root `Cargo.toml`) is part of the contract — raising it is
+a minor-version change.
+
+Releases are automated:
+
+1. Bump + tag + push locally with
+   [`cargo-release`](https://github.com/crate-ci/cargo-release) (config in
+   [`release.toml`](release.toml)):
+
+   ```sh
+   cargo release minor --execute   # or `patch` / `major`
+   ```
+
+   This updates every crate and the workspace dependency versions, writes the
+   release commit, and pushes a single `vX.Y.Z` tag.
+2. The [`release` workflow](.github/workflows/release.yml) triggers on that tag
+   and runs `cargo publish --workspace`, which publishes to crates.io in
+   dependency order (skipping `publish = false` members) and creates a GitHub
+   Release. (Requires a `CRATES_IO_TOKEN` repository secret.)
+
+## Code of conduct
+
+Participation is governed by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Security
 

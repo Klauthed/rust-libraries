@@ -10,6 +10,12 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Release automation** — a tag-triggered `release` workflow that runs
+  `cargo publish --workspace` (native dependency-ordered publish) and cuts a
+  GitHub Release, plus `release.toml` for `cargo-release` (shared workspace
+  version). The crates are publish-ready (verified via
+  `cargo publish --workspace --dry-run`). Documented in CONTRIBUTING under
+  "Versioning & releases"; added `CODE_OF_CONDUCT.md`.
 - CI: an **`osv-scanner`** supply-chain job that scans `Cargo.lock` against the
   OSV database (GHSA + RustSec). It catches GHSA-only advisories that `cargo-deny`
   (RustSec DB) can miss — the gap that let the jsonwebtoken type-confusion

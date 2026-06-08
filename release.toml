@@ -1,0 +1,11 @@
+# cargo-release configuration.
+#
+# All `klauthed-*` crates share one version and are released together. Bump with
+# `cargo release <patch|minor|major> --execute`, which updates every crate (and
+# the workspace dependency versions), writes the release commit, and pushes a
+# single `vX.Y.Z` tag. Publishing is left to the `release` CI workflow (triggered
+# by that tag), so cargo-release itself does not publish.
+shared-version = true
+publish = false
+tag-name = "v{{version}}"
+pre-release-commit-message = "release: v{{version}}"

@@ -1,0 +1,36 @@
+name: Release
+
+# Triggered by pushing a version tag (e.g. `v0.2.0`). Create the tag with
+# `cargo release` (see CONTRIBUTING.md), which bumps the shared workspace version
+# first. Requires a `CRATES_IO_TOKEN` repository secret.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # create the GitHub Release
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    name: publish to crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
+      - uses: Swatinem/rust-cache@v2
+      # `cargo publish --workspace` publishes the crates in dependency order and
+      # waits for the index between them; `publish = false` members (examples)
+      # are skipped automatically.
+      - name: Publish workspace to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: cargo publish --workspace
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
