@@ -35,6 +35,9 @@ All crates share a single version and are released together.
   `Allow`/`Deny` `Policy` rules whose `Condition`s test request `Attributes`
   (subject/resource/action/env), evaluated with deny-overrides and default-deny,
   complementing the existing RBAC `Authorizer`.
+- `klauthed-web`: `auth_service` example — a runnable end-to-end demo
+  (password login → JWT → rate-limited, JWT-protected API + health), wiring
+  `klauthed-security`, `klauthed-web` middleware/extractors, and the error layer.
 - `klauthed-data`: new `rate_limit` module — a `RateLimiter` trait with a
   clock-injected `InMemoryRateLimiter` and a `RedisRateLimiter` (`redis` feature)
   for shared, cross-replica fixed-window limiting. Token-bucket variants
