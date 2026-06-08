@@ -14,6 +14,8 @@
 //!   `EurekaRegistry` (feature `eureka`) talks to a Netflix Eureka server.
 //! * [`RoundRobin`] — lock-free client-side load balancing over resolved
 //!   instances.
+//! * `ServiceAgent` (feature `agent`) — registers on start, heartbeats in the
+//!   background, and deregisters on shutdown.
 //!
 //! ```
 //! use klauthed_discovery::{InMemoryRegistry, RoundRobin, ServiceInstance, ServiceRegistry};
@@ -31,6 +33,8 @@
 //! # }
 //! ```
 
+#[cfg(feature = "agent")]
+pub mod agent;
 #[cfg(feature = "consul")]
 pub mod consul;
 pub mod error;
@@ -40,6 +44,8 @@ pub mod instance;
 pub mod picker;
 pub mod registry;
 
+#[cfg(feature = "agent")]
+pub use agent::ServiceAgent;
 #[cfg(feature = "consul")]
 pub use consul::ConsulRegistry;
 pub use error::DiscoveryError;

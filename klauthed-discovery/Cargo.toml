@@ -22,6 +22,8 @@ tracing.workspace = true
 
 # HTTP backends (Consul / Eureka) — pulled in only with the matching feature.
 reqwest = { workspace = true, optional = true }
+# Self-registering lifecycle agent — pulled in only with the `agent` feature.
+tokio = { workspace = true, optional = true }
 
 [features]
 default = []
@@ -29,6 +31,9 @@ default = []
 consul = ["dep:reqwest"]
 # Netflix Eureka backend (HTTP).
 eureka = ["dep:reqwest"]
+# ServiceAgent: register on start, heartbeat in the background, deregister on
+# shutdown/drop.
+agent = ["dep:tokio"]
 
 [dev-dependencies]
 tokio = { workspace = true }

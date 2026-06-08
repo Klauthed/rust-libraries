@@ -13,8 +13,11 @@ All crates share a single version and are released together.
 - **`klauthed-discovery`** crate — service discovery: a `ServiceRegistry` trait
   (`register` / `deregister` / `heartbeat` / `instances`) over a `ServiceInstance`
   type, with an `InMemoryRegistry` for tests/single-process use and a lock-free
-  `RoundRobin` picker for client-side load balancing. Consul and Eureka backends
-  follow behind the `consul` / `eureka` features.
+  `RoundRobin` picker for client-side load balancing. HTTP backends for **Consul**
+  (`ConsulRegistry`, feature `consul`) and **Eureka** (`EurekaRegistry`, feature
+  `eureka`), plus a self-registering **`ServiceAgent`** (feature `agent`) that
+  registers on start, heartbeats in the background, and deregisters on
+  shutdown/drop.
 - CI: an **`integration` job** that runs the `#[ignore]`d live-infra tests
   against real Postgres, Redis, and MongoDB service containers (`cargo test
   -- --ignored`), so the data-layer (outbox, idempotency, locks, Mongo repo)
