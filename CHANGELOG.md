@@ -27,6 +27,10 @@ All crates share a single version and are released together.
 - `klauthed-security`: **role inheritance** — a `Role` may declare parent roles
   (`Role::inherits` / `inherit`), and `RoleRegistry::effective_permissions`
   resolves the permission union transitively and cycle-safely.
+- `klauthed-security`: **resource-instance scoping** — `Authorizer::is_authorized_for_resource`
+  / `authorize_for_resource` permit an action when the principal holds the
+  permission globally *or* owns the resource and holds its `:own`-suffixed form
+  (e.g. `articles:edit:own`).
 - `klauthed-security`: **ABAC policy layer** (`authz::policy`) — a `PolicySet` of
   `Allow`/`Deny` `Policy` rules whose `Condition`s test request `Attributes`
   (subject/resource/action/env), evaluated with deny-overrides and default-deny,

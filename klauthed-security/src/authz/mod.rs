@@ -46,7 +46,10 @@
 //!
 //! Roles support inheritance: a [`Role`] may declare parent roles
 //! ([`Role::inherits`]) and [`RoleRegistry::effective_permissions`] resolves the
-//! union transitively (cycle-safe). Resource-instance scoping remains future work.
+//! union transitively (cycle-safe). For per-instance scoping,
+//! [`Authorizer::is_authorized_for_resource`] grants access when the principal
+//! either holds the permission globally or owns the resource and holds its
+//! `:own`-suffixed form.
 
 pub mod authorizer;
 pub mod permission;

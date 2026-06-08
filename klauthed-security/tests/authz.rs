@@ -131,3 +131,48 @@ fn unknown_parent_is_ignored() {
     assert_eq!(perms.len(), 1);
     assert!(Authorizer::is_authorized(&perms, &Permission::new("svc:run")));
 }
+
+#[test]
+fn resource_scope_owner_with_own_grant() {
+    // "alice" may edit only her own articles.
+    let granted = perms(&["articles:edit:own"]);
+    let edit = Permission::new("articles:edit");
+
+    // Her own article (owner == principal): allowed.
+    assert!(Authorizer::is_authorized_for_resource(&granted, &edit, "alice", "alice"));
+    // Someone else's article: denied.
+    assert!(!Authorizer::is_authorized_for_resource(&granted, &edit, "alice", "bob"));
+}
+
+#[test]
+fn resource_scope_global_grant_covers_any_instance() {
+    // A global "articles:edit" (or wildcard) acts on anyone's resource.
+    let edit = Permission::new("articles:edit");
+    assert!(Authorizer::is_authorized_for_resource(
+        &perms(&["articles:edit"]),
+        &edit,
+        "mod",
+        "bob"
+    ));
+    assert!(Authorizer::is_authorized_for_resource(&perms(&["articles:*"]), &edit, "mod", "bob"));
+    assert!(Authorizer::is_authorized_for_resource(&perms(&["*"]), &edit, "mod", "bob"));
+}
+
+#[test]
+fn resource_scope_denied_without_any_grant() {
+    let granted = perms(&["articles:read"]);
+    let edit = Permission::new("articles:edit");
+    assert!(!Authorizer::is_authorized_for_resource(&granted, &edit, "alice", "alice"));
+
+    let err = Authorizer::authorize_for_resource(&granted, &edit, "alice", "alice").unwrap_err();
+    assert!(matches!(err, SecurityError::Forbidden));
+}
+
+#[test]
+fn resource_scope_own_grant_does_not_leak_to_others() {
+    // Holding only `:own` must NOT authorize acting on a non-owned resource,
+    // even though the principal is authenticated.
+    let granted = perms(&["articles:edit:own"]);
+    let edit = Permission::new("articles:edit");
+    assert!(Authorizer::authorize_for_resource(&granted, &edit, "alice", "bob").is_err());
+}
