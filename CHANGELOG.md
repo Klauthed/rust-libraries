@@ -16,6 +16,11 @@ All crates share a single version and are released together.
   `register_from_config::<T>(&config)`. Not a reflective DI container (Rust has no
   runtime reflection) — components are constructed in dependency order and
   resolved by type.
+- `klauthed-core`: **auto-config starters** (`wiring::{Starter, AppBuilder,
+  ConfigSectionsStarter}`) — `AppBuilder` runs a chain of `Starter`s over a
+  resolved `Config` to wire an `AppContext` (Rust-idiomatic Spring-Boot-style
+  auto-configuration, composed explicitly rather than scanned).
+  `ConfigSectionsStarter` registers the present standard typed config sections.
 - `klauthed-core` / `klauthed-macros`: **`#[derive(FromConfig)]`** — bind a typed
   struct to a config section (`#[config(key = "database")]`, defaulting to the
   snake-cased type name; `#[config(default)]` binds a missing section to

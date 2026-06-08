@@ -5,8 +5,7 @@
 //! construct components in dependency order (wiring them through their own
 //! constructors), register each, then resolve them by type — the same shape as
 //! actix's `app_data` or axum's `Extension`, but framework-agnostic and paired
-//! with [`FromConfig`](crate::config::FromConfig) so config-bound components wire
-//! in one step.
+//! with [`FromConfig`] so config-bound components wire in one step.
 //!
 //! ```
 //! use std::sync::Arc;
@@ -140,6 +139,124 @@ impl AppContext {
     }
 }
 
+/// A unit of auto-configuration (a "starter"): given the resolved [`Config`], it
+/// constructs and registers its components into an [`AppContext`].
+///
+/// This is the klauthed analog of a Spring Boot starter — each module contributes
+/// one and [`AppBuilder`] runs them in order. Rust has no classpath scanning, so
+/// starters are composed explicitly rather than discovered.
+pub trait Starter {
+    /// A short name, for diagnostics.
+    fn name(&self) -> &str;
+
+    /// Register this starter's components, reading what it needs from `config`.
+    ///
+    /// # Errors
+    /// Returns [`ConfigError`] if required configuration is missing or malformed.
+    fn configure(&self, config: &Config, ctx: &mut AppContext) -> Result<(), ConfigError>;
+}
+
+/// Bootstraps an [`AppContext`] by running a chain of [`Starter`]s over a
+/// resolved [`Config`].
+///
+/// The [`Config`] is registered first, so starters and components can resolve it
+/// with `ctx.require::<Config>()`.
+///
+/// ```
+/// use klauthed_core::config::ServerConfig;
+/// use klauthed_core::config::provider::MemoryProvider;
+/// use klauthed_core::config::{ConfigBuilder, Profile};
+/// use klauthed_core::wiring::{AppBuilder, ConfigSectionsStarter};
+/// use serde_json::json;
+///
+/// # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+/// let config = ConfigBuilder::new(Profile::Test)
+///     .with_provider(MemoryProvider::new().set("server", json!({ "port": 9000 })))
+///     .build()
+///     .await?;
+///
+/// let ctx = AppBuilder::new(config).with_starter(ConfigSectionsStarter).build()?;
+/// assert_eq!(ctx.require::<ServerConfig>()?.port, 9000);
+/// # Ok(())
+/// # }
+/// ```
+pub struct AppBuilder {
+    config: Config,
+    starters: Vec<Box<dyn Starter>>,
+}
+
+impl AppBuilder {
+    /// Start a builder over the resolved `config`.
+    #[must_use]
+    pub fn new(config: Config) -> Self {
+        Self { config, starters: Vec::new() }
+    }
+
+    /// Append a starter to the chain (run in insertion order).
+    #[must_use]
+    pub fn with_starter<S: Starter + 'static>(mut self, starter: S) -> Self {
+        self.starters.push(Box::new(starter));
+        self
+    }
+
+    /// Append a boxed starter (when the concrete type is only known at runtime).
+    #[must_use]
+    pub fn with_boxed_starter(mut self, starter: Box<dyn Starter>) -> Self {
+        self.starters.push(starter);
+        self
+    }
+
+    /// Run every starter in order and return the wired [`AppContext`].
+    ///
+    /// # Errors
+    /// Returns [`ConfigError`] from the first starter that fails.
+    pub fn build(self) -> Result<AppContext, ConfigError> {
+        let mut ctx = AppContext::new();
+        ctx.register(self.config.clone());
+        for starter in &self.starters {
+            tracing::debug!(starter = starter.name(), "running config starter");
+            starter.configure(&self.config, &mut ctx)?;
+        }
+        Ok(ctx)
+    }
+}
+
+/// A [`Starter`] that registers each present standard typed config section
+/// (`DatabaseConfig`, `CacheConfig`, `MessagingConfig`, `StorageConfig`,
+/// `ServerConfig`) into the context, so components can `require` them directly
+/// instead of re-reading the config.
+pub struct ConfigSectionsStarter;
+
+impl Starter for ConfigSectionsStarter {
+    fn name(&self) -> &str {
+        "config-sections"
+    }
+
+    fn configure(&self, config: &Config, ctx: &mut AppContext) -> Result<(), ConfigError> {
+        use crate::config::keys;
+        use crate::config::{
+            CacheConfig, DatabaseConfig, MessagingConfig, ServerConfig, StorageConfig,
+        };
+
+        if let Some(section) = config.get_optional::<DatabaseConfig>(keys::DATABASE)? {
+            ctx.register(section);
+        }
+        if let Some(section) = config.get_optional::<CacheConfig>(keys::CACHE)? {
+            ctx.register(section);
+        }
+        if let Some(section) = config.get_optional::<MessagingConfig>(keys::MESSAGING)? {
+            ctx.register(section);
+        }
+        if let Some(section) = config.get_optional::<StorageConfig>(keys::STORAGE)? {
+            ctx.register(section);
+        }
+        if let Some(section) = config.get_optional::<ServerConfig>(keys::SERVER)? {
+            ctx.register(section);
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -209,5 +326,47 @@ mod tests {
         ctx.register_from_config::<DatabaseSettings>(&config).unwrap();
 
         assert_eq!(ctx.require::<DatabaseSettings>().unwrap().host, "db.internal");
+    }
+
+    #[tokio::test]
+    async fn app_builder_runs_config_sections_starter() {
+        use crate::config::{DatabaseConfig, ServerConfig};
+
+        let config = ConfigBuilder::new(Profile::Test)
+            .with_provider(MemoryProvider::new().set("server", json!({ "port": 9000 })))
+            .build()
+            .await
+            .unwrap();
+
+        let ctx = AppBuilder::new(config).with_starter(ConfigSectionsStarter).build().unwrap();
+
+        // The Config itself and the present `server` section are registered.
+        assert!(ctx.contains::<Config>());
+        assert_eq!(ctx.require::<ServerConfig>().unwrap().port, 9000);
+        // An absent section is not registered.
+        assert!(!ctx.contains::<DatabaseConfig>());
+    }
+
+    #[tokio::test]
+    async fn app_builder_runs_a_custom_starter() {
+        struct DbStarter;
+        impl Starter for DbStarter {
+            fn name(&self) -> &str {
+                "db"
+            }
+            fn configure(&self, _config: &Config, ctx: &mut AppContext) -> Result<(), ConfigError> {
+                ctx.register(Db { url: "wired".into() });
+                Ok(())
+            }
+        }
+
+        let config = ConfigBuilder::new(Profile::Test)
+            .with_provider(MemoryProvider::new().set("x", json!(1)))
+            .build()
+            .await
+            .unwrap();
+
+        let ctx = AppBuilder::new(config).with_starter(DbStarter).build().unwrap();
+        assert_eq!(ctx.require::<Db>().unwrap().url, "wired");
     }
 }
