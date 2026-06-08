@@ -12,6 +12,7 @@
 //! * [`cqrs`] — command/query/event buses.
 //! * [`domain`] — domain-event / aggregate building blocks.
 //! * [`validation`] — the [`Validate`](validation::Validate) trait.
+//! * [`wiring`] — the [`AppContext`](wiring::AppContext) component registry.
 //! * [`error`] — re-exports the error kernel plus `ConfigError`.
 
 // Lets the `#[derive(FromConfig)]` macro's `::klauthed_core::…` paths resolve
@@ -26,3 +27,4 @@ pub mod error;
 pub mod id;
 pub mod time;
 pub mod validation;
+pub mod wiring;

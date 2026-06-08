@@ -10,6 +10,12 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-core`: **`wiring::AppContext`** — a small, explicit application wiring
+  container: a type-keyed registry of shared singletons (`register` / `get` /
+  `require`), framework-agnostic, paired with `FromConfig` via
+  `register_from_config::<T>(&config)`. Not a reflective DI container (Rust has no
+  runtime reflection) — components are constructed in dependency order and
+  resolved by type.
 - `klauthed-core` / `klauthed-macros`: **`#[derive(FromConfig)]`** — bind a typed
   struct to a config section (`#[config(key = "database")]`, defaulting to the
   snake-cased type name; `#[config(default)]` binds a missing section to
