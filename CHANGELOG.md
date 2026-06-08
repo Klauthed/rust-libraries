@@ -20,6 +20,9 @@ All crates share a single version and are released together.
 - `klauthed-core`: optional **`tz` feature** — convert the UTC `Timestamp` to
   civil time in a named IANA zone via `time::TimeZone` (`get`, `to_zone`,
   `offset_in`), backed by `time-tz`. The `Timestamp` stays UTC-canonical.
+- `klauthed-security`: **role inheritance** — a `Role` may declare parent roles
+  (`Role::inherits` / `inherit`), and `RoleRegistry::effective_permissions`
+  resolves the permission union transitively and cycle-safely.
 - `klauthed-security`: **ABAC policy layer** (`authz::policy`) — a `PolicySet` of
   `Allow`/`Deny` `Policy` rules whose `Condition`s test request `Attributes`
   (subject/resource/action/env), evaluated with deny-overrides and default-deny,

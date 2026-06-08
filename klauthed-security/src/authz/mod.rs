@@ -44,7 +44,9 @@
 //! contextual rules ("owners may edit their own resources", "not while
 //! suspended").
 //!
-//! Resource-instance scoping and role hierarchies/inheritance remain future work.
+//! Roles support inheritance: a [`Role`] may declare parent roles
+//! ([`Role::inherits`]) and [`RoleRegistry::effective_permissions`] resolves the
+//! union transitively (cycle-safe). Resource-instance scoping remains future work.
 
 pub mod authorizer;
 pub mod permission;
