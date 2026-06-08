@@ -67,6 +67,13 @@ All crates share a single version and are released together.
 
 ### Security
 
+- `klauthed-security`: upgraded `jsonwebtoken` from 9.3 to 10.3, which fixes the
+  algorithm-confusion advisory **GHSA-h395-gr6q-cpjc** (type confusion that could
+  lead to an authorization bypass). v10 drops the `ring` backend and requires an
+  explicit crypto provider; we use **`aws_lc_rs`**, which keeps the dependency
+  tree free of security advisories (the alternative `rust_crypto` backend pulls
+  the `rsa` crate, RUSTSEC-2023-0071). The `JwtSigner` / `JwtVerifier` public API
+  is unchanged.
 - `klauthed-security`: `SessionId` and `RefreshToken` no longer expose their raw
   bearer token via `Debug` — `{:?}` now redacts the secret (e.g. `SessionId(***)`),
   so an accidental `tracing::debug!(?session)` can't leak a live credential.

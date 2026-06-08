@@ -34,7 +34,11 @@ argon2 = { workspace = true, features = ["std"] }
 subtle = "2.6"
 
 # JWT. Not in the workspace; pinned to the vetted standard implementation.
-jsonwebtoken = "9.3"
+# `>=10.3` fixes the algorithm-confusion advisory GHSA-h395-gr6q-cpjc. v10 drops
+# `ring` and requires an explicit crypto backend: `aws_lc_rs` (chosen) keeps the
+# tree advisory-clean, whereas `rust_crypto` pulls `rsa` (RUSTSEC-2023-0071) and
+# omits the PEM key constructors this crate exposes. `use_pem` stays on (default).
+jsonwebtoken = { version = "10.3", features = ["aws_lc_rs"] }
 
 # Async session-store trait (object-safe async methods).
 async-trait = { workspace = true }
