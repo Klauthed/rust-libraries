@@ -43,6 +43,9 @@ vault = ["dep:reqwest", "dep:secrecy"]
 config-server = ["dep:reqwest"]
 # Enables the ambient (tokio task-local) RequestContext: current()/scope().
 task-local = ["dep:tokio"]
+# Enables ReloadableConfig: periodic re-resolve of the provider chain + change
+# notifications (tokio watch/interval task).
+hot-reload = ["dep:tokio"]
 # Enables IANA time-zone conversion of `Timestamp` (time::zone::TimeZone).
 tz = ["dep:time-tz"]
 

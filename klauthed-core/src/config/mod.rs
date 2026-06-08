@@ -27,6 +27,8 @@ pub mod config;
 pub mod map;
 pub mod profile;
 pub mod provider;
+#[cfg(feature = "hot-reload")]
+pub mod reload;
 pub mod schema;
 
 pub use builder::ConfigBuilder;
@@ -34,6 +36,8 @@ pub use config::Config;
 pub use map::ConfigMap;
 pub use profile::Profile;
 pub use provider::{ConfigProvider, ProviderKind};
+#[cfg(feature = "hot-reload")]
+pub use reload::ReloadableConfig;
 pub use schema::{
     CacheBackend, CacheConfig, DatabaseConfig, DbSystem, KafkaConfig, KafkaSasl, MessagingBackend,
     MessagingConfig, NatsConfig, NatsCredentials, PoolConfig, RabbitMqConfig, ServerConfig,

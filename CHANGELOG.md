@@ -10,6 +10,13 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-core`: **hot-reloading config** (`config::ReloadableConfig`, feature
+  `hot-reload`) — re-resolves the provider chain on an interval (and on demand
+  via `reload_now`), atomically swapping in the new `Config` and notifying
+  subscribers (`subscribe`) only when the resolved tree actually changes. Reads
+  are cheap `Arc<Config>` snapshots via `current()`; the background task is
+  aborted on drop. Pairs with the config-server provider for restart-free config
+  changes. `ConfigBuilder` gains `resolve(&self)` / `ensure_defaults`.
 - `klauthed-core`: **remote config-server provider** (`config::provider::
   ConfigServerProvider`, feature `config-server`) — loads configuration over HTTP
   from a **Spring Cloud Config Server**-compatible endpoint

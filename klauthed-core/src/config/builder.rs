@@ -113,17 +113,30 @@ impl ConfigBuilder {
         Ok(())
     }
 
-    /// Load every provider in order, deep-merge their output, and produce a
-    /// resolved [`Config`].
+    /// Apply the conventional default provider chain when none were registered,
+    /// otherwise return the builder unchanged. Mirrors what [`build`](Self::build)
+    /// does internally; exposed so [`ReloadableConfig`](super::ReloadableConfig)
+    /// can prepare the chain once before re-resolving it repeatedly.
     ///
-    /// If no providers were registered, the conventional chain for the active
-    /// profile is applied automatically (see [`with_defaults`](Self::with_defaults)).
-    /// This is what makes `Config::builder(Profile::detect()).build().await`
-    /// "just work" — files+env for local/dev/test, Vault+env for staging/prod.
-    pub async fn build(mut self) -> Result<Config, ConfigError> {
-        if self.providers.is_empty() {
-            self = self.with_defaults()?;
-        }
+    /// # Errors
+    /// Returns [`ConfigError`] if the default chain cannot be assembled.
+    pub fn ensure_defaults(self) -> Result<Self, ConfigError> {
+        if self.providers.is_empty() { self.with_defaults() } else { Ok(self) }
+    }
+
+    /// Enforce profile policy, then load every provider in order and deep-merge
+    /// their output into a resolved [`Config`] — **without consuming** the
+    /// builder, so the same chain can be re-resolved (this is what powers
+    /// hot-reload).
+    ///
+    /// Unlike [`build`](Self::build) it does not auto-apply the default chain for
+    /// an empty builder; call [`ensure_defaults`](Self::ensure_defaults) or
+    /// register providers first.
+    ///
+    /// # Errors
+    /// Returns [`ConfigError`] on a profile-policy violation or a provider load
+    /// failure.
+    pub async fn resolve(&self) -> Result<Config, ConfigError> {
         self.enforce_policy()?;
 
         let mut acc = ConfigMap::new();
@@ -133,7 +146,18 @@ impl ConfigBuilder {
             acc.merge(loaded);
         }
 
-        Ok(Config::new(self.profile, acc))
+        Ok(Config::new(self.profile.clone(), acc))
+    }
+
+    /// Load every provider in order, deep-merge their output, and produce a
+    /// resolved [`Config`].
+    ///
+    /// If no providers were registered, the conventional chain for the active
+    /// profile is applied automatically (see [`with_defaults`](Self::with_defaults)).
+    /// This is what makes `Config::builder(Profile::detect()).build().await`
+    /// "just work" — files+env for local/dev/test, Vault+env for staging/prod.
+    pub async fn build(self) -> Result<Config, ConfigError> {
+        self.ensure_defaults()?.resolve().await
     }
 }
 
