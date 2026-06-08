@@ -1,6 +1,6 @@
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
-#![cfg_attr(not(test), warn(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
+#![cfg_attr(not(test), deny(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 
 //! Cross-cutting platform concerns for klauthed services.
 //!
