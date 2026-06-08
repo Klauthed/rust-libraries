@@ -10,8 +10,8 @@
 //! * [`ServiceInstance`] — where one instance of a service lives, plus metadata.
 //! * [`ServiceRegistry`] — the async `register` / `deregister` / `heartbeat` /
 //!   `instances` trait. [`InMemoryRegistry`] backs tests and single-process use;
-//!   Consul and Eureka backends are planned behind the `consul` / `eureka`
-//!   features.
+//!   `ConsulRegistry` (feature `consul`) talks to a Consul agent, and a Eureka
+//!   backend is planned behind `eureka`.
 //! * [`RoundRobin`] — lock-free client-side load balancing over resolved
 //!   instances.
 //!
@@ -31,11 +31,15 @@
 //! # }
 //! ```
 
+#[cfg(feature = "consul")]
+pub mod consul;
 pub mod error;
 pub mod instance;
 pub mod picker;
 pub mod registry;
 
+#[cfg(feature = "consul")]
+pub use consul::ConsulRegistry;
 pub use error::DiscoveryError;
 pub use instance::ServiceInstance;
 pub use picker::RoundRobin;

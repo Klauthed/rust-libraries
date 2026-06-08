@@ -32,6 +32,8 @@ eureka = ["dep:reqwest"]
 
 [dev-dependencies]
 tokio = { workspace = true }
+# HTTP mock server for backend tests (no live Consul/Eureka needed).
+wiremock = "0.6"
 
 [package.metadata.docs.rs]
 all-features = true
