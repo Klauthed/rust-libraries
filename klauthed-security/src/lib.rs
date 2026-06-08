@@ -97,7 +97,7 @@ pub use compare::constant_time_eq;
 pub use error::SecurityError;
 pub use jwt::{Claims, ClaimsBuilder, JwtSigner, JwtVerifier};
 pub use kdf::{derive_key, derive_key_32};
-pub use mfa::{Totp, TotpSecret};
+pub use mfa::{GeneratedRecoveryCodes, RecoveryCodeSet, Totp, TotpSecret};
 pub use oauth2_client::{
     ClientGrantType, ClientStore, ClientType, InMemoryClientStore, OAuth2Client,
     TokenEndpointAuthMethod,

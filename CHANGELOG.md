@@ -10,6 +10,11 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-security`: **MFA recovery codes** (`mfa::RecoveryCodeSet`) — generate
+  a set of single-use backup codes, shown to the user once and persisted only as
+  SHA-256 hashes (serializes to a JSON hash list). `verify_and_consume` is
+  case/separator-insensitive, constant-time, and spends a code on use. No new
+  dependencies.
 - `klauthed-web`: **security-headers middleware** (`headers::SecurityHeaders`) —
   adds the standard hardening response headers (HSTS, `Content-Security-Policy`,
   `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and the

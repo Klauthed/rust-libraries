@@ -1,12 +1,19 @@
-//! Time-based one-time passwords (TOTP, [RFC 6238]).
+//! Multi-factor authentication: time-based one-time passwords (TOTP,
+//! [RFC 6238]) and one-time recovery codes.
 //!
-//! Wraps the vetted [`totp-rs`](totp_rs) crate behind a klauthed-flavoured API:
+//! TOTP wraps the vetted [`totp-rs`](totp_rs) crate behind a klauthed-flavoured
+//! API:
 //!
 //! * [`TotpSecret`] — a base32 shared secret, freshly generated from a CSPRNG or
 //!   restored from a stored value.
 //! * [`Totp`] — a configured authenticator (issuer, account, 6 digits, 30s step,
 //!   ±1 step window by default) that can build the `otpauth://` provisioning URI
 //!   and verify a submitted code.
+//!
+//! Recovery codes are the fallback when an authenticator is lost:
+//!
+//! * [`RecoveryCodeSet`] — a set of single-use backup codes, stored as SHA-256
+//!   hashes and consumed on use (see [`recovery`]).
 //!
 //! "Current time" is taken from a [`klauthed_core::time::Clock`], so code
 //! generation/verification is testable with
@@ -31,8 +38,10 @@
 //! assert!(!totp.verify("000000", &clock) || code == "000000");
 //! ```
 
+pub mod recovery;
 pub mod secret;
 pub mod totp;
 
+pub use recovery::{GeneratedRecoveryCodes, RecoveryCodeSet};
 pub use secret::TotpSecret;
 pub use totp::Totp;
