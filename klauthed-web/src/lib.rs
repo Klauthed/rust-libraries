@@ -18,6 +18,10 @@
 //!   the request-context middleware and health endpoints.
 //! * [`ratelimit`] — an in-memory fixed-window [`RateLimit`] middleware that
 //!   rejects over-quota clients with `429` and a `Retry-After` header.
+//! * [`headers`] — [`SecurityHeaders`] middleware that adds the standard
+//!   hardening response headers (HSTS, CSP, `X-Frame-Options`, …).
+//! * [`csrf`] — [`Csrf`] double-submit-cookie middleware guarding state-changing
+//!   requests against cross-site request forgery.
 //! * [`extract`] — [`Json`] and [`Validated`] body extractors that surface
 //!   deserialization and [`Validate`](klauthed_core::validation::Validate)
 //!   failures as [`AppError`]s.
@@ -50,8 +54,10 @@ pub mod app;
 pub mod auth;
 pub mod context;
 pub mod cors;
+pub mod csrf;
 pub mod error;
 pub mod extract;
+pub mod headers;
 pub mod health; // folder: health/{status,registry,routes,checks}.rs
 pub mod oauth; // folder: oauth/{config,util,handlers}.rs
 pub mod ratelimit;
@@ -64,8 +70,10 @@ pub use cors::{
     CachedOriginRegistry, CorsConfig, CorsOriginRegistry, DynamicCors, InMemoryOriginRegistry,
     build_cors,
 };
+pub use csrf::{Csrf, CsrfConfig, CsrfSameSite};
 pub use error::{AppError, AppResult};
 pub use extract::{Json, Validated};
+pub use headers::{FrameOptions, Hsts, SecurityHeaders, SecurityHeadersConfig};
 pub use health::{HealthCheck, HealthRegistry, HealthStatus};
 pub use ratelimit::{KeyBy, RateLimit};
 pub use server::{serve, serve_with_components, serve_with_defaults};

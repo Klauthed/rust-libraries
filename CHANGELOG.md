@@ -10,6 +10,18 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-web`: **security-headers middleware** (`headers::SecurityHeaders`) —
+  adds the standard hardening response headers (HSTS, `Content-Security-Policy`,
+  `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and the
+  cross-origin isolation headers) from a `SecurityHeadersConfig`, with strict
+  API defaults and a `relaxed()` preset for HTML apps. Existing handler-set
+  headers are never clobbered.
+- `klauthed-web`: **CSRF protection** (`csrf::Csrf`) — a stateless
+  double-submit-cookie middleware. Unsafe requests must echo the CSRF cookie in
+  a header (constant-time compared via `klauthed-security`); safe requests can
+  auto-issue the cookie; `Authorization: Bearer` requests are skipped by default.
+  Returns `403 Forbidden` on failure, and `Csrf::issue_cookie` rotates the token.
+
 - `klauthed-security`: JWT signing/verification now supports **ES256** (ECDSA
   P-256) and **EdDSA** (Ed25519) in addition to HS256/RS256. Asymmetric keys load
   from PEM or DER (`{rs256,es256,eddsa}_{pem,der}` on `JwtSigner`/`JwtVerifier`).
