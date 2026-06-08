@@ -10,6 +10,10 @@ All crates share a single version and are released together.
 
 ### Added
 
+- CI: an **`osv-scanner`** supply-chain job that scans `Cargo.lock` against the
+  OSV database (GHSA + RustSec). It catches GHSA-only advisories that `cargo-deny`
+  (RustSec DB) can miss — the gap that let the jsonwebtoken type-confusion
+  advisory through before it was mirrored to RustSec.
 - **`CAPABILITIES.md`** — a single, guided tour of every crate's capabilities,
   feature flags, and entry points (linked from the README).
 - `klauthed-core`: **`wiring::AppContext`** — a small, explicit application wiring

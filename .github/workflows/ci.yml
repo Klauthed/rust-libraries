@@ -89,6 +89,20 @@ jobs:
       - name: cargo-deny (advisories, licenses, bans, sources)
         run: cargo deny check
 
+  osv:
+    name: osv-scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: osv-scanner
+      # OSV aggregates GHSA + RustSec, so it catches GHSA-only advisories that
+      # cargo-deny (RustSec DB) misses — e.g. the jsonwebtoken type-confusion
+      # advisory that was published to GHSA before RustSec mirrored it.
+      - name: Scan dependencies (OSV)
+        run: osv-scanner scan source --lockfile=Cargo.lock
+
   feature-check:
     name: feature-check
     runs-on: ubuntu-latest

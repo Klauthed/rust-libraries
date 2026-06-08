@@ -284,6 +284,7 @@ A single dependency that re-exports the libraries behind feature flags, plus a
   OpenSSL-backed WebAuthn, OTel) are behind cargo features; the default build
   stays lean.
 - **Quality gates (CI):** rustfmt, clippy `-D warnings`, tests, docs
-  `-D warnings`, cargo-deny (advisories/licenses/bans), MSRV 1.95,
-  per-feature build check, and a live-infra integration job
-  (Postgres/Redis/Mongo containers).
+  `-D warnings`, cargo-deny (advisories/licenses/bans), **OSV-Scanner**
+  (catches GHSA-only advisories the RustSec DB misses), MSRV 1.95, per-feature
+  build check, and a live-infra integration job (Postgres/Redis/Mongo
+  containers).
