@@ -69,10 +69,10 @@ pub async fn authorize(
             }
             uri.to_owned()
         }
-        None => {
-            if client.redirect_uris.len() == 1 {
-                client.redirect_uris[0].clone()
-            } else {
+        None => match client.redirect_uris.as_slice() {
+            // Exactly one registered URI → use it; zero or many → require it.
+            [only] => only.clone(),
+            _ => {
                 return HttpResponse::BadRequest().json(
                     klauthed_protocol::oauth2::TokenErrorResponse::with_description(
                         OAuth2ErrorCode::InvalidRequest,
@@ -80,7 +80,7 @@ pub async fn authorize(
                     ),
                 );
             }
-        }
+        },
     };
 
     // ── 3. Validate response_type = code ──────────────────────────────────────

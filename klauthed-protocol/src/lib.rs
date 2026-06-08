@@ -1,6 +1,9 @@
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
-#![cfg_attr(not(test), deny(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
+#![cfg_attr(
+    not(test),
+    deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing)
+)]
 
 //! Spec-accurate serde data types for the identity protocols klauthed speaks.
 //!

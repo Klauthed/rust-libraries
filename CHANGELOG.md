@@ -144,11 +144,12 @@ All crates share a single version and are released together.
 
 ### Changed
 
-- Every library crate now **denies** `clippy::unwrap_used`, `expect_used`, and
-  `panic` in non-test code, so a bare `.unwrap()`/`.expect()` in shipping code is
-  a hard error (not just under CI's `-D warnings`, but on any `cargo clippy`).
-  The few unavoidable sites are `#[allow(..., reason = "…")]` with a proven
-  invariant or a documented `# Panics` contract. As part of the sweep, the
+- Every library crate now **denies** `clippy::unwrap_used`, `expect_used`,
+  `panic`, and `indexing_slicing` in non-test code, so a bare `.unwrap()` /
+  `.expect()` or a panicking index (`v[i]`, `&s[a..b]`) in shipping code is a hard
+  error (not just under CI's `-D warnings`, but on any `cargo clippy`). The few
+  unavoidable sites are `#[allow(..., reason = "…")]` with a proven invariant or a
+  documented `# Panics` contract. As part of the sweep, the
   in-memory stores, caches, and registries (token denylist, sessions, OAuth
   client/code/refresh stores, idempotency, locks, outbox, rate limiter, job
   queue, audit/webhook sinks, tenancy resolver, CORS registries) now **recover

@@ -1,6 +1,9 @@
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
-#![cfg_attr(not(test), deny(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
+#![cfg_attr(
+    not(test),
+    deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing)
+)]
 
 //! Observability for klauthed services: structured logging/tracing, Prometheus
 //! metrics, and OpenTelemetry trace export — from one [`TelemetryConfig`].
