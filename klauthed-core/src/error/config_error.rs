@@ -98,10 +98,19 @@ pub enum ConfigError {
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
 
-    /// A Vault HTTP transport error (`vault` feature).
-    #[cfg(feature = "vault")]
-    #[error("vault HTTP transport error: {0}")]
+    /// An HTTP transport error from a remote provider (Vault or config server).
+    #[cfg(any(feature = "vault", feature = "config-server"))]
+    #[error("HTTP transport error: {0}")]
     Http(#[from] reqwest::Error),
+
+    /// A configuration server returned an error or unreachable response.
+    #[error("config server request to '{url}' failed: {message}")]
+    ConfigServer {
+        /// The config-server URL that was requested.
+        url: String,
+        /// The failure detail (HTTP status or message).
+        message: String,
+    },
 }
 
 impl ConfigError {
@@ -124,8 +133,10 @@ impl ConfigError {
             ConfigError::Io(_) => (Internal, "config.io"),
             ConfigError::Toml(_) => (Internal, "config.toml"),
             ConfigError::Json(_) => (Internal, "config.json"),
-            #[cfg(feature = "vault")]
-            ConfigError::Http(_) => (Unavailable, "config.vault_http"),
+            // A reachable-but-failed config server is transient from the service's view.
+            ConfigError::ConfigServer { .. } => (Unavailable, "config.config_server"),
+            #[cfg(any(feature = "vault", feature = "config-server"))]
+            ConfigError::Http(_) => (Unavailable, "config.http"),
         }
     }
 }

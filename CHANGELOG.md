@@ -10,6 +10,14 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-core`: **remote config-server provider** (`config::provider::
+  ConfigServerProvider`, feature `config-server`) — loads configuration over HTTP
+  from a **Spring Cloud Config Server**-compatible endpoint
+  (`/{application}/{profile}[/{label}]`, merging ordered `propertySources` of
+  flat dotted keys) or a plain JSON document (`RawJson`), deep-merged into the
+  config tree like the file/env/Vault providers. Basic/Bearer auth, an `optional`
+  fail-soft mode, and a new non-secret `ProviderKind::ConfigServer` (secrets stay
+  in Vault). New `ConfigError::ConfigServer` variant.
 - **`klauthed-discovery`** crate — service discovery: a `ServiceRegistry` trait
   (`register` / `deregister` / `heartbeat` / `instances`) over a `ServiceInstance`
   type, with an `InMemoryRegistry` for tests/single-process use and a lock-free

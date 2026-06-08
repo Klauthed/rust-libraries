@@ -39,6 +39,8 @@ time-tz = { workspace = true, optional = true }
 default = ["vault"]
 # Enables the HashiCorp Vault config provider (KV v2; Token/AppRole/Kubernetes auth).
 vault = ["dep:reqwest", "dep:secrecy"]
+# Enables the remote config-server provider (Spring Cloud Config Server-compatible).
+config-server = ["dep:reqwest"]
 # Enables the ambient (tokio task-local) RequestContext: current()/scope().
 task-local = ["dep:tokio"]
 # Enables IANA time-zone conversion of `Timestamp` (time::zone::TimeZone).
@@ -46,6 +48,8 @@ tz = ["dep:time-tz"]
 
 [dev-dependencies]
 tokio = { workspace = true }
+# HTTP mock server for the config-server provider tests (no live server needed).
+wiremock = "0.6"
 
 [package.metadata.docs.rs]
 all-features = true

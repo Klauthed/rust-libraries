@@ -12,12 +12,16 @@
 
 use crate::config::map::ConfigMap;
 
+#[cfg(feature = "config-server")]
+pub mod config_server;
 pub mod env;
 pub mod file;
 pub mod memory;
 #[cfg(feature = "vault")]
 pub mod vault;
 
+#[cfg(feature = "config-server")]
+pub use config_server::{ConfigServerFormat, ConfigServerProvider};
 pub use env::EnvProvider;
 pub use file::FileProvider;
 pub use memory::MemoryProvider;
@@ -36,6 +40,8 @@ pub enum ProviderKind {
     File,
     /// HashiCorp Vault.
     Vault,
+    /// A remote configuration server (e.g. Spring Cloud Config Server).
+    ConfigServer,
     /// In-memory values supplied programmatically (defaults, tests, overrides).
     Memory,
 }
