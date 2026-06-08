@@ -79,6 +79,9 @@ ulid = { version = "1", features = ["serde"] }
 # depends on it directly; every other crate uses the re-exported
 # `klauthed_core::time::Duration`, keeping the datetime library swappable.
 time = { version = "0.3", features = ["macros", "formatting", "parsing"] }
+# IANA time-zone database, for rendering the UTC `Timestamp` as civil time in a
+# named zone (klauthed-core `tz` feature). Only klauthed-core depends on it.
+time-tz = { version = "2", features = ["db"] }
 
 # ── Config ────────────────────────────────────────────────────────────────────
 config-rs = { package = "config", version = "0.14" }

@@ -17,6 +17,9 @@ All crates share a single version and are released together.
   encrypt under a fresh per-message data key wrapped by a long-lived root key,
   with `Envelope::rewrap` for root-key rotation without re-encrypting payloads,
   and a self-contained byte/base64 wire format.
+- `klauthed-core`: optional **`tz` feature** — convert the UTC `Timestamp` to
+  civil time in a named IANA zone via `time::TimeZone` (`get`, `to_zone`,
+  `offset_in`), backed by `time-tz`. The `Timestamp` stays UTC-canonical.
 - `klauthed-security`: **ABAC policy layer** (`authz::policy`) — a `PolicySet` of
   `Allow`/`Deny` `Policy` rules whose `Condition`s test request `Attributes`
   (subject/resource/action/env), evaluated with deny-overrides and default-deny,

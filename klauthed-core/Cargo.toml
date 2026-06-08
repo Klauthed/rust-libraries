@@ -29,6 +29,8 @@ reqwest = { workspace = true, optional = true }
 secrecy = { workspace = true, optional = true }
 # ── Optional: ambient RequestContext (feature = "task-local") ─────────────────
 tokio = { workspace = true, optional = true }
+# ── Optional: IANA time-zone conversions (feature = "tz") ─────────────────────
+time-tz = { workspace = true, optional = true }
 
 [features]
 # Vault is on by default so `Config::load()` / auto-build works in staging/prod
@@ -39,6 +41,8 @@ default = ["vault"]
 vault = ["dep:reqwest", "dep:secrecy"]
 # Enables the ambient (tokio task-local) RequestContext: current()/scope().
 task-local = ["dep:tokio"]
+# Enables IANA time-zone conversion of `Timestamp` (time::zone::TimeZone).
+tz = ["dep:time-tz"]
 
 [dev-dependencies]
 tokio = { workspace = true }

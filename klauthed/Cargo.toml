@@ -50,6 +50,7 @@ full = [
 # ── Pass-through to sub-crate features (also enable the owning crate) ──────────
 vault         = ["core", "klauthed-core/vault"]
 task-local    = ["core", "klauthed-core/task-local"]
+tz            = ["core", "klauthed-core/tz"]
 context-scope = ["web", "klauthed-web/context-scope"]
 metrics       = ["observability", "klauthed-observability/metrics"]
 otel          = ["observability", "klauthed-observability/otel"]
