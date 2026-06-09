@@ -11,7 +11,8 @@ plumbing, and observability — so each service writes domain logic instead of b
 > Built for [actix-web](https://actix.rs/) services.
 
 📖 **[CAPABILITIES.md](CAPABILITIES.md)** — a single, guided tour of every crate's
-capabilities, features, and entry points.
+capabilities, features, and entry points. · 🗺️ **[ROADMAP.md](ROADMAP.md)** — what's
+next.
 
 ## Crates
 
