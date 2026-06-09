@@ -16,6 +16,14 @@ All crates share a single version and are released together.
   `webauthn` (security), and `consul` / `eureka` / `agent` (discovery). Added
   `discovery` to `full` and surfaced `ServiceInstance` / `ServiceRegistry` in the
   prelude, so the one-crate entry point now reaches every library.
+
+## [0.1.0] - 2026-06-09
+
+### Added
+
+- Initial release of the workspace: the `klauthed` umbrella plus `klauthed-core`,
+  `-error`, `-macros`, `-i18n`, `-security`, `-protocol`, `-data`, `-discovery`,
+  `-platform`, `-observability`, `-web`, and `-testing` — published to crates.io.
 - **Release automation** — a tag-triggered `release` workflow that runs
   `cargo publish --workspace` (native dependency-ordered publish) and cuts a
   GitHub Release, plus `release.toml` for `cargo-release` (shared workspace
@@ -185,12 +193,6 @@ All crates share a single version and are released together.
 - Datetime handling moved from `chrono` to the `time` crate, encapsulated behind
   `klauthed_core::time`.
 - CI bumped `actions/checkout` to v6 (Node 24).
-
-## [0.1.0]
-
-- Initial workspace: `klauthed` umbrella plus `klauthed-core`, `-error`,
-  `-macros`, `-i18n`, `-security`, `-protocol`, `-data`, `-platform`,
-  `-observability`, `-web`, and `-testing`.
 
 [Unreleased]: https://github.com/klauthed/rust-libraries/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/klauthed/rust-libraries/releases/tag/v0.1.0
