@@ -48,6 +48,9 @@ redis = { workspace = true, optional = true }
 serde_json.workspace = true
 base64.workspace = true
 ring.workspace = true
+# Adds the SQLite driver in test builds so WebStarter/Components can be exercised
+# against an in-memory pool without a live database.
+sqlx = { workspace = true, features = ["sqlite"] }
 
 [package.metadata.docs.rs]
 all-features = true

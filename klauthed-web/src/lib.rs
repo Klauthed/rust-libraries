@@ -66,6 +66,7 @@ pub mod health; // folder: health/{status,registry,routes,checks}.rs
 pub mod oauth; // folder: oauth/{config,util,handlers}.rs
 pub mod ratelimit;
 pub mod server;
+pub mod starter;
 
 pub use app::Components;
 pub use auth::{AuthenticatedUser, JwtAuth, OptionalAuthentication, TokenRevocationCheck};
@@ -81,3 +82,4 @@ pub use headers::{FrameOptions, Hsts, SecurityHeaders, SecurityHeadersConfig};
 pub use health::{HealthCheck, HealthRegistry, HealthStatus};
 pub use ratelimit::{KeyBy, RateLimit};
 pub use server::{serve, serve_with_components, serve_with_defaults};
+pub use starter::WebStarter;

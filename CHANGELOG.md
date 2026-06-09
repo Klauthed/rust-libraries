@@ -22,10 +22,14 @@ All crates share a single version and are released together.
 
 ### Added
 
-- `klauthed-data`: **`DataStarter`** (feature `sql`) — a `wiring::Starter` that
-  builds the relational pool (`sqlx::AnyPool`) from the `database` config section
-  and registers it in the `AppContext`, so components `require::<AnyPool>()`
-  instead of connecting by hand. The first of the resource starters.
+- **Resource starters** — `wiring::Starter`s that wire live resources into an
+  `AppContext`:
+  - `klauthed-data`: **`DataStarter`** (feature `sql`) builds the relational pool
+    (`sqlx::AnyPool`) from the `database` config section and registers it, so
+    components `require::<AnyPool>()` instead of connecting by hand.
+  - `klauthed-web`: **`WebStarter`** assembles the actix `Components` (web `Data`
+    + readiness health checks) from resources already in the context (e.g. the
+    `DataStarter` pool), ready for `serve_with_components`.
 - `klauthed` (umbrella): re-export **`klauthed::discovery`** behind a `discovery`
   feature, and forward the newer sub-crate features that were previously
   unreachable through the umbrella — `config-server` / `hot-reload` (core),

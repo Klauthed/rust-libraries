@@ -20,9 +20,10 @@ and a security quick-win.**
 
 - [x] Umbrella crate fronts everything (`discovery` + newer feature pass-throughs).
 - [x] Trusted Publishing (OIDC) — tokenless releases.
-- [ ] **Resource starters** — `DataStarter` (pool from `DatabaseConfig`) and
-      `WebStarter` (pre-wired server) so `AppBuilder` auto-config reaches live
-      components. (Makes `Starter`/`AppBuilder` async.)
+- [x] **Resource starters** — `DataStarter` (pool from `DatabaseConfig`) and
+      `WebStarter` (assembles the web `Components` from wired resources) so
+      `AppBuilder` auto-config reaches live components. (Made `Starter`/`AppBuilder`
+      async.)
 - [ ] **OTEL span auto-instrumentation** — spans around data queries + web
       requests, with trace-context propagation.
 - [ ] **DB migrations runner** — embedded, versioned migrations in `klauthed-data`.
