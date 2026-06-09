@@ -25,6 +25,7 @@
 //! | `error`         | `klauthed::error` (the `DomainError` kernel)          |
 //! | `macros`        | `klauthed::macros` (`#[derive(DomainError)]`)         |
 //! | `data`          | `klauthed::data` (db/cache/messaging/storage + outbox/idempotency/locks) |
+//! | `discovery`     | `klauthed::discovery` (service registry: in-memory, Consul, Eureka) |
 //! | `web`           | `klauthed::web` (actix `AppError`, context middleware, health) |
 //! | `observability` | `klauthed::observability` (logging/metrics/otel)      |
 //! | `i18n`          | `klauthed::i18n` (message catalogs)                   |
@@ -34,7 +35,9 @@
 //! | `full`          | all of the above (each with its own defaults)         |
 //!
 //! Pass-through features forward to a sub-crate's own feature and pull in the
-//! owning crate: `vault`, `task-local`, `context-scope`, `metrics`, `otel`,
+//! owning crate: `vault`/`config-server`/`hot-reload`/`task-local`/`tz` (core),
+//! `sealed`/`webauthn` (security), `context-scope` (web),
+//! `metrics`/`otel` (observability), `consul`/`eureka`/`agent` (discovery),
 //! `postgres`/`mysql`/`sqlite`, `redis`/`cache-memory`,
 //! `nats`/`rabbitmq`/`kafka`, `storage`/`storage-s3`/`storage-gcs`/`storage-azure`.
 
@@ -42,6 +45,8 @@
 pub use klauthed_core as core;
 #[cfg(feature = "data")]
 pub use klauthed_data as data;
+#[cfg(feature = "discovery")]
+pub use klauthed_discovery as discovery;
 #[cfg(feature = "error")]
 pub use klauthed_error as error;
 #[cfg(feature = "i18n")]
@@ -88,6 +93,10 @@ pub mod prelude {
     #[cfg(feature = "core")]
     pub use klauthed_core::validation::{Validate, ValidationErrors};
 
+    // Service discovery.
+    #[cfg(feature = "discovery")]
+    pub use klauthed_discovery::{ServiceInstance, ServiceRegistry};
+
     // HTTP layer.
     #[cfg(feature = "web")]
     pub use klauthed_web::{AppError, AppResult};
@@ -111,5 +120,17 @@ mod tests {
         // Prelude brings the types into scope.
         let _profile2: Profile = Profile::Local;
         let _id = Id::<()>::nil();
+    }
+
+    /// The `discovery` feature re-exports the crate and surfaces its types in the
+    /// prelude.
+    #[test]
+    #[cfg(feature = "discovery")]
+    fn discovery_reexport_and_prelude_resolve() {
+        use crate::prelude::*;
+
+        let _instance: ServiceInstance = crate::discovery::ServiceInstance::new("svc", "h", 1);
+        // `ServiceRegistry` is in scope from the prelude (used as a trait bound).
+        fn _needs_registry<R: ServiceRegistry>() {}
     }
 }

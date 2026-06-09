@@ -17,6 +17,7 @@ klauthed-core          = { workspace = true, optional = true }
 klauthed-error         = { workspace = true, optional = true }
 klauthed-macros        = { workspace = true, optional = true }
 klauthed-data          = { workspace = true, optional = true }
+klauthed-discovery     = { workspace = true, optional = true }
 klauthed-web           = { workspace = true, optional = true }
 klauthed-observability = { workspace = true, optional = true }
 klauthed-i18n          = { workspace = true, optional = true }
@@ -33,6 +34,7 @@ error         = ["dep:klauthed-error"]
 core          = ["dep:klauthed-core", "error"]
 macros        = ["dep:klauthed-macros"]
 data          = ["dep:klauthed-data", "core"]
+discovery     = ["dep:klauthed-discovery", "error"]
 web           = ["dep:klauthed-web", "core"]
 observability = ["dep:klauthed-observability", "core"]
 i18n          = ["dep:klauthed-i18n", "error"]
@@ -43,16 +45,22 @@ testing       = ["dep:klauthed-testing", "core"]
 
 # Everything except the dev-only testing utilities (with each crate's own defaults).
 full = [
-    "core", "error", "macros", "data", "web",
+    "core", "error", "macros", "data", "discovery", "web",
     "observability", "i18n", "security", "platform", "protocol",
 ]
 
 # ── Pass-through to sub-crate features (also enable the owning crate) ──────────
 vault         = ["core", "klauthed-core/vault"]
+config-server = ["core", "klauthed-core/config-server"]
+hot-reload    = ["core", "klauthed-core/hot-reload"]
 task-local    = ["core", "klauthed-core/task-local"]
 tz            = ["core", "klauthed-core/tz"]
 sealed        = ["security", "klauthed-security/sealed"]
+webauthn      = ["security", "klauthed-security/webauthn"]
 context-scope = ["web", "klauthed-web/context-scope"]
+consul        = ["discovery", "klauthed-discovery/consul"]
+eureka        = ["discovery", "klauthed-discovery/eureka"]
+agent         = ["discovery", "klauthed-discovery/agent"]
 metrics       = ["observability", "klauthed-observability/metrics"]
 otel          = ["observability", "klauthed-observability/otel"]
 postgres      = ["data", "klauthed-data/postgres"]

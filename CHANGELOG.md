@@ -10,6 +10,12 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed` (umbrella): re-export **`klauthed::discovery`** behind a `discovery`
+  feature, and forward the newer sub-crate features that were previously
+  unreachable through the umbrella — `config-server` / `hot-reload` (core),
+  `webauthn` (security), and `consul` / `eureka` / `agent` (discovery). Added
+  `discovery` to `full` and surfaced `ServiceInstance` / `ServiceRegistry` in the
+  prelude, so the one-crate entry point now reaches every library.
 - **Release automation** — a tag-triggered `release` workflow that runs
   `cargo publish --workspace` (native dependency-ordered publish) and cuts a
   GitHub Release, plus `release.toml` for `cargo-release` (shared workspace
