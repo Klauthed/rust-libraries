@@ -66,22 +66,33 @@ breaking changes and a patch bump (`0.x.y`) is backward-compatible. The **MSRV**
 (`rust-version` in the root `Cargo.toml`) is part of the contract — raising it is
 a minor-version change.
 
-Releases are automated:
+Publishing is owned by CI; locally you only bump and tag.
 
-1. Bump + tag + push locally with
-   [`cargo-release`](https://github.com/crate-ci/cargo-release) (config in
-   [`release.toml`](release.toml)):
+1. Bump the shared version with
+   [`cargo-release`](https://github.com/crate-ci/cargo-release) (`shared-version`
+   in [`release.toml`](release.toml)). The `version` subcommand **only** rewrites
+   version numbers — it does not publish:
 
    ```sh
-   cargo release minor --execute   # or `patch` / `major`
+   cargo release version minor --execute   # or `patch` / `major`
    ```
 
-   This updates every crate and the workspace dependency versions, writes the
-   release commit, and pushes a single `vX.Y.Z` tag.
-2. The [`release` workflow](.github/workflows/release.yml) triggers on that tag
-   and runs `cargo publish --workspace`, which publishes to crates.io in
+   This bumps every crate and the workspace dependency entries to the same
+   `X.Y.Z` (verify with `git diff`).
+2. Commit, tag, and push:
+
+   ```sh
+   git commit -am "release: vX.Y.Z"
+   git tag -a vX.Y.Z -m "vX.Y.Z"
+   git push origin master --follow-tags
+   ```
+3. The [`release` workflow](.github/workflows/release.yml) triggers on the `v*`
+   tag and runs `cargo publish --workspace`, which publishes to crates.io in
    dependency order (skipping `publish = false` members) and creates a GitHub
    Release. (Requires a `CRATES_IO_TOKEN` repository secret.)
+
+> Publishing lives only in CI so there's a single, auditable publish path and no
+> risk of a local double-publish.
 
 ## Code of conduct
 
