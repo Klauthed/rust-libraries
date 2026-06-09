@@ -8,6 +8,13 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Changed
+
+- Release: publishing now uses **crates.io Trusted Publishing (OIDC)** via
+  `rust-lang/crates-io-auth-action` — no long-lived `CRATES_IO_TOKEN` secret.
+  Requires a one-time per-crate Trusted Publisher setup on crates.io (see
+  CONTRIBUTING).
+
 ### Added
 
 - `klauthed` (umbrella): re-export **`klauthed::discovery`** behind a `discovery`

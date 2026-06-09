@@ -2,7 +2,9 @@ name: Release
 
 # Triggered by pushing a version tag (e.g. `v0.2.0`). Create the tag with
 # `cargo release` (see CONTRIBUTING.md), which bumps the shared workspace version
-# first. Requires a `CRATES_IO_TOKEN` repository secret.
+# first. Publishing uses crates.io Trusted Publishing (OIDC) — no long-lived
+# token. Each crate must have a Trusted Publisher configured on crates.io
+# (repo `klauthed/rust-libraries`, workflow `release.yml`); see CONTRIBUTING.md.
 on:
   push:
     tags:
@@ -13,6 +15,7 @@ on:
 
 permissions:
   contents: write # create the GitHub Release
+  id-token: write # mint a short-lived crates.io token via Trusted Publishing
 
 env:
   CARGO_TERM_COLOR: always
@@ -26,12 +29,17 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
       - uses: Swatinem/rust-cache@v2
+      # Exchange the workflow's GitHub OIDC identity for a short-lived crates.io
+      # token (Trusted Publishing) — no long-lived PAT in repo secrets.
+      - name: Authenticate to crates.io
+        id: auth
+        uses: rust-lang/crates-io-auth-action@v1
       # Idempotent, dependency-ordered publish that skips already-published
       # crates and backs off on the crates.io new-crate rate limit, so a large
       # first release (or a re-run) completes reliably.
       - name: Publish workspace to crates.io
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
         run: bash scripts/publish-workspace.sh
       # Only cut a Release on an actual tag push (not on manual re-runs).
       - name: Create GitHub Release

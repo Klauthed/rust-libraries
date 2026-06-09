@@ -87,12 +87,19 @@ Publishing is owned by CI; locally you only bump and tag.
    git push origin master --follow-tags
    ```
 3. The [`release` workflow](.github/workflows/release.yml) triggers on the `v*`
-   tag and runs `cargo publish --workspace`, which publishes to crates.io in
-   dependency order (skipping `publish = false` members) and creates a GitHub
-   Release. (Requires a `CRATES_IO_TOKEN` repository secret.)
+   tag, publishes to crates.io in dependency order (skipping `publish = false`
+   members), and creates a GitHub Release.
 
-> Publishing lives only in CI so there's a single, auditable publish path and no
-> risk of a local double-publish.
+Publishing uses **crates.io Trusted Publishing (OIDC)** — the workflow exchanges
+its GitHub identity for a short-lived token via
+[`rust-lang/crates-io-auth-action`](https://github.com/rust-lang/crates-io-auth-action),
+so there's **no long-lived `CRATES_IO_TOKEN` secret**. This requires a one-time
+setup per crate on crates.io: **crate → Settings → Trusted Publishing → add
+GitHub Actions**, with owner `klauthed`, repo `rust-libraries`, workflow
+`release.yml`.
+
+> Publishing lives only in CI so there's a single, auditable publish path, no
+> long-lived token, and no risk of a local double-publish.
 
 ## Code of conduct
 
