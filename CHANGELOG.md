@@ -10,6 +10,11 @@ All crates share a single version and are released together.
 
 ### Changed
 
+- `klauthed-core`: **`wiring::Starter` / `AppBuilder` are now async** (breaking) —
+  `Starter::configure` and `AppBuilder::build` are `async`, and a starter fails
+  with the new broad `StarterError` (`Box<dyn Error + Send + Sync>`) instead of
+  `ConfigError`, so starters can build live resources (pools, clients) and
+  surface any error. (Pre-1.0; `klauthed` 0.1.0 had the sync form.)
 - Release: publishing now uses **crates.io Trusted Publishing (OIDC)** via
   `rust-lang/crates-io-auth-action` — no long-lived `CRATES_IO_TOKEN` secret.
   Requires a one-time per-crate Trusted Publisher setup on crates.io (see
@@ -17,6 +22,10 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-data`: **`DataStarter`** (feature `sql`) — a `wiring::Starter` that
+  builds the relational pool (`sqlx::AnyPool`) from the `database` config section
+  and registers it in the `AppContext`, so components `require::<AnyPool>()`
+  instead of connecting by hand. The first of the resource starters.
 - `klauthed` (umbrella): re-export **`klauthed::discovery`** behind a `discovery`
   feature, and forward the newer sub-crate features that were previously
   unreachable through the umbrella — `config-server` / `hot-reload` (core),

@@ -73,6 +73,10 @@ pub mod messaging;
 #[cfg(feature = "storage")]
 pub mod storage;
 
+// Auto-configuration starter: build the SQL pool from config into an AppContext.
+#[cfg(feature = "sql")]
+pub mod starter;
+
 // ── Stub modules reserved for future implementation ───────────────────────────
 pub mod eventbus;
 pub mod pagination;
@@ -80,6 +84,9 @@ pub mod saga;
 pub mod transaction;
 
 pub use error::DataError;
+
+#[cfg(feature = "sql")]
+pub use starter::DataStarter;
 
 pub use idempotency::{
     IdempotencyRecord, IdempotencyStatus, IdempotencyStore, InMemoryIdempotencyStore, Outcome,

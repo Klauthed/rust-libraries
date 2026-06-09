@@ -139,21 +139,30 @@ impl AppContext {
     }
 }
 
+/// The error a [`Starter`] may fail with — boxed so a starter can surface a
+/// config error, a connection failure, or anything else that should abort
+/// startup (every klauthed error type coerces into it via `?`).
+pub type StarterError = Box<dyn std::error::Error + Send + Sync>;
+
 /// A unit of auto-configuration (a "starter"): given the resolved [`Config`], it
 /// constructs and registers its components into an [`AppContext`].
 ///
 /// This is the klauthed analog of a Spring Boot starter — each module contributes
 /// one and [`AppBuilder`] runs them in order. Rust has no classpath scanning, so
-/// starters are composed explicitly rather than discovered.
-pub trait Starter {
+/// starters are composed explicitly rather than discovered. `configure` is async
+/// because real starters build live resources (database pools, clients).
+#[async_trait::async_trait]
+pub trait Starter: Send + Sync {
     /// A short name, for diagnostics.
     fn name(&self) -> &str;
 
-    /// Register this starter's components, reading what it needs from `config`.
+    /// Register this starter's components, reading what it needs from `config`
+    /// and building any live resources it provides.
     ///
     /// # Errors
-    /// Returns [`ConfigError`] if required configuration is missing or malformed.
-    fn configure(&self, config: &Config, ctx: &mut AppContext) -> Result<(), ConfigError>;
+    /// Returns a [`StarterError`] if configuration is missing/malformed or a
+    /// resource can't be built — anything that should stop startup.
+    async fn configure(&self, config: &Config, ctx: &mut AppContext) -> Result<(), StarterError>;
 }
 
 /// Bootstraps an [`AppContext`] by running a chain of [`Starter`]s over a
@@ -169,13 +178,13 @@ pub trait Starter {
 /// use klauthed_core::wiring::{AppBuilder, ConfigSectionsStarter};
 /// use serde_json::json;
 ///
-/// # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+/// # async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 /// let config = ConfigBuilder::new(Profile::Test)
 ///     .with_provider(MemoryProvider::new().set("server", json!({ "port": 9000 })))
 ///     .build()
 ///     .await?;
 ///
-/// let ctx = AppBuilder::new(config).with_starter(ConfigSectionsStarter).build()?;
+/// let ctx = AppBuilder::new(config).with_starter(ConfigSectionsStarter).build().await?;
 /// assert_eq!(ctx.require::<ServerConfig>()?.port, 9000);
 /// # Ok(())
 /// # }
@@ -209,13 +218,13 @@ impl AppBuilder {
     /// Run every starter in order and return the wired [`AppContext`].
     ///
     /// # Errors
-    /// Returns [`ConfigError`] from the first starter that fails.
-    pub fn build(self) -> Result<AppContext, ConfigError> {
+    /// Returns the [`StarterError`] from the first starter that fails.
+    pub async fn build(self) -> Result<AppContext, StarterError> {
         let mut ctx = AppContext::new();
         ctx.register(self.config.clone());
         for starter in &self.starters {
-            tracing::debug!(starter = starter.name(), "running config starter");
-            starter.configure(&self.config, &mut ctx)?;
+            tracing::debug!(starter = starter.name(), "running starter");
+            starter.configure(&self.config, &mut ctx).await?;
         }
         Ok(ctx)
     }
@@ -227,12 +236,13 @@ impl AppBuilder {
 /// instead of re-reading the config.
 pub struct ConfigSectionsStarter;
 
+#[async_trait::async_trait]
 impl Starter for ConfigSectionsStarter {
     fn name(&self) -> &str {
         "config-sections"
     }
 
-    fn configure(&self, config: &Config, ctx: &mut AppContext) -> Result<(), ConfigError> {
+    async fn configure(&self, config: &Config, ctx: &mut AppContext) -> Result<(), StarterError> {
         use crate::config::keys;
         use crate::config::{
             CacheConfig, DatabaseConfig, MessagingConfig, ServerConfig, StorageConfig,
@@ -338,7 +348,8 @@ mod tests {
             .await
             .unwrap();
 
-        let ctx = AppBuilder::new(config).with_starter(ConfigSectionsStarter).build().unwrap();
+        let ctx =
+            AppBuilder::new(config).with_starter(ConfigSectionsStarter).build().await.unwrap();
 
         // The Config itself and the present `server` section are registered.
         assert!(ctx.contains::<Config>());
@@ -350,11 +361,16 @@ mod tests {
     #[tokio::test]
     async fn app_builder_runs_a_custom_starter() {
         struct DbStarter;
+        #[async_trait::async_trait]
         impl Starter for DbStarter {
             fn name(&self) -> &str {
                 "db"
             }
-            fn configure(&self, _config: &Config, ctx: &mut AppContext) -> Result<(), ConfigError> {
+            async fn configure(
+                &self,
+                _config: &Config,
+                ctx: &mut AppContext,
+            ) -> Result<(), StarterError> {
                 ctx.register(Db { url: "wired".into() });
                 Ok(())
             }
@@ -366,7 +382,7 @@ mod tests {
             .await
             .unwrap();
 
-        let ctx = AppBuilder::new(config).with_starter(DbStarter).build().unwrap();
+        let ctx = AppBuilder::new(config).with_starter(DbStarter).build().await.unwrap();
         assert_eq!(ctx.require::<Db>().unwrap().url, "wired");
     }
 }
