@@ -101,6 +101,10 @@ pub enum SecurityError {
     /// (bad client response, challenge mismatch, failed attestation, …).
     #[domain(category = "unauthorized", code = "webauthn")]
     Webauthn(String),
+
+    /// A Have I Been Pwned breach-check request failed (external service).
+    #[domain(category = "unavailable", code = "hibp")]
+    Hibp(String),
 }
 
 impl std::fmt::Display for SecurityError {
@@ -131,6 +135,7 @@ impl std::fmt::Display for SecurityError {
                 write!(f, "invalid WebAuthn configuration: {msg}")
             }
             SecurityError::Webauthn(msg) => write!(f, "WebAuthn ceremony failed: {msg}"),
+            SecurityError::Hibp(msg) => write!(f, "breach check failed: {msg}"),
         }
     }
 }

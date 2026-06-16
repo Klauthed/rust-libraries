@@ -109,6 +109,8 @@ pub use oauth2_client::{
 };
 #[cfg(feature = "webauthn")]
 pub use passkey::{InMemoryPasskeyStore, PasskeyAuthenticator, PasskeyStore};
+#[cfg(feature = "hibp")]
+pub use password::HibpClient;
 pub use password::{hash_password, verify_password};
 pub use refresh_token::{
     ConsumeResult, InMemoryRefreshTokenStore, RefreshToken, RefreshTokenBuilder, RefreshTokenStore,

@@ -22,6 +22,11 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-security`: **HIBP breach check** (`password::hibp::HibpClient`, feature
+  `hibp`) — checks a password against Have I Been Pwned's "Pwned Passwords" via
+  the k-anonymity range API: only the first 5 hex chars of the password's SHA-1
+  are sent, the match is done client-side. `pwned_count` / `is_pwned`; new
+  `SecurityError::Hibp`. wiremock-tested.
 - **Resource starters** — `wiring::Starter`s that wire live resources into an
   `AppContext`:
   - `klauthed-data`: **`DataStarter`** (feature `sql`) builds the relational pool

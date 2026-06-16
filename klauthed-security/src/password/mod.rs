@@ -15,5 +15,9 @@
 //! ```
 
 mod argon2;
+#[cfg(feature = "hibp")]
+pub mod hibp;
 
 pub use argon2::*;
+#[cfg(feature = "hibp")]
+pub use hibp::HibpClient;

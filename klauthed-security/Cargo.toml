@@ -47,6 +47,12 @@ async-trait = { workspace = true }
 # fields; `gen_secret` enables CSPRNG secret generation.
 totp-rs = { version = "5.7", default-features = false, features = ["otpauth", "gen_secret"] }
 
+# Have I Been Pwned breach check — optional (`hibp` feature). `reqwest` (rustls)
+# calls the k-anonymity range API; `sha1` hashes the password locally so only a
+# 5-char prefix is ever sent.
+reqwest = { workspace = true, optional = true }
+sha1 = { version = "0.10", optional = true }
+
 # X25519 for sealed-box (public-key) encryption — optional (`sealed` feature).
 x25519-dalek = { workspace = true, optional = true }
 
@@ -65,10 +71,14 @@ default = []
 sealed = ["dep:x25519-dalek"]
 # WebAuthn / passkey registration + authentication ceremonies (`passkey` module).
 webauthn = ["dep:webauthn-rs"]
+# Have I Been Pwned "Pwned Passwords" k-anonymity breach check (`password::hibp`).
+hibp = ["dep:reqwest", "dep:sha1"]
 
 [dev-dependencies]
 tokio = { workspace = true }
 webauthn-authenticator-rs = { version = "0.5.5", default-features = false, features = ["softpasskey"] }
+# HTTP mock for the HIBP client tests (no live API needed).
+wiremock = "0.6"
 
 [package.metadata.docs.rs]
 all-features = true

@@ -48,6 +48,8 @@ pub use schema::{
 
 /// Conventional top-level keys for the pre-built typed sections.
 pub mod keys {
+    /// Key for the [`ServerConfig`](super::ServerConfig) section.
+    pub const SERVER: &str = "server";
     /// Key for the [`DatabaseConfig`](super::DatabaseConfig) section.
     pub const DATABASE: &str = "database";
     /// Key for the [`CacheConfig`](super::CacheConfig) section.
@@ -56,6 +58,4 @@ pub mod keys {
     pub const MESSAGING: &str = "messaging";
     /// Key for the [`StorageConfig`](super::StorageConfig) section.
     pub const STORAGE: &str = "storage";
-    /// Key for the [`ServerConfig`](super::ServerConfig) section.
-    pub const SERVER: &str = "server";
 }
