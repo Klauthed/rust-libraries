@@ -25,6 +25,8 @@
 //! tracing::info!("handling request"); // carries request_id + tenant
 //! ```
 
+#[cfg(feature = "otel")]
+pub mod propagation;
 pub mod record;
 pub mod span;
 

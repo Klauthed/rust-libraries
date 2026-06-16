@@ -29,6 +29,8 @@ opentelemetry         = { workspace = true, optional = true }
 opentelemetry_sdk     = { workspace = true, optional = true }
 opentelemetry-otlp    = { workspace = true, optional = true }
 tracing-opentelemetry = { workspace = true, optional = true }
+# Carrier (HeaderMap) interop for W3C trace-context propagation.
+http                  = { version = "1", optional = true }
 
 [dev-dependencies]
 serde_json.workspace = true
@@ -43,6 +45,7 @@ otel = [
     "dep:opentelemetry_sdk",
     "dep:opentelemetry-otlp",
     "dep:tracing-opentelemetry",
+    "dep:http",
 ]
 
 [package.metadata.docs.rs]

@@ -39,6 +39,8 @@ mod otel;
 
 pub use config::{LogConfig, LogFormat, MetricsConfig, OtelConfig, TelemetryConfig};
 pub use error::ObservabilityError;
+#[cfg(feature = "otel")]
+pub use trace::propagation;
 pub use trace::{RecordContext, request_span};
 
 use tracing_subscriber::Registry;

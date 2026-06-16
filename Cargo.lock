@@ -2548,6 +2548,7 @@ dependencies = [
 name = "klauthed-observability"
 version = "0.1.0"
 dependencies = [
+ "http 1.4.1",
  "klauthed-core",
  "klauthed-error",
  "klauthed-macros",
