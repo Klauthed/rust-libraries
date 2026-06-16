@@ -1,6 +1,10 @@
-//! Remote config server: serve a Spring Cloud-style document from a throwaway
-//! in-process HTTP server, then load it through `ConfigServerProvider` and watch
-//! the ordered property sources merge and the dotted keys nest.
+//! Remote config server: serve a klauthed-native `ConfigDocument` from a
+//! throwaway in-process HTTP server, then load it through `ConfigServerProvider`
+//! (default `Klauthed` format) and read the nested config tree.
+//!
+//! (A real deployment would run a service as the server via
+//! `klauthed_web::config_server::ConfigServer`; here we hand-roll the response
+//! so the example stays dependency-light.)
 
 use klauthed_core::config::ConfigProvider;
 use klauthed_core::config::provider::ConfigServerProvider;
@@ -9,13 +13,11 @@ use tokio::net::TcpListener;
 
 /// Run the config-server demo against a one-shot local HTTP server.
 pub async fn run() {
-    // `overrides` has higher precedence than `base`, so its database.port wins;
-    // the flat dotted keys nest into a `database` object.
+    // The native contract: a ConfigDocument whose `config` is the nested tree.
     let body = concat!(
-        r#"{"propertySources":["#,
-        r#"{"name":"overrides","source":{"database.port":6543}},"#,
-        r#"{"name":"base","source":{"database.host":"db.internal","database.port":5432,"app_name":"auth"}}"#,
-        r#"]}"#,
+        r#"{"application":"auth-api","profile":"prod","config":{"#,
+        r#""database":{"host":"db.internal","port":6543},"app_name":"auth""#,
+        r#"}}"#,
     );
 
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -34,6 +36,7 @@ pub async fn run() {
         }
     });
 
+    // Default format is Klauthed (native) — pairs with our own config server.
     let provider =
         ConfigServerProvider::new(format!("http://127.0.0.1:{port}"), "auth-api").profile("prod");
     let config = provider.load().await.unwrap();
@@ -44,7 +47,7 @@ pub async fn run() {
     println!("  database = {database}");
     println!("  app_name = {}", config.get("app_name").cloned().unwrap_or_default());
 
-    // The higher-precedence source overrode the port; both sources' keys nested.
+    // The native `config` tree was extracted verbatim.
     assert_eq!(database.get("host").and_then(|v| v.as_str()), Some("db.internal"));
     assert_eq!(database.get("port").and_then(|v| v.as_u64()), Some(6543));
     assert_eq!(config.get("app_name").and_then(|v| v.as_str()), Some("auth"));
