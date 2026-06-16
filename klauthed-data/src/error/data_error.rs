@@ -40,6 +40,10 @@ pub enum DataError {
     #[error("idempotency store error: {0}")]
     Idempotency(String),
 
+    /// A schema migration failed or is invalid (e.g. a duplicate version).
+    #[error("migration error: {0}")]
+    Migration(String),
+
     /// A named distributed lock is already held by another holder.
     #[error("lock '{0}' is already held")]
     LockHeld(String),
@@ -112,6 +116,7 @@ impl DataError {
             DataError::Messaging(_) => (Internal, ErrorCode::new("data.messaging")),
             DataError::Outbox(_) => (Internal, ErrorCode::new("data.outbox")),
             DataError::Idempotency(_) => (Internal, ErrorCode::new("data.idempotency")),
+            DataError::Migration(_) => (Internal, ErrorCode::new("data.migration")),
             // Another holder owns the lock — a conflict from the caller's view.
             DataError::LockHeld(_) => (ErrorCategory::Conflict, ErrorCode::new("data.lock_held")),
             DataError::FeatureDisabled(_) => (Internal, ErrorCode::new("data.feature_disabled")),

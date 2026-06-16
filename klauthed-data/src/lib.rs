@@ -73,6 +73,10 @@ pub mod messaging;
 #[cfg(feature = "storage")]
 pub mod storage;
 
+// Embedded, versioned schema migrations over a relational pool.
+#[cfg(feature = "sql")]
+pub mod migrate;
+
 // Auto-configuration starter: build the SQL pool from config into an AppContext.
 #[cfg(feature = "sql")]
 pub mod starter;
@@ -85,6 +89,10 @@ pub mod transaction;
 
 pub use error::DataError;
 
+#[cfg(feature = "sql")]
+pub use migrate::{Migration, Migrator};
+#[cfg(feature = "sql")]
+pub use sqlx::AnyPool;
 #[cfg(feature = "sql")]
 pub use starter::DataStarter;
 

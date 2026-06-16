@@ -26,7 +26,7 @@ and a security quick-win.**
       async.)
 - [ ] **OTEL span auto-instrumentation** — spans around data queries + web
       requests, with trace-context propagation.
-- [ ] **DB migrations runner** — embedded, versioned migrations in `klauthed-data`.
+- [x] **DB migrations runner** — embedded, versioned migrations in `klauthed-data` (`migrate::Migrator`, over `AnyPool`).
 - [x] **HIBP breach check** — k-anonymity password check in `klauthed-security`
       (`password::hibp`, feature-gated).
 

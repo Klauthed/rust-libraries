@@ -26,6 +26,11 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-data`: **migration runner** (`migrate::{Migrator, Migration}`, feature
+  `sql`) — embedded, versioned schema migrations over the driver-agnostic
+  `AnyPool`, tracked in a `_klauthed_migrations` table so each runs exactly once
+  (idempotent re-runs); each migration applies in its own transaction. Re-exports
+  `AnyPool`. New `DataError::Migration`.
 - `klauthed-web`: **config server** (`config_server` module, feature
   `config-server`) — run a klauthed service *as* the config server other services
   pull from, the Rust-native counterpart to Spring Cloud Config Server. A
