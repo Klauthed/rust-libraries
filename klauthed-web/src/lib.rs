@@ -56,6 +56,8 @@
 
 pub mod app;
 pub mod auth;
+#[cfg(feature = "config-server")]
+pub mod config_server;
 pub mod context;
 pub mod cors;
 pub mod csrf;
@@ -70,6 +72,10 @@ pub mod starter;
 
 pub use app::Components;
 pub use auth::{AuthenticatedUser, JwtAuth, OptionalAuthentication, TokenRevocationCheck};
+#[cfg(feature = "config-server")]
+pub use config_server::{
+    ConfigDocument, ConfigServer, ConfigSource, DirectoryConfigSource, InMemoryConfigSource,
+};
 pub use context::{Context, RequestContextMiddleware};
 pub use cors::{
     CachedOriginRegistry, CorsConfig, CorsOriginRegistry, DynamicCors, InMemoryOriginRegistry,

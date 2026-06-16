@@ -24,6 +24,10 @@ data-sql   = ["dep:sqlx", "klauthed-data/sql"]
 # the `redis` feature on klauthed-data.
 data-redis = ["dep:redis", "klauthed-data/redis"]
 
+# Run this service *as* a config server: serve configuration to other services
+# over HTTP (the `config_server` module). No extra dependencies.
+config-server = []
+
 [dependencies]
 klauthed-error.workspace = true
 klauthed-core.workspace = true

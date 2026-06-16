@@ -1,11 +1,15 @@
-//! A remote configuration-server [`ConfigProvider`] (`config-server` feature).
+//! A remote configuration-server **client** [`ConfigProvider`]
+//! (`config-server` feature) — fetches a service's config *from* a config server
+//! and deep-merges it into the config tree like any other provider.
 //!
-//! Speaks the [Spring Cloud Config Server] REST contract
-//! (`GET /{application}/{profile}[/{label}]` returning ordered `propertySources`
-//! of flat, dotted keys), or fetches a plain JSON document verbatim
-//! ([`ConfigServerFormat::RawJson`]) for any other tooling. The fetched values
-//! are deep-merged into the config tree like any other provider, so a central
-//! server slots into the chain alongside files, env, and Vault.
+//! By default it speaks the **klauthed-native** format ([`ConfigServerFormat::Klauthed`]),
+//! pairing with our own server,
+//! [`klauthed_web::config_server::ConfigServer`](https://docs.rs/klauthed-web) —
+//! run a klauthed service as the config server and point this provider at it. It
+//! can also speak the [Spring Cloud Config Server] contract
+//! ([`SpringCloud`](ConfigServerFormat::SpringCloud)) to consume an existing
+//! Spring server, or fetch a plain JSON document
+//! ([`RawJson`](ConfigServerFormat::RawJson)).
 //!
 //! It is a **non-secret** source ([`ProviderKind::ConfigServer`]): use it for
 //! configuration, and keep secrets in Vault.
@@ -25,10 +29,16 @@ use crate::error::ConfigError;
 /// The wire format a configuration server speaks.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ConfigServerFormat {
+    /// The **klauthed-native** config server
+    /// (`klauthed_web::config_server::ConfigServer`):
+    /// `GET /{application}/{profile}[/{label}]` returns a `ConfigDocument` whose
+    /// `config` field is the (already nested) configuration tree. The default —
+    /// this is what our own server speaks.
+    #[default]
+    Klauthed,
     /// Spring Cloud Config Server: `GET /{application}/{profile}[/{label}]`
     /// returns ordered `propertySources` whose `source` maps hold flat, dotted
-    /// keys (e.g. `database.host`). The default.
-    #[default]
+    /// keys (e.g. `database.host`). For talking to an existing Spring server.
     SpringCloud,
     /// A plain JSON object fetched verbatim from the base URL — for config
     /// stored as a single document by some other tool.
@@ -68,7 +78,7 @@ pub struct ConfigServerProvider {
 
 impl ConfigServerProvider {
     /// A provider for `application` against the server at `base_url`, profile
-    /// `default`, Spring Cloud format, required (not optional).
+    /// `default`, klauthed-native format, required (not optional).
     #[must_use]
     pub fn new(base_url: impl Into<String>, application: impl Into<String>) -> Self {
         Self {
@@ -76,7 +86,7 @@ impl ConfigServerProvider {
             application: application.into(),
             profile: "default".to_owned(),
             label: None,
-            format: ConfigServerFormat::SpringCloud,
+            format: ConfigServerFormat::default(),
             auth: None,
             optional: false,
             client: reqwest::Client::new(),
@@ -101,6 +111,23 @@ impl ConfigServerProvider {
     #[must_use]
     pub fn format(mut self, format: ConfigServerFormat) -> Self {
         self.format = format;
+        self
+    }
+
+    /// Use the klauthed-native config-server format (shorthand for
+    /// [`format`](Self::format) with [`ConfigServerFormat::Klauthed`]). This is
+    /// already the default; call it to be explicit.
+    #[must_use]
+    pub fn klauthed(mut self) -> Self {
+        self.format = ConfigServerFormat::Klauthed;
+        self
+    }
+
+    /// Speak the Spring Cloud Config Server contract (shorthand for
+    /// [`format`](Self::format) with [`ConfigServerFormat::SpringCloud`]).
+    #[must_use]
+    pub fn spring_cloud(mut self) -> Self {
+        self.format = ConfigServerFormat::SpringCloud;
         self
     }
 
@@ -146,7 +173,7 @@ impl ConfigServerProvider {
     /// The URL this provider fetches.
     fn url(&self) -> String {
         match self.format {
-            ConfigServerFormat::SpringCloud => match &self.label {
+            ConfigServerFormat::SpringCloud | ConfigServerFormat::Klauthed => match &self.label {
                 Some(label) => {
                     format!("{}/{}/{}/{label}", self.base_url, self.application, self.profile)
                 }
@@ -199,6 +226,21 @@ impl ConfigProvider for ConfigServerProvider {
         }
 
         match self.format {
+            ConfigServerFormat::Klauthed => {
+                let document: KlauthedDocument = response.json().await.map_err(|e| {
+                    ConfigError::ConfigServer { url: url.clone(), message: e.to_string() }
+                })?;
+                match document.config {
+                    Value::Object(map) => {
+                        Ok(ConfigMap::from(map.into_iter().collect::<BTreeMap<_, _>>()))
+                    }
+                    Value::Null => Ok(ConfigMap::new()),
+                    other => Err(ConfigError::ConfigServer {
+                        url,
+                        message: format!("expected `config` to be a JSON object, got {other}"),
+                    }),
+                }
+            }
             ConfigServerFormat::SpringCloud => {
                 let parsed: SpringCloudResponse = response
                     .json()
@@ -222,6 +264,13 @@ impl ConfigProvider for ConfigServerProvider {
             }
         }
     }
+}
+
+/// The klauthed-native `ConfigDocument`; only the `config` tree is needed here.
+#[derive(Deserialize)]
+struct KlauthedDocument {
+    #[serde(default)]
+    config: Value,
 }
 
 #[derive(Deserialize)]
@@ -283,9 +332,36 @@ mod tests {
 
         let map = ConfigServerProvider::new(server.uri(), "auth-api")
             .profile("prod")
+            .spring_cloud()
             .load()
             .await
             .expect("load");
+
+        assert_eq!(map.get("app_name"), Some(&json!("auth")));
+        assert_eq!(map.get("database"), Some(&json!({ "host": "db.internal", "port": 6543 })));
+    }
+
+    #[tokio::test]
+    async fn klauthed_format_extracts_the_config_tree() {
+        let server = MockServer::start().await;
+        // Native ConfigDocument: `config` is the already-nested tree.
+        let body = json!({
+            "application": "auth-api",
+            "profile": "prod",
+            "config": { "database": { "host": "db.internal", "port": 6543 }, "app_name": "auth" }
+        });
+        Mock::given(method("GET"))
+            .and(path("/auth-api/prod"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(&server)
+            .await;
+
+        // Klauthed is the default format — no `.klauthed()` needed.
+        let map = ConfigServerProvider::new(server.uri(), "auth-api")
+            .profile("prod")
+            .load()
+            .await
+            .unwrap();
 
         assert_eq!(map.get("app_name"), Some(&json!("auth")));
         assert_eq!(map.get("database"), Some(&json!({ "host": "db.internal", "port": 6543 })));

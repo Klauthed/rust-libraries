@@ -10,6 +10,10 @@ All crates share a single version and are released together.
 
 ### Changed
 
+- `klauthed-core`: **`ConfigServerProvider` now defaults to the klauthed-native
+  format** (`ConfigServerFormat::Klauthed`), pairing with our own config server;
+  added `klauthed()` / `spring_cloud()` shorthands. `SpringCloud` / `RawJson`
+  remain for talking to an existing Spring Cloud server or arbitrary JSON.
 - `klauthed-core`: **`wiring::Starter` / `AppBuilder` are now async** (breaking) —
   `Starter::configure` and `AppBuilder::build` are `async`, and a starter fails
   with the new broad `StarterError` (`Box<dyn Error + Send + Sync>`) instead of
@@ -22,6 +26,13 @@ All crates share a single version and are released together.
 
 ### Added
 
+- `klauthed-web`: **config server** (`config_server` module, feature
+  `config-server`) — run a klauthed service *as* the config server other services
+  pull from, the Rust-native counterpart to Spring Cloud Config Server. A
+  `ConfigServer` serves `GET /{application}/{profile}[/{label}]` as a native
+  `ConfigDocument`, backed by a `ConfigSource` (`DirectoryConfigSource` over
+  layered TOML/JSON files, or `InMemoryConfigSource`). `klauthed-core`'s
+  `ConfigServerProvider` consumes it with the default `Klauthed` format.
 - `klauthed-security`: **HIBP breach check** (`password::hibp::HibpClient`, feature
   `hibp`) — checks a password against Have I Been Pwned's "Pwned Passwords" via
   the k-anonymity range API: only the first 5 hex chars of the password's SHA-1
