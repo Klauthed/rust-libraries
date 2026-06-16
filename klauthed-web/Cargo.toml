@@ -28,6 +28,15 @@ data-redis = ["dep:redis", "klauthed-data/redis"]
 # over HTTP (the `config_server` module). No extra dependencies.
 config-server = []
 
+# OpenTelemetry request-tracing middleware (RequestTracing): per-request spans +
+# W3C trace-context propagation, exported via klauthed-observability's pipeline.
+otel = [
+    "dep:klauthed-observability",
+    "klauthed-observability/otel",
+    "dep:opentelemetry",
+    "dep:tracing-opentelemetry",
+]
+
 [dependencies]
 klauthed-error.workspace = true
 klauthed-core.workspace = true
@@ -47,6 +56,10 @@ futures-util.workspace = true
 # Optional — pulled in only when the corresponding feature is enabled.
 sqlx  = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
+# OpenTelemetry request tracing (`otel` feature).
+klauthed-observability = { workspace = true, optional = true }
+opentelemetry          = { workspace = true, optional = true }
+tracing-opentelemetry  = { workspace = true, optional = true }
 
 [dev-dependencies]
 serde_json.workspace = true

@@ -27,12 +27,11 @@ pub fn inject<I: Injector>(cx: &Context, carrier: &mut I) {
 /// Inject the **current** span's context into `headers` for an outbound HTTP
 /// request, so the callee links into this trace.
 ///
-/// ```no_run
-/// # fn build(req: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+/// ```ignore
+/// // Build outbound headers carrying this request's trace context:
 /// let mut headers = http::HeaderMap::new();
 /// klauthed_observability::propagation::inject_current(&mut headers);
-/// req.headers(headers)
-/// # }
+/// let resp = reqwest::Client::new().get(url).headers(headers).send().await?;
 /// ```
 pub fn inject_current(headers: &mut http::HeaderMap) {
     use tracing_opentelemetry::OpenTelemetrySpanExt;

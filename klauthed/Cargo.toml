@@ -51,7 +51,7 @@ full = [
 
 # ── Pass-through to sub-crate features (also enable the owning crate) ──────────
 vault         = ["core", "klauthed-core/vault"]
-config-server = ["core", "klauthed-core/config-server"]
+config-server = ["core", "klauthed-core/config-server", "klauthed-web?/config-server"]
 hot-reload    = ["core", "klauthed-core/hot-reload"]
 task-local    = ["core", "klauthed-core/task-local"]
 tz            = ["core", "klauthed-core/tz"]
@@ -62,7 +62,7 @@ consul        = ["discovery", "klauthed-discovery/consul"]
 eureka        = ["discovery", "klauthed-discovery/eureka"]
 agent         = ["discovery", "klauthed-discovery/agent"]
 metrics       = ["observability", "klauthed-observability/metrics"]
-otel          = ["observability", "klauthed-observability/otel"]
+otel          = ["observability", "klauthed-observability/otel", "klauthed-web?/otel"]
 postgres      = ["data", "klauthed-data/postgres"]
 mysql         = ["data", "klauthed-data/mysql"]
 sqlite        = ["data", "klauthed-data/sqlite"]

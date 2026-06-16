@@ -26,6 +26,13 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **OpenTelemetry request tracing** (feature `otel`): `klauthed-web`'s
+  `RequestTracing` actix middleware opens a span per request (method/path/status)
+  and links it to the caller's trace by extracting the inbound W3C `traceparent`;
+  `klauthed-observability::propagation` carries W3C context across services
+  (`inject_current` for outbound reqwest). Spans export through the existing OTLP
+  pipeline. The umbrella's `otel` / `config-server` features now also enable the
+  matching `klauthed-web` features when `web` is on.
 - `klauthed-data`: **migration runner** (`migrate::{Migrator, Migration}`, feature
   `sql`) — embedded, versioned schema migrations over the driver-agnostic
   `AnyPool`, tracked in a `_klauthed_migrations` table so each runs exactly once

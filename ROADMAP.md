@@ -24,8 +24,8 @@ and a security quick-win.**
       `WebStarter` (assembles the web `Components` from wired resources) so
       `AppBuilder` auto-config reaches live components. (Made `Starter`/`AppBuilder`
       async.)
-- [ ] **OTEL span auto-instrumentation** — spans around data queries + web
-      requests, with trace-context propagation.
+- [x] **OTEL span auto-instrumentation** — `RequestTracing` middleware (span per
+      web request) + W3C trace-context propagation (klauthed-observability::propagation).
 - [x] **DB migrations runner** — embedded, versioned migrations in `klauthed-data` (`migrate::Migrator`, over `AnyPool`).
 - [x] **HIBP breach check** — k-anonymity password check in `klauthed-security`
       (`password::hibp`, feature-gated).

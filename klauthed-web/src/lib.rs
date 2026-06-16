@@ -69,6 +69,8 @@ pub mod oauth; // folder: oauth/{config,util,handlers}.rs
 pub mod ratelimit;
 pub mod server;
 pub mod starter;
+#[cfg(feature = "otel")]
+pub mod trace;
 
 pub use app::Components;
 pub use auth::{AuthenticatedUser, JwtAuth, OptionalAuthentication, TokenRevocationCheck};
@@ -89,3 +91,5 @@ pub use health::{HealthCheck, HealthRegistry, HealthStatus};
 pub use ratelimit::{KeyBy, RateLimit};
 pub use server::{serve, serve_with_components, serve_with_defaults};
 pub use starter::WebStarter;
+#[cfg(feature = "otel")]
+pub use trace::RequestTracing;

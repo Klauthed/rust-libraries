@@ -6,8 +6,7 @@
 //! the merged configuration tree, read from a [`ConfigSource`] (a directory of
 //! TOML/JSON files, or in-memory).
 //!
-//! It is the server counterpart to
-//! [`ConfigServerProvider`](klauthed_core::config::provider::ConfigServerProvider):
+//! It is the server counterpart to `klauthed_core`'s `ConfigServerProvider`:
 //! a client points its provider at this server (with the `Klauthed` format) and
 //! its config is served from here.
 //!
