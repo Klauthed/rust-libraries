@@ -37,7 +37,8 @@ and a security quick-win.**
       token-response deserialization, config tree (`fuzz/`, nightly CI).
       More targets (JWK, full OIDC/SCIM) can be added to the same harness.
 - [x] Property tests for invariants (config merge, pagination cursors, ids).
-- Coverage gate (`cargo-llvm-cov`) + criterion benchmarks on hot paths.
+- [x] Coverage gate (`cargo-llvm-cov`, line floor in CI) + criterion benchmarks
+      on hot paths (config merge/expand, ids, cursors, JWT, AEAD).
 
 **Features**
 - Discovery ↔ config push-refresh (bus event → `ReloadableConfig::reload_now`).

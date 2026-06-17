@@ -59,6 +59,25 @@ jobs:
       - name: Build docs (deny warnings)
         run: cargo doc --workspace --all-features --no-deps
 
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
+      - name: Install llvm-tools-preview
+        run: rustup component add llvm-tools-preview
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - uses: Swatinem/rust-cache@v2
+      # Line-coverage floor — a ratchet that fails the build if coverage drops
+      # below it (currently ~79%). Raise it as coverage improves; live-infra
+      # paths are exercised separately by the `integration` job.
+      - name: Coverage (line floor)
+        run: cargo llvm-cov --workspace --all-features --summary-only --fail-under-lines 75
+
   msrv:
     name: msrv (1.95)
     runs-on: ubuntu-latest

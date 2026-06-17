@@ -72,6 +72,12 @@ mongodb = ["dep:mongodb"]
 tokio = { workspace = true }
 # Property-based tests for the cursor encode/decode round-trip invariant.
 proptest = { workspace = true }
+# Micro-benchmarks for the pagination cursor hot path.
+criterion = { workspace = true }
+
+[[bench]]
+name = "cursor"
+harness = false
 
 [[example]]
 name = "memory_cache"

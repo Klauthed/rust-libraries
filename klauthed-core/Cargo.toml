@@ -56,6 +56,12 @@ tokio = { workspace = true }
 wiremock = "0.6"
 # Property-based tests for config-merge and id round-trip invariants.
 proptest = { workspace = true }
+# Micro-benchmarks for the config-merge and id hot paths.
+criterion = { workspace = true }
+
+[[bench]]
+name = "core_hot_paths"
+harness = false
 
 [package.metadata.docs.rs]
 all-features = true

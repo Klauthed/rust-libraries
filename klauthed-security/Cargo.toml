@@ -79,6 +79,12 @@ tokio = { workspace = true }
 webauthn-authenticator-rs = { version = "0.5.5", default-features = false, features = ["softpasskey"] }
 # HTTP mock for the HIBP client tests (no live API needed).
 wiremock = "0.6"
+# Micro-benchmarks for the JWT and AEAD crypto hot paths.
+criterion = { workspace = true }
+
+[[bench]]
+name = "crypto"
+harness = false
 
 [package.metadata.docs.rs]
 all-features = true

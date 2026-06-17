@@ -10,6 +10,10 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Coverage gate + benchmarks**: a `coverage` CI job runs `cargo-llvm-cov` with
+  a line-coverage floor (currently ~79%), and `criterion` micro-benchmarks
+  (dev-only) cover the hot paths — config merge/expand, id generation/parse,
+  pagination cursor encode/decode, and HS256 JWT + AES-256-GCM AEAD.
 - **Fuzz targets** (`cargo-fuzz`, in `fuzz/`) for the untrusted-input parsers —
   JWT decode, AEAD decrypt, OAuth2 token-response deserialization, and the config
   tree-shaping (`expand_dotted` / `merge`). A separate nightly `Fuzz` workflow
