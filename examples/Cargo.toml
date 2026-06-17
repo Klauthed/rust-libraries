@@ -14,7 +14,7 @@ klauthed-core = { workspace = true, features = ["tz", "config-server"] }
 klauthed-error.workspace = true
 klauthed-macros.workspace = true
 klauthed-security = { workspace = true, features = ["sealed"] }
-klauthed-data.workspace = true
+klauthed-data = { workspace = true, features = ["sqlite"] }
 klauthed-discovery = { workspace = true, features = ["agent"] }
 klauthed-protocol.workspace = true
 klauthed-i18n.workspace = true

@@ -20,6 +20,16 @@ The HTTP layer every klauthed service shares, built on [actix-web](https://actix
   (with `id_token`), `/oauth/revoke`, `/oauth/introspect`, `/oauth/userinfo`,
   `/oauth/jwks`, and `/.well-known/openid-configuration`. Stores and the
   `UserInfoProvider` are SPI traits the service implements.
+- **config_server** (feature `config-server`) — `ConfigServer` turns the service
+  *into* a config server (a Rust-native alternative to Spring Cloud Config
+  Server). Mount it and it serves `GET /{application}/{profile}[/{label}]` from a
+  `ConfigSource` (a directory of TOML/JSON files, or in-memory); clients point a
+  `klauthed_core` `ConfigServerProvider` at it.
+- **trace** (feature `otel`) — `RequestTracing` middleware opens an
+  OpenTelemetry span per request and links it to the caller's trace via the
+  inbound W3C `traceparent`, exporting through `klauthed-observability`'s pipeline.
+- **starter** — `WebStarter` assembles the actix `Components` (pools + common
+  middleware) from an `AppContext`, the web half of the Spring-style auto-config.
 
 Optional `data-sql` / `data-redis` features add ready-made health checks and rate-limit
 stores.

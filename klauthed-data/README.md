@@ -21,6 +21,11 @@ Beyond connectors, it provides the reliability patterns services reuse: **outbox
 **idempotency**, distributed **locks**, **sagas**, **pagination** (offset/cursor/keyset
 + SQL helpers), a **transaction** abstraction, and an **event bus**.
 
+It also ships a small embedded **migration runner** (`sql` feature): a `Migrator`
+applies versioned `Migration { version, name, sql }` entries in order, each in its
+own transaction, recording them in a portable `_klauthed_migrations` table so runs
+are idempotent (already-applied versions are skipped) across Postgres/MySQL/SQLite.
+
 Errors surface as `DataError` (`impl DomainError`).
 
 ---

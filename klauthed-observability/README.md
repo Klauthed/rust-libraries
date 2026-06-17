@@ -21,7 +21,13 @@ tracing::info!("service starting");
 | Feature | Enables |
 |---------|---------|
 | `metrics` | Prometheus recorder + a `/metrics` render handle |
-| `otel` | OTLP trace export wired into the tracing subscriber |
+| `otel` | OTLP trace export + the `propagation` module |
+
+With `otel`, the `propagation` module carries W3C trace context across service
+boundaries: `extract` a parent context from an inbound request's headers, and
+`inject` / `inject_current` the active span into outbound request headers. Paired
+with `klauthed-web`'s `RequestTracing` middleware, this stitches per-service spans
+into a single distributed trace.
 
 ---
 

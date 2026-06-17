@@ -23,13 +23,13 @@ next.
 | [`klauthed-core`](klauthed-core/) | Foundations: profile-driven config (custom `ConfigProvider` + Vault), ids, injectable time (`Clock`/`Timestamp`), validation, `RequestContext`, domain & CQRS building blocks. |
 | [`klauthed-macros`](klauthed-macros/) | Proc-macros (leaf crate). Currently `#[derive(DomainError)]`. |
 | [`klauthed-i18n`](klauthed-i18n/) | Internationalized message catalogs with graceful locale fallback; ships embedded en/de/es/fr/it/tr defaults. |
-| [`klauthed-observability`](klauthed-observability/) | Structured logging/tracing, Prometheus metrics, and OpenTelemetry export from one `TelemetryConfig`. |
+| [`klauthed-observability`](klauthed-observability/) | Structured logging/tracing, Prometheus metrics, and OpenTelemetry export (with W3C trace-context propagation) from one `TelemetryConfig`. |
 | [`klauthed-protocol`](klauthed-protocol/) | Spec-accurate serde wire types for OIDC, JWKS, OAuth 2.0, and SCIM (typed data modeling — no I/O). |
 | [`klauthed-security`](klauthed-security/) | Crypto & auth primitives: Argon2id password hashing, JWT (HS256/RS256), AEAD, HKDF, MFA/TOTP, sessions, RBAC, and the OAuth2/OIDC building blocks. |
-| [`klauthed-data`](klauthed-data/) | Connected resources from typed config: SQL/Mongo pools, Redis/in-memory cache, NATS/RabbitMQ/Kafka, object storage, plus outbox, idempotency, locks, sagas, pagination & event bus. |
+| [`klauthed-data`](klauthed-data/) | Connected resources from typed config: SQL/Mongo pools, Redis/in-memory cache, NATS/RabbitMQ/Kafka, object storage, plus an embedded migration runner, outbox, idempotency, locks, sagas, pagination & event bus. |
 | [`klauthed-discovery`](klauthed-discovery/) | Service discovery: a `ServiceRegistry` (in-memory, Consul, Eureka) with a self-registering agent and round-robin client-side load balancing. |
 | [`klauthed-platform`](klauthed-platform/) | Cross-cutting concerns: tenancy, feature flags, audit, background-job stores, and webhooks (SPI traits + in-memory impls). |
-| [`klauthed-web`](klauthed-web/) | The actix-web layer: `AppError`, request-context middleware, health probes, server builder, rate limiting, extractors, JWT auth, CORS, and the OAuth2/OIDC endpoints. |
+| [`klauthed-web`](klauthed-web/) | The actix-web layer: `AppError`, request-context middleware, health probes, server builder, rate limiting, extractors, JWT auth, CORS, the OAuth2/OIDC endpoints, an OpenTelemetry request-tracing middleware, and a native config server. |
 | [`klauthed-testing`](klauthed-testing/) | Dev-dependency test utilities (fixed clock, assertions, deterministic ids, context/repository helpers). |
 
 ## Quick start

@@ -75,8 +75,10 @@ The shared foundation. Modules: `config`, `time`, `context`, `id`, `cqrs`,
 - **`ConfigBuilder`** + a **provider chain** that deep-merges (later wins):
   `EnvProvider`, `FileProvider` (TOML/JSON), `MemoryProvider`, `VaultProvider`
   (feature `vault`, KV v2 + Token/AppRole/Kubernetes auth), and
-  **`ConfigServerProvider`** (feature `config-server`, Spring Cloud Config
-  Server-compatible or RawJson).
+  **`ConfigServerProvider`** (feature `config-server`) — pulls config from a
+  remote config server. Defaults to the **klauthed-native** format served by
+  `klauthed-web`'s [config server](#klauthed-web); `spring_cloud()` / `RawJson`
+  talk to a Spring Cloud Config Server or arbitrary JSON instead.
 - **`Profile`** (local/dev/test/staging/prod) drives policy — staging/prod must
   source secrets from Vault, never files/env.
 - **Typed sections** out of the box: `DatabaseConfig`, `CacheConfig`,
@@ -143,6 +145,10 @@ only what you use.
 
 - **Databases** (`db`) — connection pools for SQL (`sqlx` Any; `postgres`,
   `mysql`, `sqlite`) and `mongodb`.
+- **Migrations** (`sql`) — `Migrator` runs embedded, versioned SQL migrations
+  (`Migration { version, name, sql }`) in order, each in its own transaction,
+  tracked in a portable `_klauthed_migrations` table; safe to re-run (already
+  applied versions are skipped).
 - **Cache** (`cache`) — Redis (`redis`) and in-process (`cache-memory`, moka).
 - **Messaging** (`messaging`) — NATS (`nats`), RabbitMQ (`rabbitmq`), Kafka
   (`kafka`).
@@ -212,7 +218,11 @@ Wiring for the three pillars.
 - **Logging / tracing** — structured `tracing` setup.
 - **Metrics** (feature `metrics`) — counters/gauges/histograms with a Prometheus
   exporter.
-- **OpenTelemetry** (feature `otel`) — OTLP span export / propagation wiring.
+- **OpenTelemetry** (feature `otel`) — OTLP span export, plus a
+  **`propagation`** module that carries W3C trace context across services:
+  `extract` a parent context from inbound headers, `inject` / `inject_current`
+  the active span into outbound request headers. Pairs with `klauthed-web`'s
+  [`RequestTracing`](#klauthed-web) middleware for end-to-end distributed traces.
 
 *Features:* `metrics`, `otel`.
 
@@ -239,7 +249,17 @@ The actix-web HTTP layer shared by services.
 
 - **Middleware** — `RequestContextMiddleware` (per-request context),
   `SecurityHeaders` (HSTS/CSP/X-Frame/…), `Csrf` (double-submit-cookie),
-  `RateLimit`, CORS (static `build_cors` + dynamic `DynamicCors`), `JwtAuth`.
+  `RateLimit`, CORS (static `build_cors` + dynamic `DynamicCors`), `JwtAuth`,
+  and `RequestTracing` (feature `otel`) — opens an OpenTelemetry span per
+  request, linking it to the caller's trace via the inbound W3C `traceparent`.
+- **Config server** (feature `config-server`) — `ConfigServer` turns the service
+  *into* a config server (a Rust-native alternative to Spring Cloud Config
+  Server): mount it and it answers `GET /{application}/{profile}[/{label}]` with
+  the merged config tree from a `ConfigSource` (directory of TOML/JSON, or
+  in-memory). Clients point a `ConfigServerProvider` at it (see
+  [klauthed-core](#klauthed-core)).
+- **Starter** — `WebStarter` assembles the actix `Components` (pools, middleware)
+  from an `AppContext`, completing the Spring-style auto-config story.
 - **Extractors** (`extract`) — `Json` and `Validated` bodies that surface
   deserialization / `Validate` failures as `AppError`.
 - **Errors** (`error`) — `AppError` absorbs any `DomainError` and renders a
@@ -250,7 +270,7 @@ The actix-web HTTP layer shared by services.
 - **Server** (`server`) — bind an `HttpServer` from `ServerConfig` with the
   common middleware/health pre-wired.
 
-*Features:* `context-scope`, `data-sql`, `data-redis`.
+*Features:* `context-scope`, `data-sql`, `data-redis`, `config-server`, `otel`.
 *See the runnable `auth_service` example: `cargo run -p klauthed-web --example auth_service`.*
 
 ---

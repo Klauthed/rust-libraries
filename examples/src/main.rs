@@ -14,6 +14,7 @@ mod data_demo;
 mod discovery_demo;
 mod error_demo;
 mod i18n_demo;
+mod migrate_demo;
 mod protocol_demo;
 mod security_demo;
 
@@ -40,6 +41,9 @@ async fn main() {
 
     section("data: rate limiting");
     data_demo::run().await;
+
+    section("data: embedded SQL migrations (Migrator)");
+    migrate_demo::run().await;
 
     section("protocol: oidc + oauth2");
     protocol_demo::run();

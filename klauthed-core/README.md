@@ -5,7 +5,13 @@ Foundational primitives shared by every klauthed service.
 - **config** — profile-driven configuration. A `Profile` (Local/Dev/Test/Staging/Prod)
   governs which sources are allowed; staging/prod must use Vault (enforced in the
   builder). `ConfigProvider` is a **trait** (file, env, and a built-in Vault client over
-  reqwest behind the `vault` feature), so a service can register its own sources.
+  reqwest behind the `vault` feature), so a service can register its own sources. The
+  `config-server` feature adds `ConfigServerProvider`, which pulls config from a remote
+  config server — defaulting to the klauthed-native format served by `klauthed-web`'s
+  config server, with `spring_cloud()` / `RawJson` modes for other servers.
+- **wiring** — Spring-style application assembly: `AppContext` (a type-keyed registry of
+  shared singletons) plus async `Starter` / `AppBuilder` auto-config, so crates contribute
+  resources (pools, clients) to one composed context.
 - **time** — time as an injectable dependency: components take a `Clock` (`SystemClock`
   in production, `FixedClock` in tests). `Timestamp`/`Duration` are the canonical instant
   and span types, backed by the [`time`](https://docs.rs/time) crate and fully
