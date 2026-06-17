@@ -10,6 +10,11 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Fuzz targets** (`cargo-fuzz`, in `fuzz/`) for the untrusted-input parsers —
+  JWT decode, AEAD decrypt, OAuth2 token-response deserialization, and the config
+  tree-shaping (`expand_dotted` / `merge`). A separate nightly `Fuzz` workflow
+  runs them time-boxed (weekly + manual); the crate stays out of the stable
+  workspace gates.
 - **Property tests** (`proptest`, dev-only) for core invariants: config
   deep-merge (empty-identity, idempotence, key-union, non-object overlay wins),
   `Id` UUID/ULID string round-trips and value-ordering, and pagination `Cursor`

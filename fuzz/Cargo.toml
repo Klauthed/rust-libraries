@@ -1,0 +1,50 @@
+# Fuzz harnesses for klauthed's untrusted-input parsers. This is a standalone
+# crate (note the empty `[workspace]` table below) so it stays out of the main
+# workspace and its stable-toolchain gates — `cargo fuzz` drives it on nightly.
+[package]
+name = "klauthed-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+serde_json = "1"
+klauthed-core = { path = "../klauthed-core" }
+klauthed-security = { path = "../klauthed-security" }
+klauthed-protocol = { path = "../klauthed-protocol" }
+
+[[bin]]
+name = "jwt_decode"
+path = "fuzz_targets/jwt_decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "aead_decrypt"
+path = "fuzz_targets/aead_decrypt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "oauth2_token_response"
+path = "fuzz_targets/oauth2_token_response.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "config_tree"
+path = "fuzz_targets/config_tree.rs"
+test = false
+doc = false
+bench = false
+
+# Detach from the parent workspace: a fuzz crate builds only on nightly with
+# libFuzzer and must not be pulled into the stable workspace gates.
+[workspace]

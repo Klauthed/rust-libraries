@@ -33,7 +33,9 @@ and a security quick-win.**
 ## Backlog (0.3.0+ / parallel tracks)
 
 **Assurance**
-- Fuzz targets for untrusted parsers (JWT/JWK, OAuth2/OIDC/SCIM, config, AEAD).
+- [x] Fuzz targets for untrusted parsers — JWT decode, AEAD decrypt, OAuth2
+      token-response deserialization, config tree (`fuzz/`, nightly CI).
+      More targets (JWK, full OIDC/SCIM) can be added to the same harness.
 - [x] Property tests for invariants (config merge, pagination cursors, ids).
 - Coverage gate (`cargo-llvm-cov`) + criterion benchmarks on hot paths.
 
