@@ -12,27 +12,17 @@ tracks intent, not a commitment — scope shifts as we learn.
   outbox/idempotency/locks/rate-limit/saga), discovery (in-memory/Consul/Eureka +
   agent), actix web layer, observability, i18n, platform. No-panic lints, OSV gate,
   live-infra integration tests. See [CHANGELOG](CHANGELOG.md).
+- **0.2.0** — auto-config / observability / migrations round-out: resource
+  starters (`DataStarter`/`WebStarter`) with async wiring, embedded DB migration
+  runner, Rust-native config server + native client format, HIBP breach check,
+  and OpenTelemetry request tracing + W3C trace-context propagation. Trusted
+  Publishing (OIDC) releases. See [CHANGELOG](CHANGELOG.md).
 
-## 0.2.0 (ready to release)
+## 0.3.0 (in progress)
 
-Theme: **finish the auto-config / observability story, close the migrations gap,
-and a security quick-win.**
+Theme: **harden for 1.0 and round out the web/adoption surface.**
 
-- [x] Umbrella crate fronts everything (`discovery` + newer feature pass-throughs).
-- [x] Trusted Publishing (OIDC) — tokenless releases.
-- [x] **Resource starters** — `DataStarter` (pool from `DatabaseConfig`) and
-      `WebStarter` (assembles the web `Components` from wired resources) so
-      `AppBuilder` auto-config reaches live components. (Made `Starter`/`AppBuilder`
-      async.)
-- [x] **OTEL span auto-instrumentation** — `RequestTracing` middleware (span per
-      web request) + W3C trace-context propagation (klauthed-observability::propagation).
-- [x] **DB migrations runner** — embedded, versioned migrations in `klauthed-data` (`migrate::Migrator`, over `AnyPool`).
-- [x] **HIBP breach check** — k-anonymity password check in `klauthed-security`
-      (`password::hibp`, feature-gated).
-
-## Backlog (0.3.0+ / parallel tracks)
-
-**Assurance**
+**Assurance** — done:
 - [x] Fuzz targets for untrusted parsers — JWT decode, AEAD decrypt, OAuth2
       token-response deserialization, config tree (`fuzz/`, nightly CI).
       More targets (JWK, full OIDC/SCIM) can be added to the same harness.
@@ -41,12 +31,13 @@ and a security quick-win.**
       on hot paths (config merge/expand, ids, cursors, JWT, AEAD).
 
 **Features**
+- [x] OpenAPI generation (`utoipa`) — `klauthed-web` `openapi` feature: annotated
+      built-in endpoints + spec serving; services merge their own paths.
+- PASETO tokens.
+- Swagger UI bundling on top of the `openapi` feature.
 - Discovery ↔ config push-refresh (bus event → `ReloadableConfig::reload_now`).
 - Kubernetes discovery backend.
 - Actix passkey (WebAuthn) HTTP endpoints in `klauthed-web`.
-- PASETO tokens.
-- [x] OpenAPI generation (`utoipa`) — `klauthed-web` `openapi` feature: annotated
-      built-in endpoints + spec serving; services merge their own paths.
 
 **Docs / adoption**
 - mdBook guide (architecture, getting started, per-area how-tos).
