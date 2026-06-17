@@ -8,6 +8,8 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-17
+
 ### Changed
 
 - `klauthed-core`: **`ConfigServerProvider` now defaults to the klauthed-native
@@ -242,5 +244,6 @@ All crates share a single version and are released together.
   `klauthed_core::time`.
 - CI bumped `actions/checkout` to v6 (Node 24).
 
-[Unreleased]: https://github.com/klauthed/rust-libraries/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/klauthed/rust-libraries/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/klauthed/rust-libraries/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/klauthed/rust-libraries/releases/tag/v0.1.0
