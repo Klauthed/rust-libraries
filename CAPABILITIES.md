@@ -260,6 +260,10 @@ The actix-web HTTP layer shared by services.
   [klauthed-core](#klauthed-core)).
 - **Starter** — `WebStarter` assembles the actix `Components` (pools, middleware)
   from an `AppContext`, completing the Spring-style auto-config story.
+- **OpenAPI** (feature `openapi`) — generate an OpenAPI 3.1 spec with `utoipa`:
+  the built-in endpoints (health probes) ship annotated as `base_openapi()`,
+  `serve_spec` exposes the JSON, and `utoipa` is re-exported so a service merges
+  its own annotated paths into one document (view it with any OpenAPI UI).
 - **Extractors** (`extract`) — `Json` and `Validated` bodies that surface
   deserialization / `Validate` failures as `AppError`.
 - **Errors** (`error`) — `AppError` absorbs any `DomainError` and renders a
@@ -270,7 +274,8 @@ The actix-web HTTP layer shared by services.
 - **Server** (`server`) — bind an `HttpServer` from `ServerConfig` with the
   common middleware/health pre-wired.
 
-*Features:* `context-scope`, `data-sql`, `data-redis`, `config-server`, `otel`.
+*Features:* `context-scope`, `data-sql`, `data-redis`, `config-server`, `otel`,
+`openapi`.
 *See the runnable `auth_service` example: `cargo run -p klauthed-web --example auth_service`.*
 
 ---

@@ -44,7 +44,9 @@ and a security quick-win.**
 - Discovery ↔ config push-refresh (bus event → `ReloadableConfig::reload_now`).
 - Kubernetes discovery backend.
 - Actix passkey (WebAuthn) HTTP endpoints in `klauthed-web`.
-- PASETO tokens; OpenAPI generation (utoipa).
+- PASETO tokens.
+- [x] OpenAPI generation (`utoipa`) — `klauthed-web` `openapi` feature: annotated
+      built-in endpoints + spec serving; services merge their own paths.
 
 **Docs / adoption**
 - mdBook guide (architecture, getting started, per-area how-tos).

@@ -30,6 +30,9 @@ The HTTP layer every klauthed service shares, built on [actix-web](https://actix
   inbound W3C `traceparent`, exporting through `klauthed-observability`'s pipeline.
 - **starter** — `WebStarter` assembles the actix `Components` (pools + common
   middleware) from an `AppContext`, the web half of the Spring-style auto-config.
+- **openapi** (feature `openapi`) — generate an OpenAPI 3.1 spec with `utoipa`:
+  built-in endpoints ship annotated (`openapi::base_openapi`), `serve_spec`
+  exposes the JSON, and `utoipa` is re-exported so services merge their own paths.
 
 Optional `data-sql` / `data-redis` features add ready-made health checks and rate-limit
 stores.

@@ -4,6 +4,7 @@ use serde::Serialize;
 
 /// Health of a single component or of the service overall.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum HealthStatus {
     /// Fully healthy.

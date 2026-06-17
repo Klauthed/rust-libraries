@@ -26,6 +26,7 @@ pub trait HealthCheck: Send + Sync + 'static {
 
 /// The result of one named check.
 #[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CheckResult {
     /// The check's [`HealthCheck::name`].
     pub name: String,
@@ -35,6 +36,7 @@ pub struct CheckResult {
 
 /// The aggregated outcome of running every registered check.
 #[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ReadinessReport {
     /// The overall status — the worst of all checks (`Up` when there are none).
     pub status: HealthStatus,

@@ -14,6 +14,7 @@ use super::status::HealthStatus;
 // ── Private response types ────────────────────────────────────────────────────
 
 #[derive(Serialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 struct LivenessBody {
     status: HealthStatus,
 }
@@ -21,11 +22,32 @@ struct LivenessBody {
 // ── Handlers ──────────────────────────────────────────────────────────────────
 
 /// Liveness handler — the process is running, so this always returns `200`.
+#[cfg_attr(
+    feature = "openapi",
+    utoipa::path(
+        get,
+        path = "/health",
+        tag = "health",
+        responses((status = 200, description = "The process is live", body = LivenessBody)),
+    )
+)]
 async fn liveness() -> HttpResponse {
     HttpResponse::Ok().json(LivenessBody { status: HealthStatus::Up })
 }
 
 /// Readiness handler — `200` when all checks are `Up`, `503` otherwise.
+#[cfg_attr(
+    feature = "openapi",
+    utoipa::path(
+        get,
+        path = "/health/ready",
+        tag = "health",
+        responses(
+            (status = 200, description = "All checks are up", body = ReadinessReport),
+            (status = 503, description = "One or more checks are down", body = ReadinessReport),
+        ),
+    )
+)]
 async fn readiness(registry: Option<web::Data<HealthRegistry>>) -> HttpResponse {
     let report = match registry {
         Some(r) => r.report().await,
@@ -48,6 +70,21 @@ async fn readiness(registry: Option<web::Data<HealthRegistry>>) -> HttpResponse 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.route("/health", web::get().to(liveness)).route("/health/ready", web::get().to(readiness));
 }
+
+/// OpenAPI document describing the built-in health endpoints (feature `openapi`).
+/// Merge it into a service's own document via [`utoipa::OpenApi`].
+#[cfg(feature = "openapi")]
+#[derive(utoipa::OpenApi)]
+#[openapi(
+    paths(liveness, readiness),
+    components(schemas(
+        HealthStatus,
+        super::registry::CheckResult,
+        ReadinessReport,
+        LivenessBody
+    ))
+)]
+pub(crate) struct HealthApi;
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 

@@ -66,6 +66,8 @@ pub mod extract;
 pub mod headers;
 pub mod health; // folder: health/{status,registry,routes,checks}.rs
 pub mod oauth; // folder: oauth/{config,util,handlers}.rs
+#[cfg(feature = "openapi")]
+pub mod openapi;
 pub mod ratelimit;
 pub mod server;
 pub mod starter;
