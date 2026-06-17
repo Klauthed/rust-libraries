@@ -24,14 +24,20 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config
       - name: Install nightly toolchain
-        run: rustup toolchain install nightly --profile minimal
+        run: |
+          rustup toolchain install nightly --profile minimal
+          rustup target add x86_64-unknown-linux-gnu --toolchain nightly
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-fuzz
       # Time-boxed so the job terminates: libFuzzer exits non-zero (failing the
       # job) the moment it finds a panic or sanitizer error.
+      #
+      # `--target` is pinned to gnu: the prebuilt cargo-fuzz is a musl-static
+      # binary, so its default target is musl — where ASan can't link against
+      # the statically linked libc. Building for gnu keeps the sanitizer working.
       - name: Fuzz ${{ matrix.target }}
-        run: cargo +nightly fuzz run ${{ matrix.target }} -- -max_total_time=120 -print_final_stats=1
+        run: cargo +nightly fuzz run ${{ matrix.target }} --target x86_64-unknown-linux-gnu -- -max_total_time=120 -print_final_stats=1
       - name: Upload crash artifacts
         if: failure()
         uses: actions/upload-artifact@v4
