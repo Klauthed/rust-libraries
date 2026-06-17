@@ -185,6 +185,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
       - uses: Swatinem/rust-cache@v2
       # `--ignored` runs only the live-infra tests; the regular `test` job
-      # already covers everything else.
+      # already covers everything else. `--tests` restricts this to test targets
+      # (the `#[ignore]`d live-infra tests live there) and excludes doctests —
+      # otherwise `--ignored` also tries to *compile* `ignore`-fenced doctests,
+      # which are illustrative and not meant to build.
       - name: Run ignored integration tests (live infra)
-        run: cargo test --workspace --all-features -- --ignored
+        run: cargo test --workspace --all-features --tests -- --ignored
