@@ -10,6 +10,11 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **PASETO v4 tokens** (`klauthed-security`, feature `paseto`): `PasetoV4Signer` /
+  `PasetoV4Verifier` mint and verify v4.public (Ed25519) tokens from the same
+  `Claims` as JWT — a misuse-resistant alternative (versioned protocol, no `alg`
+  confusion), built on the audited `pasetors`. Adds `Timestamp::parse_rfc3339`
+  to `klauthed-core` (inverse of `to_rfc3339`).
 - **OpenAPI generation** (`klauthed-web`, feature `openapi`): generate an OpenAPI
   3.1 document with `utoipa`. The built-in health endpoints ship annotated
   (`openapi::base_openapi()`), `openapi::serve_spec` exposes the JSON, and

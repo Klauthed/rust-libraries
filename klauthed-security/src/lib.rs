@@ -84,6 +84,8 @@ pub mod jwt;
 pub mod kdf;
 pub mod mfa;
 pub mod oauth2_client; // folder: oauth2_client/{client,store}.rs
+#[cfg(feature = "paseto")]
+pub mod paseto;
 #[cfg(feature = "webauthn")]
 pub mod passkey; // folder: passkey/{authenticator}.rs — feature = "webauthn"
 pub mod password;
@@ -107,6 +109,8 @@ pub use oauth2_client::{
     ClientGrantType, ClientStore, ClientType, InMemoryClientStore, OAuth2Client,
     TokenEndpointAuthMethod,
 };
+#[cfg(feature = "paseto")]
+pub use paseto::{PasetoV4Signer, PasetoV4Verifier};
 #[cfg(feature = "webauthn")]
 pub use passkey::{InMemoryPasskeyStore, PasskeyAuthenticator, PasskeyStore};
 #[cfg(feature = "hibp")]

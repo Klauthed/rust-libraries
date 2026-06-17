@@ -7,6 +7,9 @@ cryptographic crates (no hand-rolled primitives).
   `verify_password`.
 - **JWTs** (`jwt`) — `Claims` with `JwtSigner` / `JwtVerifier` (HS256, RS256, ES256, EdDSA), with
   `exp`/`iss`/`aud`/`nbf` validation driven by an injected `Clock`.
+- **PASETO** (`paseto`, feature `paseto`) — `PasetoV4Signer` / `PasetoV4Verifier`
+  for v4.public (Ed25519) tokens over the same `Claims`; a misuse-resistant
+  alternative to JWT (versioned protocol, no algorithm-confusion class of bug).
 - **Secure random tokens** (`token`) — `random_token` / `random_bytes` from the OS CSPRNG.
 - **Constant-time comparison** (`compare`) — `constant_time_eq` for secret/MAC equality.
 - **AEAD encryption** (`aead`) — AES-256-GCM with a per-message random nonce.

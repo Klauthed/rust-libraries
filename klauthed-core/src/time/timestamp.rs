@@ -105,6 +105,15 @@ impl Timestamp {
         self.0.format(fmt).expect("formatting a UTC timestamp with a fixed description cannot fail")
     }
 
+    /// Parse an RFC 3339 / ISO 8601 timestamp (e.g. from [`to_rfc3339`]), or
+    /// `None` if it is malformed. The inverse of [`to_rfc3339`].
+    ///
+    /// [`to_rfc3339`]: Timestamp::to_rfc3339
+    #[must_use]
+    pub fn parse_rfc3339(s: &str) -> Option<Self> {
+        OffsetDateTime::parse(s, &Rfc3339).map(Self::from_offset_datetime).ok()
+    }
+
     /// The signed duration elapsed since `earlier` (negative if `earlier` is later).
     pub fn duration_since(&self, earlier: Timestamp) -> Duration {
         self.0 - earlier.0

@@ -117,6 +117,10 @@ A focused toolkit over vetted crypto crates — no hand-rolled primitives.
 - **JWT** (`jwt`) — `JwtSigner` / `JwtVerifier` for HS256, RS256, ES256, EdDSA
   (PEM or DER keys), with `exp`/`iss`/`aud`/`nbf` validation. Built on
   `jsonwebtoken` ≥10 (`aws_lc_rs` backend).
+- **PASETO** (`paseto`, feature `paseto`) — `PasetoV4Signer` / `PasetoV4Verifier`
+  for v4.public (Ed25519) tokens, sharing the same `Claims` as JWT. A
+  misuse-resistant alternative (versioned protocol, no `alg` confusion). Built on
+  the audited `pasetors`.
 - **Passwords** (`password`) — Argon2id PHC `hash_password` / `verify_password`.
 - **AEAD** (`aead`) — AES-256-GCM `encrypt`/`decrypt`, **envelope encryption**
   (`Envelope`, per-message data key + `rewrap` rotation), and **sealed-box**
@@ -134,7 +138,7 @@ A focused toolkit over vetted crypto crates — no hand-rolled primitives.
 - **Tokens / KDF / compare / API keys** — CSPRNG `random_token`, HKDF
   `derive_key`, `constant_time_eq`, `generate_api_key` / `verify_api_key`.
 
-*Features:* `sealed`, `webauthn`.
+*Features:* `sealed`, `webauthn`, `paseto`, `hibp`.
 
 ---
 

@@ -56,6 +56,10 @@ sha1 = { version = "0.10", optional = true }
 # X25519 for sealed-box (public-key) encryption — optional (`sealed` feature).
 x25519-dalek = { workspace = true, optional = true }
 
+# PASETO v4 tokens — optional (`paseto` feature). Audited, versioned-protocol
+# design (no algorithm-confusion class of bug); v4.public is Ed25519.
+pasetors = { workspace = true, optional = true }
+
 # WebAuthn / passkeys — optional (`webauthn` feature). The de-facto standard
 # server-side implementation; MPL-2.0 (allow-listed in deny.toml) and links
 # OpenSSL, so it is gated off by default. `danger-allow-state-serialisation`
@@ -73,6 +77,8 @@ sealed = ["dep:x25519-dalek"]
 webauthn = ["dep:webauthn-rs"]
 # Have I Been Pwned "Pwned Passwords" k-anonymity breach check (`password::hibp`).
 hibp = ["dep:reqwest", "dep:sha1"]
+# PASETO v4 tokens (`paseto` module) — v4.public (Ed25519) sign/verify.
+paseto = ["dep:pasetors"]
 
 [dev-dependencies]
 tokio = { workspace = true }
