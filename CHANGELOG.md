@@ -8,6 +8,13 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Added
+
+- **Property tests** (`proptest`, dev-only) for core invariants: config
+  deep-merge (empty-identity, idempotence, key-union, non-object overlay wins),
+  `Id` UUID/ULID string round-trips and value-ordering, and pagination `Cursor`
+  encode/decode round-trips (including graceful handling of arbitrary input).
+
 ## [0.2.0] - 2026-06-17
 
 ### Changed

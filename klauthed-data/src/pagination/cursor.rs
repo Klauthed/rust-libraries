@@ -243,3 +243,37 @@ mod tests {
         assert!(!mapped.has_next_page);
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        /// Any serializable value survives an `encode` → `decode` round-trip.
+        #[test]
+        fn encode_decode_round_trips(id in any::<u64>(), ts in any::<i64>(), name in "[ -~]{0,32}") {
+            let value = (id, ts, name);
+            let cursor = Cursor::encode(&value).unwrap();
+            let decoded: (u64, i64, String) = cursor.decode().unwrap();
+            prop_assert_eq!(decoded, value);
+        }
+
+        /// `as_str`, `Display`, and `FromStr` agree on the opaque token text.
+        #[test]
+        fn string_forms_agree(id in any::<u64>()) {
+            let cursor = Cursor::encode(&id).unwrap();
+            let shown = cursor.to_string();
+            prop_assert_eq!(cursor.as_str(), shown.as_str());
+            let reparsed: Cursor = cursor.as_str().parse().unwrap(); // FromStr is infallible
+            prop_assert_eq!(reparsed.as_str(), cursor.as_str());
+        }
+
+        /// Decoding arbitrary text errors gracefully rather than panicking.
+        #[test]
+        fn decode_arbitrary_text_never_panics(s in ".*") {
+            let cursor: Cursor = s.parse().unwrap(); // FromStr is infallible
+            let _ = cursor.decode::<(u64, i64, String)>();
+        }
+    }
+}

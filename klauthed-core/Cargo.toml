@@ -54,6 +54,8 @@ tz = ["dep:time-tz"]
 tokio = { workspace = true }
 # HTTP mock server for the config-server provider tests (no live server needed).
 wiremock = "0.6"
+# Property-based tests for config-merge and id round-trip invariants.
+proptest = { workspace = true }
 
 [package.metadata.docs.rs]
 all-features = true

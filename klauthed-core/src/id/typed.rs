@@ -160,3 +160,53 @@ impl<'de, T: ?Sized> Deserialize<'de> for Id<T> {
         raw.parse().map_err(D::Error::custom)
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    // A throwaway marker for the phantom type parameter.
+    struct Thing;
+
+    proptest! {
+        /// Display → `FromStr` round-trips through the canonical UUID form.
+        #[test]
+        fn uuid_string_round_trips(n in any::<u128>()) {
+            let id = Id::<Thing>::from_uuid(Uuid::from_u128(n));
+            let parsed: Id<Thing> = id.to_string().parse().unwrap();
+            prop_assert_eq!(id, parsed);
+        }
+
+        /// `to_ulid_string` → `from_ulid_str` round-trips the same 128 bits.
+        #[test]
+        fn ulid_string_round_trips(n in any::<u128>()) {
+            let id = Id::<Thing>::from_uuid(Uuid::from_u128(n));
+            let parsed = Id::<Thing>::from_ulid_str(&id.to_ulid_string()).unwrap();
+            prop_assert_eq!(id, parsed);
+        }
+
+        /// `FromStr` accepts both encodings of the same id and yields equal ids.
+        #[test]
+        fn uuid_and_ulid_forms_agree(n in any::<u128>()) {
+            let id = Id::<Thing>::from_uuid(Uuid::from_u128(n));
+            let from_uuid: Id<Thing> = id.to_string().parse().unwrap();
+            let from_ulid: Id<Thing> = id.to_ulid_string().parse().unwrap();
+            prop_assert_eq!(from_uuid, from_ulid);
+        }
+
+        /// Id ordering tracks the underlying 128-bit value (stable across stores).
+        #[test]
+        fn ordering_matches_u128(a in any::<u128>(), b in any::<u128>()) {
+            let ia = Id::<Thing>::from_uuid(Uuid::from_u128(a));
+            let ib = Id::<Thing>::from_uuid(Uuid::from_u128(b));
+            prop_assert_eq!(ia.cmp(&ib), a.cmp(&b));
+        }
+
+        /// Parsing rejects non-id text instead of panicking.
+        #[test]
+        fn arbitrary_text_never_panics(s in ".*") {
+            let _ = s.parse::<Id<Thing>>();
+        }
+    }
+}

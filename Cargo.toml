@@ -122,6 +122,9 @@ once_cell    = "1"
 arc-swap     = "1"
 dashmap      = "6"
 
+# ── Testing ───────────────────────────────────────────────────────────────────
+proptest     = "1"
+
 # ── Workspace crates ─────────────────────────────────────────────────────────
 klauthed               = { path = "klauthed",               version = "0.2.0" }
 klauthed-core          = { path = "klauthed-core",         version = "0.2.0", default-features = false }

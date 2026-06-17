@@ -13,7 +13,7 @@ tracks intent, not a commitment — scope shifts as we learn.
   agent), actix web layer, observability, i18n, platform. No-panic lints, OSV gate,
   live-infra integration tests. See [CHANGELOG](CHANGELOG.md).
 
-## 0.2.0 (in progress)
+## 0.2.0 (ready to release)
 
 Theme: **finish the auto-config / observability story, close the migrations gap,
 and a security quick-win.**
@@ -34,7 +34,7 @@ and a security quick-win.**
 
 **Assurance**
 - Fuzz targets for untrusted parsers (JWT/JWK, OAuth2/OIDC/SCIM, config, AEAD).
-- Property tests for invariants (config merge, pagination cursors, ids).
+- [x] Property tests for invariants (config merge, pagination cursors, ids).
 - Coverage gate (`cargo-llvm-cov`) + criterion benchmarks on hot paths.
 
 **Features**

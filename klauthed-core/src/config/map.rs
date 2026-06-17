@@ -215,3 +215,90 @@ mod tests {
         assert_eq!(base.get("hosts"), Some(&json!(["d"])));
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use std::collections::BTreeSet;
+
+    use super::*;
+    use proptest::prelude::*;
+
+    /// A recursive JSON value of bounded depth. Numbers are kept to integers so
+    /// generated values compare cleanly by structural equality (no float NaN).
+    fn arb_value() -> impl Strategy<Value = Value> {
+        let leaf = prop_oneof![
+            Just(Value::Null),
+            any::<bool>().prop_map(Value::Bool),
+            any::<i64>().prop_map(|n| Value::Number(n.into())),
+            "[a-z]{0,6}".prop_map(Value::String),
+        ];
+        leaf.prop_recursive(3, 24, 4, |inner| {
+            prop_oneof![
+                prop::collection::vec(inner.clone(), 0..4).prop_map(Value::Array),
+                prop::collection::btree_map("[a-z]{1,4}", inner, 0..4)
+                    .prop_map(|m| Value::Object(m.into_iter().collect())),
+            ]
+        })
+    }
+
+    fn arb_map() -> impl Strategy<Value = ConfigMap> {
+        prop::collection::btree_map("[a-z]{1,4}", arb_value(), 0..5).prop_map(ConfigMap::from)
+    }
+
+    proptest! {
+        /// Merging an empty overlay changes nothing.
+        #[test]
+        fn merge_empty_is_identity(base in arb_map()) {
+            let mut merged = base.clone();
+            merged.merge(ConfigMap::new());
+            prop_assert_eq!(merged, base);
+        }
+
+        /// Merging an overlay onto an empty map yields the overlay unchanged.
+        #[test]
+        fn empty_base_yields_overlay(overlay in arb_map()) {
+            let mut merged = ConfigMap::new();
+            merged.merge(overlay.clone());
+            prop_assert_eq!(merged, overlay);
+        }
+
+        /// Merge is idempotent: applying the same overlay twice equals once.
+        #[test]
+        fn merge_is_idempotent(base in arb_map(), overlay in arb_map()) {
+            let mut once = base.clone();
+            once.merge(overlay.clone());
+            let mut twice = base;
+            twice.merge(overlay.clone());
+            twice.merge(overlay);
+            prop_assert_eq!(once, twice);
+        }
+
+        /// Merging a map with itself is a no-op.
+        #[test]
+        fn self_merge_is_identity(base in arb_map()) {
+            let mut merged = base.clone();
+            merged.merge(base.clone());
+            prop_assert_eq!(merged, base);
+        }
+
+        /// The merged top-level key set is the union of both inputs' keys.
+        #[test]
+        fn keys_are_unioned(base in arb_map(), overlay in arb_map()) {
+            let expected: BTreeSet<String> =
+                base.keys().chain(overlay.keys()).map(str::to_owned).collect();
+            let mut merged = base;
+            merged.merge(overlay);
+            let got: BTreeSet<String> = merged.keys().map(str::to_owned).collect();
+            prop_assert_eq!(got, expected);
+        }
+
+        /// A non-object overlay value wins outright at the top level.
+        #[test]
+        fn non_object_overlay_wins(base in arb_map(), key in "[a-z]{1,4}", value in arb_value()) {
+            prop_assume!(!value.is_object());
+            let mut merged = base;
+            merged.merge(ConfigMap::from_iter([(key.clone(), value.clone())]));
+            prop_assert_eq!(merged.get(&key), Some(&value));
+        }
+    }
+}

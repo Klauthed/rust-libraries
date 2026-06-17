@@ -70,6 +70,8 @@ mongodb = ["dep:mongodb"]
 
 [dev-dependencies]
 tokio = { workspace = true }
+# Property-based tests for the cursor encode/decode round-trip invariant.
+proptest = { workspace = true }
 
 [[example]]
 name = "memory_cache"
