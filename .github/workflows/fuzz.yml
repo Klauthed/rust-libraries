@@ -15,6 +15,10 @@ jobs:
   fuzz:
     name: fuzz (${{ matrix.target }})
     runs-on: ubuntu-latest
+    # Bound the whole job: the fuzz step is time-boxed (-max_total_time), but the
+    # setup steps (apt, rustup) are not — cap them so a stuck runner can't hang
+    # for GitHub's 6h default.
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
