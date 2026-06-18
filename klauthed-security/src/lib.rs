@@ -110,7 +110,7 @@ pub use oauth2_client::{
     TokenEndpointAuthMethod,
 };
 #[cfg(feature = "paseto")]
-pub use paseto::{PasetoV4Signer, PasetoV4Verifier};
+pub use paseto::{PasetoV4Local, PasetoV4Signer, PasetoV4Verifier};
 #[cfg(feature = "webauthn")]
 pub use passkey::{InMemoryPasskeyStore, PasskeyAuthenticator, PasskeyStore};
 #[cfg(feature = "hibp")]

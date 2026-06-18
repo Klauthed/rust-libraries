@@ -33,8 +33,9 @@ Theme: **harden for 1.0 and round out the web/adoption surface.**
 **Features**
 - [x] OpenAPI generation (`utoipa`) — `klauthed-web` `openapi` feature: annotated
       built-in endpoints + spec serving; services merge their own paths.
-- [x] PASETO tokens — `klauthed-security` `paseto` feature: v4.public (Ed25519)
-      `PasetoV4Signer`/`PasetoV4Verifier`, sharing the JWT `Claims`. (v4.local TBD.)
+- [x] PASETO tokens — `klauthed-security` `paseto` feature, sharing the JWT
+      `Claims`: v4.public (Ed25519) `PasetoV4Signer`/`PasetoV4Verifier` and
+      v4.local (XChaCha20-Poly1305) `PasetoV4Local`.
 - [x] Swagger UI — `klauthed-web` `swagger-ui` feature: `serve_swagger_ui`,
       assets vendored (no network at build/run).
 - [x] Config push-refresh — `ReloadableConfig::start_with_refresh` + a clonable

@@ -19,11 +19,12 @@ All crates share a single version and are released together.
 - **Swagger UI** (`klauthed-web`, feature `swagger-ui`): `openapi::serve_swagger_ui`
   mounts an interactive Swagger UI backed by the generated spec, with the UI
   assets vendored into the binary (no build-time or runtime network access).
-- **PASETO v4 tokens** (`klauthed-security`, feature `paseto`): `PasetoV4Signer` /
-  `PasetoV4Verifier` mint and verify v4.public (Ed25519) tokens from the same
-  `Claims` as JWT — a misuse-resistant alternative (versioned protocol, no `alg`
-  confusion), built on the audited `pasetors`. Adds `Timestamp::parse_rfc3339`
-  to `klauthed-core` (inverse of `to_rfc3339`).
+- **PASETO v4 tokens** (`klauthed-security`, feature `paseto`): mint/verify from
+  the same `Claims` as JWT — a misuse-resistant alternative (versioned protocol,
+  no `alg` confusion), built on the audited `pasetors`. `PasetoV4Signer` /
+  `PasetoV4Verifier` for **v4.public** (Ed25519, signed/readable) and
+  `PasetoV4Local` for **v4.local** (XChaCha20-Poly1305, encrypted/confidential).
+  Adds `Timestamp::parse_rfc3339` to `klauthed-core` (inverse of `to_rfc3339`).
 - **OpenAPI generation** (`klauthed-web`, feature `openapi`): generate an OpenAPI
   3.1 document with `utoipa`. The built-in health endpoints ship annotated
   (`openapi::base_openapi()`), `openapi::serve_spec` exposes the JSON, and
