@@ -15,7 +15,9 @@ All crates share a single version and are released together.
   `refresh()` re-resolves the provider chain immediately (coalesced), so a
   config-server webhook, a discovery / message-bus event, or an HTTP `/refresh`
   endpoint can push changes live instead of waiting for the poll interval. The
-  periodic refresh remains as a safety net.
+  periodic refresh remains as a safety net. `klauthed-web`'s `config-refresh`
+  feature adds `refresh::serve_refresh`, a `POST /refresh` endpoint that drives
+  the trigger (the Spring `/actuator/refresh` analog).
 - **Swagger UI** (`klauthed-web`, feature `swagger-ui`): `openapi::serve_swagger_ui`
   mounts an interactive Swagger UI backed by the generated spec, with the UI
   assets vendored into the binary (no build-time or runtime network access).

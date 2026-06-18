@@ -40,8 +40,8 @@ Theme: **harden for 1.0 and round out the web/adoption surface.**
       assets vendored (no network at build/run).
 - [x] Config push-refresh — `ReloadableConfig::start_with_refresh` + a clonable
       `RefreshTrigger` (`refresh()` reloads immediately, coalesced). Any event
-      source (config-server webhook, discovery / bus event, HTTP `/refresh`)
-      drives it. (A built-in web `/refresh` endpoint is a possible follow-up.)
+      source drives it; `klauthed-web`'s `config-refresh` feature ships a built-in
+      `POST /refresh` endpoint (`refresh::serve_refresh`).
 - Kubernetes discovery backend.
 - Actix passkey (WebAuthn) HTTP endpoints in `klauthed-web`.
 

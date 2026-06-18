@@ -69,6 +69,8 @@ pub mod oauth; // folder: oauth/{config,util,handlers}.rs
 #[cfg(feature = "openapi")]
 pub mod openapi;
 pub mod ratelimit;
+#[cfg(feature = "config-refresh")]
+pub mod refresh;
 pub mod server;
 pub mod starter;
 #[cfg(feature = "otel")]

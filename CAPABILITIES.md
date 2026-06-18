@@ -274,6 +274,9 @@ The actix-web HTTP layer shared by services.
   its own annotated paths into one document. Feature `swagger-ui` adds
   `serve_swagger_ui` — an interactive Swagger UI with assets vendored into the
   binary (no build-time or runtime network access).
+- **Config refresh** (feature `config-refresh`) — `refresh::serve_refresh` mounts
+  a `POST /refresh` endpoint that drives a `klauthed_core` `RefreshTrigger` to
+  push-reload configuration live (the Spring `/actuator/refresh` analog).
 - **Extractors** (`extract`) — `Json` and `Validated` bodies that surface
   deserialization / `Validate` failures as `AppError`.
 - **Errors** (`error`) — `AppError` absorbs any `DomainError` and renders a
@@ -285,7 +288,7 @@ The actix-web HTTP layer shared by services.
   common middleware/health pre-wired.
 
 *Features:* `context-scope`, `data-sql`, `data-redis`, `config-server`, `otel`,
-`openapi`, `swagger-ui`.
+`openapi`, `swagger-ui`, `config-refresh`.
 *See the runnable `auth_service` example: `cargo run -p klauthed-web --example auth_service`.*
 
 ---

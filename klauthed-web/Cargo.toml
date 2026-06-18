@@ -45,6 +45,10 @@ openapi = ["dep:utoipa"]
 # generated spec. Implies `openapi`.
 swagger-ui = ["openapi", "dep:utoipa-swagger-ui"]
 
+# Expose POST /refresh to drive a klauthed-core RefreshTrigger (push config
+# reload — the Spring `/actuator/refresh` analog). No extra direct deps.
+config-refresh = ["klauthed-core/hot-reload"]
+
 [dependencies]
 klauthed-error.workspace = true
 klauthed-core.workspace = true
