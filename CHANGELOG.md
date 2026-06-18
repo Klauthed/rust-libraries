@@ -8,6 +8,8 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-18
+
 ### Added
 
 - **Config push-refresh** (`klauthed-core`, feature `hot-reload`):
