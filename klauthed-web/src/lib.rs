@@ -68,6 +68,8 @@ pub mod health; // folder: health/{status,registry,routes,checks}.rs
 pub mod oauth; // folder: oauth/{config,util,handlers}.rs
 #[cfg(feature = "openapi")]
 pub mod openapi;
+#[cfg(feature = "webauthn")]
+pub mod passkey;
 pub mod ratelimit;
 #[cfg(feature = "config-refresh")]
 pub mod refresh;
@@ -92,6 +94,8 @@ pub use error::{AppError, AppResult};
 pub use extract::{Json, Validated};
 pub use headers::{FrameOptions, Hsts, SecurityHeaders, SecurityHeadersConfig};
 pub use health::{HealthCheck, HealthRegistry, HealthStatus};
+#[cfg(feature = "webauthn")]
+pub use passkey::{CeremonyStore, InMemoryCeremonyStore, PasskeyApi};
 pub use ratelimit::{KeyBy, RateLimit};
 pub use server::{serve, serve_with_components, serve_with_defaults};
 pub use starter::WebStarter;

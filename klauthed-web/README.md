@@ -38,6 +38,9 @@ The HTTP layer every klauthed service shares, built on [actix-web](https://actix
 - **refresh** (feature `config-refresh`) — `refresh::serve_refresh` mounts a
   `POST /refresh` endpoint that drives a `klauthed_core` `RefreshTrigger` to
   push-reload configuration live (the Spring `/actuator/refresh` analog).
+- **passkey** (feature `webauthn`) — `PasskeyApi` mounts the four WebAuthn
+  ceremony routes (`register`/`login` × `start`/`finish`) over
+  `klauthed-security`'s SPI, with a `CeremonyStore` for in-flight state.
 
 Optional `data-sql` / `data-redis` features add ready-made health checks and rate-limit
 stores.

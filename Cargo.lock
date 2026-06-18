@@ -2851,6 +2851,7 @@ dependencies = [
  "tracing-opentelemetry",
  "utoipa",
  "utoipa-swagger-ui",
+ "webauthn-authenticator-rs",
 ]
 
 [[package]]

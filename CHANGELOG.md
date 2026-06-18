@@ -10,6 +10,13 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Passkey HTTP endpoints** (`klauthed-web`, feature `webauthn`): a `passkey`
+  module exposing the WebAuthn ceremonies over four `POST` routes
+  (`register/start`·`finish`, `login/start`·`finish`). Mount a `PasskeyApi`
+  (relying party + `PasskeyStore` + a new `CeremonyStore` for in-flight state,
+  with an `InMemoryCeremonyStore`); `login/finish` returns the verified user
+  handle and persists the signature counter. Verified end-to-end against a
+  software authenticator. The umbrella's `webauthn` feature enables it with `web`.
 - More **fuzz targets** (`cargo-fuzz`, in `fuzz/`) for the untrusted-input
   parsers: JWKS / JWK documents, OIDC discovery metadata + ID-token claims, and
   SCIM `User` / `Group` / PATCH deserialization. Wired into the nightly `Fuzz`

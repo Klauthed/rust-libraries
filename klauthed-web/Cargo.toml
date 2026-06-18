@@ -49,6 +49,10 @@ swagger-ui = ["openapi", "dep:utoipa-swagger-ui"]
 # reload — the Spring `/actuator/refresh` analog). No extra direct deps.
 config-refresh = ["klauthed-core/hot-reload"]
 
+# WebAuthn / passkey HTTP endpoints (the `passkey` module) over the
+# klauthed-security ceremony SPI. Pulls klauthed-security/webauthn (OpenSSL).
+webauthn = ["klauthed-security/webauthn"]
+
 [dependencies]
 klauthed-error.workspace = true
 klauthed-core.workspace = true
@@ -83,6 +87,9 @@ ring.workspace = true
 # Adds the SQLite driver in test builds so WebStarter/Components can be exercised
 # against an in-memory pool without a live database.
 sqlx = { workspace = true, features = ["sqlite"] }
+# In-process software authenticator to drive the passkey ceremony end-to-end in
+# tests (no browser); matches klauthed-security's passkey test dep.
+webauthn-authenticator-rs = { version = "0.5.5", default-features = false, features = ["softpasskey"] }
 
 [package.metadata.docs.rs]
 all-features = true

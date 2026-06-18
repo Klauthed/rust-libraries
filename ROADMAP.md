@@ -30,9 +30,9 @@ Theme: **finish the discovery/auth surface and invest in adoption.**
 **Features**
 - Kubernetes discovery backend (`kube`) — live-cluster integration-tested,
   alongside the existing Consul/Eureka backends.
-- Actix passkey (WebAuthn) HTTP endpoints in `klauthed-web` — the ceremony
-  routes over the existing `klauthed-security` SPI (needs a ceremony-state-store
-  + post-auth design).
+- [x] Actix passkey (WebAuthn) HTTP endpoints — `klauthed-web` `webauthn`
+      feature: `PasskeyApi` mounts the four ceremony routes over the
+      `klauthed-security` SPI, with a `CeremonyStore` for in-flight state.
 - [x] More fuzz targets on the existing harness — JWKS/JWK, OIDC discovery +
       ID-token claims, SCIM User/Group/PATCH.
 

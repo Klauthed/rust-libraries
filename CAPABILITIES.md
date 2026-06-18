@@ -277,6 +277,10 @@ The actix-web HTTP layer shared by services.
 - **Config refresh** (feature `config-refresh`) — `refresh::serve_refresh` mounts
   a `POST /refresh` endpoint that drives a `klauthed_core` `RefreshTrigger` to
   push-reload configuration live (the Spring `/actuator/refresh` analog).
+- **Passkeys / WebAuthn** (feature `webauthn`) — `PasskeyApi` mounts the four
+  ceremony routes (`register`/`login` × `start`/`finish`) over
+  `klauthed-security`'s SPI, with a `CeremonyStore` (+ `InMemoryCeremonyStore`)
+  for in-flight state. Verified end-to-end against a software authenticator.
 - **Extractors** (`extract`) — `Json` and `Validated` bodies that surface
   deserialization / `Validate` failures as `AppError`.
 - **Errors** (`error`) — `AppError` absorbs any `DomainError` and renders a
@@ -288,7 +292,7 @@ The actix-web HTTP layer shared by services.
   common middleware/health pre-wired.
 
 *Features:* `context-scope`, `data-sql`, `data-redis`, `config-server`, `otel`,
-`openapi`, `swagger-ui`, `config-refresh`.
+`openapi`, `swagger-ui`, `config-refresh`, `webauthn`.
 *See the runnable `auth_service` example: `cargo run -p klauthed-web --example auth_service`.*
 
 ---
