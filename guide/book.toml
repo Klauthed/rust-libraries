@@ -1,0 +1,17 @@
+[book]
+title = "klauthed"
+description = "Spring-Boot-like ergonomics for Rust services"
+authors = ["Klauthed Authors"]
+language = "en"
+src = "src"
+
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/Klauthed/rust-libraries"
+edit-url-template = "https://github.com/Klauthed/rust-libraries/edit/master/guide/{path}"
+additional-css = []
+
+[output.html.fold]
+enable = true
+level = 1

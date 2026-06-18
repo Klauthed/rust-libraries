@@ -63,6 +63,18 @@ jobs:
       - name: Build docs (deny warnings)
         run: cargo doc --workspace --all-features --no-deps
 
+  book:
+    name: book
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook
+      - name: Build the guide
+        run: mdbook build guide
+
   coverage:
     name: coverage
     runs-on: ubuntu-latest

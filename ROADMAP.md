@@ -38,7 +38,9 @@ Theme: **finish the discovery/auth surface and invest in adoption.**
       ID-token claims, SCIM User/Group/PATCH.
 
 **Docs / adoption**
-- mdBook guide (architecture, getting started, per-area how-tos).
+- [x] mdBook guide (`guide/`) — introduction, getting started, architecture,
+      configuration, capability map, releases; built in CI. (GitHub Pages
+      deployment is a possible follow-up.)
 - A reference service dogfooding the full suite end-to-end.
 
 ## Toward 1.0

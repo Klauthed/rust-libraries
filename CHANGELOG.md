@@ -10,6 +10,10 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **mdBook guide** (`guide/`): a narrative companion to the reference docs —
+  introduction, getting started, architecture & design principles, the
+  configuration model, a capability map, and the release/versioning policy. Built
+  in CI (`mdbook build`).
 - **Kubernetes discovery backend** (`klauthed-discovery`, feature `kubernetes`):
   `KubernetesRegistry` resolves a service's ready instances from the Kubernetes
   Endpoints API (`instances`), with `in_cluster()` config (service-account token,
