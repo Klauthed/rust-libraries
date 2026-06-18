@@ -22,29 +22,21 @@ tracks intent, not a commitment — scope shifts as we learn.
   OpenAPI 3.1 generation + bundled Swagger UI, PASETO v4 tokens (v4.public
   Ed25519 + v4.local XChaCha20-Poly1305), and config push-refresh
   (`RefreshTrigger` + `POST /refresh`). See [CHANGELOG](CHANGELOG.md).
+- **0.4.0** — discovery/auth surface + adoption: Kubernetes discovery backend,
+  WebAuthn passkey HTTP endpoints, more fuzz targets (JWK/OIDC/SCIM), an mdBook
+  guide, and a runnable reference service dogfooding the suite. Per-job CI
+  timeouts. See [CHANGELOG](CHANGELOG.md).
 
-## 0.4.0 (in progress)
+## 0.5.0 (in progress)
 
-Theme: **finish the discovery/auth surface and invest in adoption.**
+Theme: **toward a stable 1.0 — API ergonomics and policy.**
 
-**Features**
-- [x] Kubernetes discovery backend — `klauthed-discovery` `kubernetes` feature:
-      `KubernetesRegistry` over the Endpoints API (read-only), `in_cluster()`
-      config, reqwest-based + wiremock-tested (no live cluster needed).
-- [x] Actix passkey (WebAuthn) HTTP endpoints — `klauthed-web` `webauthn`
-      feature: `PasskeyApi` mounts the four ceremony routes over the
-      `klauthed-security` SPI, with a `CeremonyStore` for in-flight state.
-- [x] More fuzz targets on the existing harness — JWKS/JWK, OIDC discovery +
-      ID-token claims, SCIM User/Group/PATCH.
-
-**Docs / adoption**
-- [x] mdBook guide (`guide/`) — introduction, getting started, architecture,
-      configuration, capability map, releases; built in CI. (GitHub Pages
-      deployment is a possible follow-up.)
-- [x] A reference service dogfooding the suite end-to-end (`reference-service/`)
-      — config + telemetry + web + JWT auth, with end-to-end tests.
+- Per-crate `prelude` modules re-exporting each crate's common types.
+- API consistency pass (builder patterns, naming, re-export surface).
+- GitHub Pages deployment for the mdBook guide.
+- Committed SemVer + deprecation policy and an explicit MSRV policy.
 
 ## Toward 1.0
 
-API review per crate (preludes, consistent builders), committed SemVer +
-deprecation policy, MSRV policy, and broad test/fuzz coverage.
+Broad API review per crate, committed SemVer + deprecation policy, MSRV policy,
+and broad test / fuzz coverage.
