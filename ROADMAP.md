@@ -28,8 +28,9 @@ tracks intent, not a commitment — scope shifts as we learn.
 Theme: **finish the discovery/auth surface and invest in adoption.**
 
 **Features**
-- Kubernetes discovery backend (`kube`) — live-cluster integration-tested,
-  alongside the existing Consul/Eureka backends.
+- [x] Kubernetes discovery backend — `klauthed-discovery` `kubernetes` feature:
+      `KubernetesRegistry` over the Endpoints API (read-only), `in_cluster()`
+      config, reqwest-based + wiremock-tested (no live cluster needed).
 - [x] Actix passkey (WebAuthn) HTTP endpoints — `klauthed-web` `webauthn`
       feature: `PasskeyApi` mounts the four ceremony routes over the
       `klauthed-security` SPI, with a `CeremonyStore` for in-flight state.

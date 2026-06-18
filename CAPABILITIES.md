@@ -182,12 +182,14 @@ Service discovery: register instances and resolve peers, backend-agnostic.
 - **`ServiceRegistry`** trait — `register` / `deregister` / `heartbeat` /
   `instances`, over a `ServiceInstance` (host/port/metadata).
 - **Backends** — `InMemoryRegistry` (tests/single-process), `ConsulRegistry`
-  (feature `consul`), `EurekaRegistry` (feature `eureka`).
+  (feature `consul`), `EurekaRegistry` (feature `eureka`), and `KubernetesRegistry`
+  (feature `kubernetes`) — read-only discovery over the Endpoints API, with
+  `in_cluster()` service-account config.
 - **`ServiceAgent`** (feature `agent`) — registers on start, heartbeats in the
   background, deregisters on shutdown/drop.
 - **`RoundRobin`** — lock-free client-side load balancing over resolved instances.
 
-*Features:* `consul`, `eureka`, `agent`.
+*Features:* `consul`, `eureka`, `kubernetes`, `agent`.
 
 ---
 

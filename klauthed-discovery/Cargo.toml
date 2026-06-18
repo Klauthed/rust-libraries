@@ -31,6 +31,8 @@ default = []
 consul = ["dep:reqwest"]
 # Netflix Eureka backend (HTTP).
 eureka = ["dep:reqwest"]
+# Kubernetes backend (read-only discovery via the Endpoints API).
+kubernetes = ["dep:reqwest"]
 # ServiceAgent: register on start, heartbeat in the background, deregister on
 # shutdown/drop.
 agent = ["dep:tokio"]

@@ -44,6 +44,8 @@ pub mod error;
 #[cfg(feature = "eureka")]
 pub mod eureka;
 pub mod instance;
+#[cfg(feature = "kubernetes")]
+pub mod kubernetes;
 pub mod picker;
 pub mod registry;
 
@@ -55,5 +57,7 @@ pub use error::DiscoveryError;
 #[cfg(feature = "eureka")]
 pub use eureka::EurekaRegistry;
 pub use instance::ServiceInstance;
+#[cfg(feature = "kubernetes")]
+pub use kubernetes::KubernetesRegistry;
 pub use picker::RoundRobin;
 pub use registry::{InMemoryRegistry, ServiceRegistry};

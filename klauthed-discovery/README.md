@@ -6,8 +6,9 @@ themselves and resolve their peers, independent of the backing system.
 
 - `ServiceInstance` — where one instance of a service lives, plus metadata.
 - `ServiceRegistry` — async `register` / `deregister` / `heartbeat` /
-  `instances`. `InMemoryRegistry` backs tests and single-process use; Consul and
-  Eureka backends are available behind the `consul` / `eureka` features.
+  `instances`. `InMemoryRegistry` backs tests and single-process use; Consul,
+  Eureka, and Kubernetes backends are available behind the `consul` / `eureka` /
+  `kubernetes` features (the last is read-only discovery over the Endpoints API).
 - `RoundRobin` — lock-free client-side load balancing over resolved instances.
 
 ```rust

@@ -10,6 +10,12 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Kubernetes discovery backend** (`klauthed-discovery`, feature `kubernetes`):
+  `KubernetesRegistry` resolves a service's ready instances from the Kubernetes
+  Endpoints API (`instances`), with `in_cluster()` config (service-account token,
+  CA, namespace) or an explicit API base URL. Read-only — `register`/`deregister`/
+  `heartbeat` error (the platform owns pod lifecycle). Reuses `reqwest` (no heavy
+  SDK) and is wiremock-tested, no live cluster required.
 - **Passkey HTTP endpoints** (`klauthed-web`, feature `webauthn`): a `passkey`
   module exposing the WebAuthn ceremonies over four `POST` routes
   (`register/start`·`finish`, `login/start`·`finish`). Mount a `PasskeyApi`
