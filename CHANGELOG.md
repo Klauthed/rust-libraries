@@ -10,6 +10,9 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Stability policy** (CONTRIBUTING.md): a committed public-API/SemVer
+  definition, a deprecation policy (`#[deprecated]`, kept ≥1 minor release), and
+  an explicit MSRV policy (1.95; raising it is a minor bump).
 - **mdBook guide on GitHub Pages**: a `Pages` workflow builds `guide/` and
   publishes it to GitHub Pages on every change (self-enabling via
   `configure-pages`), so the guide is browsable online.

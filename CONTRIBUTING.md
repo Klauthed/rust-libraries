@@ -101,6 +101,44 @@ GitHub Actions**, with owner `klauthed`, repo `rust-libraries`, workflow
 > Publishing lives only in CI so there's a single, auditable publish path, no
 > long-lived token, and no risk of a local double-publish.
 
+## Stability policy
+
+What the suite commits to. These tighten at 1.0; the pre-1.0 caveats note where
+they are looser for now.
+
+### Public API & SemVer
+
+A crate's **public API** is everything reachable from its crate root (including
+its `prelude`) together with its set of cargo features. Changes are versioned per
+[SemVer](https://semver.org):
+
+- **Breaking** (major; pre-1.0 a minor `0.x` bump) — removing or renaming a public
+  item, changing a signature or trait bound, removing a feature, or raising the
+  MSRV.
+- **Additive** (minor; pre-1.0 a patch where it cleanly can be) — new items, new
+  features, new builder options.
+- **Patch** — bug fixes and docs with no API change.
+
+Not covered: `#[doc(hidden)]` items, private fields, exact error *messages* (the
+`DomainError` category and `area.reason` **code** *are* stable), and anything
+documented as experimental.
+
+### Deprecation
+
+Before a public item is removed it is first **deprecated** with
+`#[deprecated(since = "…", note = "use … instead")]`, kept for **at least one
+minor release**, and listed under *Deprecated* in the [CHANGELOG](CHANGELOG.md);
+removal follows in a later breaking release. Pre-1.0 this is best-effort; from 1.0
+it is a firm contract.
+
+### MSRV
+
+The **minimum supported Rust version is 1.95** (`rust-version` in the root
+`Cargo.toml`), enforced by the `msrv` CI job on every change. Raising it is a
+**minor** bump (a major bump at/after 1.0) and is called out in the CHANGELOG. We
+track a recent stable and do not commit to Rust releases older than the declared
+MSRV.
+
 ## Code of conduct
 
 Participation is governed by our [Code of Conduct](CODE_OF_CONDUCT.md).
