@@ -18,7 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [jwt_decode, aead_decrypt, oauth2_token_response, config_tree]
+        target:
+          [jwt_decode, aead_decrypt, oauth2_token_response, config_tree, jwks, oidc, scim]
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies

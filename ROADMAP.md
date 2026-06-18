@@ -33,7 +33,8 @@ Theme: **finish the discovery/auth surface and invest in adoption.**
 - Actix passkey (WebAuthn) HTTP endpoints in `klauthed-web` — the ceremony
   routes over the existing `klauthed-security` SPI (needs a ceremony-state-store
   + post-auth design).
-- More fuzz targets (JWK, full OIDC/SCIM) on the existing harness.
+- [x] More fuzz targets on the existing harness — JWKS/JWK, OIDC discovery +
+      ID-token claims, SCIM User/Group/PATCH.
 
 **Docs / adoption**
 - mdBook guide (architecture, getting started, per-area how-tos).

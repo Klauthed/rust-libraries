@@ -8,6 +8,13 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Added
+
+- More **fuzz targets** (`cargo-fuzz`, in `fuzz/`) for the untrusted-input
+  parsers: JWKS / JWK documents, OIDC discovery metadata + ID-token claims, and
+  SCIM `User` / `Group` / PATCH deserialization. Wired into the nightly `Fuzz`
+  workflow matrix alongside the existing targets.
+
 ## [0.3.0] - 2026-06-18
 
 ### Added

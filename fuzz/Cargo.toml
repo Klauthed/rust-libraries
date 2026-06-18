@@ -45,6 +45,27 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "jwks"
+path = "fuzz_targets/jwks.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "oidc"
+path = "fuzz_targets/oidc.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "scim"
+path = "fuzz_targets/scim.rs"
+test = false
+doc = false
+bench = false
+
 # Detach from the parent workspace: a fuzz crate builds only on nightly with
 # libFuzzer and must not be pulled into the stable workspace gates.
 [workspace]
