@@ -10,6 +10,9 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **mdBook guide on GitHub Pages**: a `Pages` workflow builds `guide/` and
+  publishes it to GitHub Pages on every change (self-enabling via
+  `configure-pages`), so the guide is browsable online.
 - **Per-crate `prelude` modules** — each library crate now exposes a curated
   `prelude` re-exporting its common types, so a service can
   `use klauthed_web::prelude::*;` (and likewise for `core`, `error`, `data`,

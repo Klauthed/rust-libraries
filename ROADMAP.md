@@ -33,7 +33,7 @@ Theme: **toward a stable 1.0 — API ergonomics and policy.**
 
 - [x] Per-crate `prelude` modules re-exporting each crate's common types.
 - API consistency pass (builder patterns, naming, re-export surface).
-- GitHub Pages deployment for the mdBook guide.
+- [x] GitHub Pages deployment for the mdBook guide (`Pages` workflow).
 - Committed SemVer + deprecation policy and an explicit MSRV policy.
 
 ## Toward 1.0

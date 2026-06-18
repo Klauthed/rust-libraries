@@ -1,0 +1,46 @@
+name: Pages
+
+# Build the mdBook guide and publish it to GitHub Pages. `configure-pages` with
+# `enablement: true` turns Pages on for the repo on first run, so no manual repo
+# setting is required. Runs when the guide changes, or on demand.
+on:
+  push:
+    branches: [master]
+    paths: ["guide/**"]
+  workflow_dispatch:
+
+# Least-privilege token scoped to deploy Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One in-flight deploy at a time; don't cancel a running publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: build & deploy guide
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook
+      - name: Build the guide
+        run: mdbook build guide
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: guide/book
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
