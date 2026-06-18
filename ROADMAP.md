@@ -17,33 +17,23 @@ tracks intent, not a commitment — scope shifts as we learn.
   runner, Rust-native config server + native client format, HIBP breach check,
   and OpenTelemetry request tracing + W3C trace-context propagation. Trusted
   Publishing (OIDC) releases. See [CHANGELOG](CHANGELOG.md).
+- **0.3.0** — harden + round out the web surface: assurance (property tests,
+  cargo-fuzz targets + nightly workflow, coverage gate + criterion benches),
+  OpenAPI 3.1 generation + bundled Swagger UI, PASETO v4 tokens (v4.public
+  Ed25519 + v4.local XChaCha20-Poly1305), and config push-refresh
+  (`RefreshTrigger` + `POST /refresh`). See [CHANGELOG](CHANGELOG.md).
 
-## 0.3.0 (in progress)
+## 0.4.0 (in progress)
 
-Theme: **harden for 1.0 and round out the web/adoption surface.**
-
-**Assurance** — done:
-- [x] Fuzz targets for untrusted parsers — JWT decode, AEAD decrypt, OAuth2
-      token-response deserialization, config tree (`fuzz/`, nightly CI).
-      More targets (JWK, full OIDC/SCIM) can be added to the same harness.
-- [x] Property tests for invariants (config merge, pagination cursors, ids).
-- [x] Coverage gate (`cargo-llvm-cov`, line floor in CI) + criterion benchmarks
-      on hot paths (config merge/expand, ids, cursors, JWT, AEAD).
+Theme: **finish the discovery/auth surface and invest in adoption.**
 
 **Features**
-- [x] OpenAPI generation (`utoipa`) — `klauthed-web` `openapi` feature: annotated
-      built-in endpoints + spec serving; services merge their own paths.
-- [x] PASETO tokens — `klauthed-security` `paseto` feature, sharing the JWT
-      `Claims`: v4.public (Ed25519) `PasetoV4Signer`/`PasetoV4Verifier` and
-      v4.local (XChaCha20-Poly1305) `PasetoV4Local`.
-- [x] Swagger UI — `klauthed-web` `swagger-ui` feature: `serve_swagger_ui`,
-      assets vendored (no network at build/run).
-- [x] Config push-refresh — `ReloadableConfig::start_with_refresh` + a clonable
-      `RefreshTrigger` (`refresh()` reloads immediately, coalesced). Any event
-      source drives it; `klauthed-web`'s `config-refresh` feature ships a built-in
-      `POST /refresh` endpoint (`refresh::serve_refresh`).
-- Kubernetes discovery backend.
-- Actix passkey (WebAuthn) HTTP endpoints in `klauthed-web`.
+- Kubernetes discovery backend (`kube`) — live-cluster integration-tested,
+  alongside the existing Consul/Eureka backends.
+- Actix passkey (WebAuthn) HTTP endpoints in `klauthed-web` — the ceremony
+  routes over the existing `klauthed-security` SPI (needs a ceremony-state-store
+  + post-auth design).
+- More fuzz targets (JWK, full OIDC/SCIM) on the existing harness.
 
 **Docs / adoption**
 - mdBook guide (architecture, getting started, per-area how-tos).
