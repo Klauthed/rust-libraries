@@ -8,6 +8,8 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-18
+
 ### Added
 
 - **Reference service** (`reference-service/`, not published): a small runnable
