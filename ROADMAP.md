@@ -37,7 +37,10 @@ Theme: **harden for 1.0 and round out the web/adoption surface.**
       `PasetoV4Signer`/`PasetoV4Verifier`, sharing the JWT `Claims`. (v4.local TBD.)
 - [x] Swagger UI — `klauthed-web` `swagger-ui` feature: `serve_swagger_ui`,
       assets vendored (no network at build/run).
-- Discovery ↔ config push-refresh (bus event → `ReloadableConfig::reload_now`).
+- [x] Config push-refresh — `ReloadableConfig::start_with_refresh` + a clonable
+      `RefreshTrigger` (`refresh()` reloads immediately, coalesced). Any event
+      source (config-server webhook, discovery / bus event, HTTP `/refresh`)
+      drives it. (A built-in web `/refresh` endpoint is a possible follow-up.)
 - Kubernetes discovery backend.
 - Actix passkey (WebAuthn) HTTP endpoints in `klauthed-web`.
 

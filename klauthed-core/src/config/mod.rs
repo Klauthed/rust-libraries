@@ -39,7 +39,7 @@ pub use map::ConfigMap;
 pub use profile::Profile;
 pub use provider::{ConfigProvider, ProviderKind};
 #[cfg(feature = "hot-reload")]
-pub use reload::ReloadableConfig;
+pub use reload::{RefreshTrigger, ReloadableConfig};
 pub use schema::{
     CacheBackend, CacheConfig, DatabaseConfig, DbSystem, KafkaConfig, KafkaSasl, MessagingBackend,
     MessagingConfig, NatsConfig, NatsCredentials, PoolConfig, RabbitMqConfig, ServerConfig,

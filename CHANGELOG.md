@@ -10,6 +10,12 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Config push-refresh** (`klauthed-core`, feature `hot-reload`):
+  `ReloadableConfig::start_with_refresh` returns a clonable `RefreshTrigger` whose
+  `refresh()` re-resolves the provider chain immediately (coalesced), so a
+  config-server webhook, a discovery / message-bus event, or an HTTP `/refresh`
+  endpoint can push changes live instead of waiting for the poll interval. The
+  periodic refresh remains as a safety net.
 - **Swagger UI** (`klauthed-web`, feature `swagger-ui`): `openapi::serve_swagger_ui`
   mounts an interactive Swagger UI backed by the generated spec, with the UI
   assets vendored into the binary (no build-time or runtime network access).

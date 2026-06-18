@@ -86,6 +86,9 @@ The shared foundation. Modules: `config`, `time`, `context`, `id`, `cqrs`,
 - **`FromConfig`** trait + derive for binding your own structs.
 - **`ReloadableConfig`** (feature `hot-reload`) — re-resolves the chain on an
   interval / on demand, atomically swaps, and notifies subscribers on change.
+  `start_with_refresh` also returns a **`RefreshTrigger`** for **push-refresh**:
+  wire a config-server webhook, a discovery / message-bus event, or an HTTP
+  `/refresh` endpoint to `trigger.refresh()` to reload immediately (coalesced).
 
 ### wiring — application assembly (Spring-style, Rust-idiomatic)
 - **`AppContext`** — a type-keyed registry of shared singletons

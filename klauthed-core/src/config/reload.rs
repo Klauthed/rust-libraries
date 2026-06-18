@@ -9,7 +9,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use tokio::sync::watch;
+use tokio::sync::{mpsc, watch};
 use tokio::task::JoinHandle;
 
 use super::{Config, ConfigBuilder};
@@ -104,6 +104,92 @@ impl ReloadableConfig {
         swap_if_changed(&self.tx, next);
         Ok(())
     }
+
+    /// Like [`start`](Self::start), but also returns a [`RefreshTrigger`] that
+    /// **push-refreshes** on demand — re-resolve immediately when an external
+    /// change signal arrives, instead of waiting for the next interval. Wire the
+    /// trigger to a config-server webhook, a discovery / message-bus event, or an
+    /// HTTP `/refresh` endpoint.
+    ///
+    /// The periodic refresh still runs as a safety net. When the last
+    /// `RefreshTrigger` is dropped the task falls back to interval-only.
+    ///
+    /// ```no_run
+    /// use std::time::Duration;
+    /// use klauthed_core::config::{ConfigBuilder, Profile, ReloadableConfig};
+    ///
+    /// # async fn run() -> Result<(), klauthed_core::error::ConfigError> {
+    /// let builder = ConfigBuilder::new(Profile::detect());
+    /// let (config, trigger) =
+    ///     ReloadableConfig::start_with_refresh(builder, Duration::from_secs(300)).await?;
+    ///
+    /// // … hand `trigger` to an event source; on a "config changed" event:
+    /// trigger.refresh();
+    /// # let _ = config;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    /// Returns [`ConfigError`] if the initial resolve fails.
+    pub async fn start_with_refresh(
+        builder: ConfigBuilder,
+        interval: Duration,
+    ) -> Result<(Self, RefreshTrigger), ConfigError> {
+        let builder = Arc::new(builder.ensure_defaults()?);
+        let initial = Arc::new(builder.resolve().await?);
+        let (tx, rx) = watch::channel(initial);
+        // Capacity 1 ⇒ bursts of signals coalesce into at most one pending reload.
+        let (trigger_tx, mut trigger_rx) = mpsc::channel::<()>(1);
+
+        let task = {
+            let builder = Arc::clone(&builder);
+            let tx = tx.clone();
+            tokio::spawn(async move {
+                let mut ticker = tokio::time::interval(interval);
+                ticker.tick().await; // skip the immediate first tick
+                let mut triggers_open = true;
+                loop {
+                    tokio::select! {
+                        _ = ticker.tick() => {}
+                        signal = trigger_rx.recv(), if triggers_open => {
+                            if signal.is_none() {
+                                // All triggers dropped; keep the periodic refresh.
+                                triggers_open = false;
+                                continue;
+                            }
+                        }
+                    }
+                    match builder.resolve().await {
+                        Ok(next) => swap_if_changed(&tx, next),
+                        Err(error) => {
+                            tracing::warn!(%error, "config reload failed; keeping current values");
+                        }
+                    }
+                }
+            })
+        };
+
+        Ok((Self { builder, tx, rx, task }, RefreshTrigger(trigger_tx)))
+    }
+}
+
+/// A cheap, clonable handle that **push-refreshes** a [`ReloadableConfig`]
+/// created with [`start_with_refresh`](ReloadableConfig::start_with_refresh).
+///
+/// Wire any change signal — a config-server webhook, a discovery / message-bus
+/// event, an HTTP `/refresh` endpoint — to [`refresh`](Self::refresh) to
+/// re-resolve the provider chain immediately.
+#[derive(Clone)]
+pub struct RefreshTrigger(mpsc::Sender<()>);
+
+impl RefreshTrigger {
+    /// Request a reload as soon as possible. Non-blocking and **coalescing**: if
+    /// a refresh is already queued, extra signals are dropped — one reload covers
+    /// them all.
+    pub fn refresh(&self) {
+        let _ = self.0.try_send(());
+    }
 }
 
 impl Drop for ReloadableConfig {
@@ -189,6 +275,34 @@ mod tests {
 
         let mut sub = config.subscribe();
         // The background task should re-resolve and swap within a few intervals.
+        tokio::time::timeout(Duration::from_secs(2), sub.changed()).await.unwrap().unwrap();
+        assert!(config.current().get_raw("version").unwrap().as_u64().unwrap() >= 1);
+    }
+
+    #[tokio::test]
+    async fn refresh_trigger_forces_a_reload() {
+        let builder = ConfigBuilder::new(Profile::Test).with_provider(CountingProvider::default());
+        // A long interval so only the explicit push-refresh causes a change.
+        let (config, trigger) =
+            ReloadableConfig::start_with_refresh(builder, Duration::from_secs(3600)).await.unwrap();
+        assert_eq!(config.current().get_raw("version"), Some(&json!(0)));
+
+        let mut sub = config.subscribe();
+        trigger.refresh();
+
+        tokio::time::timeout(Duration::from_secs(2), sub.changed()).await.unwrap().unwrap();
+        assert_eq!(config.current().get_raw("version"), Some(&json!(1)));
+    }
+
+    #[tokio::test]
+    async fn periodic_refresh_survives_dropping_the_trigger() {
+        let builder = ConfigBuilder::new(Profile::Test).with_provider(CountingProvider::default());
+        let (config, trigger) =
+            ReloadableConfig::start_with_refresh(builder, Duration::from_millis(20)).await.unwrap();
+        // Dropping the only trigger must fall back to interval-only, not kill the task.
+        drop(trigger);
+
+        let mut sub = config.subscribe();
         tokio::time::timeout(Duration::from_secs(2), sub.changed()).await.unwrap().unwrap();
         assert!(config.current().get_raw("version").unwrap().as_u64().unwrap() >= 1);
     }
