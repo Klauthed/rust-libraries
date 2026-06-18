@@ -10,6 +10,11 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Reference service** (`reference-service/`, not published): a small runnable
+  service wiring config + telemetry + the web layer + JWT auth end to end
+  (`/login` issues a token, `/api/me` is `JwtAuth`-protected, health probes via
+  `serve_with_defaults`). A starting template, dogfooding the suite; covered by
+  end-to-end tests.
 - **mdBook guide** (`guide/`): a narrative companion to the reference docs —
   introduction, getting started, architecture & design principles, the
   configuration model, a capability map, and the release/versioning policy. Built

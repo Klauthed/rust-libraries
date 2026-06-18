@@ -41,7 +41,8 @@ Theme: **finish the discovery/auth surface and invest in adoption.**
 - [x] mdBook guide (`guide/`) — introduction, getting started, architecture,
       configuration, capability map, releases; built in CI. (GitHub Pages
       deployment is a possible follow-up.)
-- A reference service dogfooding the full suite end-to-end.
+- [x] A reference service dogfooding the suite end-to-end (`reference-service/`)
+      — config + telemetry + web + JWT auth, with end-to-end tests.
 
 ## Toward 1.0
 

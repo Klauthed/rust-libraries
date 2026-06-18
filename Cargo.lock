@@ -4210,6 +4210,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "reference-service"
+version = "0.4.0"
+dependencies = [
+ "actix-web",
+ "klauthed-core",
+ "klauthed-observability",
+ "klauthed-security",
+ "klauthed-web",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "regex"
 version = "1.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
