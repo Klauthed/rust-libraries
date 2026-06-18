@@ -122,3 +122,12 @@ pub use refresh_token::{
 pub use revocation::{InMemoryTokenDenylist, TokenDenylist};
 pub use session::{InMemorySessionStore, Session, SessionId, SessionStore};
 pub use token::{random_bytes, random_token};
+
+/// Common imports for the security toolkit: `use klauthed_security::prelude::*;`.
+pub mod prelude {
+    pub use crate::{
+        Authorizer, Claims, ClaimsBuilder, EncryptionKey, JwtSigner, JwtVerifier, Permission, Role,
+        RoleRegistry, SecurityError, constant_time_eq, decrypt, encrypt, hash_password,
+        random_token, verify_password,
+    };
+}

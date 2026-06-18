@@ -78,3 +78,12 @@ pub use webhooks::{
     RecordingWebhookSender, WebhookDelivery, WebhookEndpoint, WebhookEndpointId, WebhookEvent,
     WebhookEventId, WebhookSender, sign_payload, verify_signature,
 };
+
+/// Common imports for the platform services: `use klauthed_platform::prelude::*;`.
+pub mod prelude {
+    pub use crate::{
+        Audit, AuditSink, FeatureFlag, FeatureFlags, InMemoryAuditSink, InMemoryFeatureFlags,
+        InMemoryJobQueue, InMemoryTenantResolver, Job, JobQueue, PlatformError, Tenant,
+        TenantResolver, WebhookSender,
+    };
+}

@@ -61,3 +61,10 @@ pub use instance::ServiceInstance;
 pub use kubernetes::KubernetesRegistry;
 pub use picker::RoundRobin;
 pub use registry::{InMemoryRegistry, ServiceRegistry};
+
+/// Common imports for service discovery: `use klauthed_discovery::prelude::*;`.
+pub mod prelude {
+    pub use crate::{
+        DiscoveryError, InMemoryRegistry, RoundRobin, ServiceInstance, ServiceRegistry,
+    };
+}

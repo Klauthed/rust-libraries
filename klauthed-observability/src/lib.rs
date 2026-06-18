@@ -43,6 +43,14 @@ pub use error::ObservabilityError;
 pub use trace::propagation;
 pub use trace::{RecordContext, request_span};
 
+/// Common imports for telemetry setup: `use klauthed_observability::prelude::*;`.
+pub mod prelude {
+    pub use crate::{
+        LogConfig, LogFormat, MetricsConfig, ObservabilityError, OtelConfig, RecordContext,
+        TelemetryConfig, init, request_span,
+    };
+}
+
 use tracing_subscriber::Registry;
 use tracing_subscriber::prelude::*;
 

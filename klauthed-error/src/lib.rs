@@ -49,6 +49,11 @@ mod code;
 pub use category::ErrorCategory;
 pub use code::ErrorCode;
 
+/// Common imports for working with klauthed errors: `use klauthed_error::prelude::*;`.
+pub mod prelude {
+    pub use crate::{DomainError, ErrorCategory, ErrorCode};
+}
+
 /// The contract every klauthed error type implements.
 ///
 /// Concrete error enums stay in their own crates and implement this to plug into

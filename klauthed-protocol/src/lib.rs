@@ -40,6 +40,12 @@ mod error;
 
 pub use error::ProtocolError;
 
+/// Common imports for the protocol wire types: `use klauthed_protocol::prelude::*;`.
+pub mod prelude {
+    pub use crate::ProtocolError;
+    pub use crate::oauth2::{TokenResponse, TokenType};
+}
+
 #[cfg(feature = "oidc")]
 pub mod jwks;
 

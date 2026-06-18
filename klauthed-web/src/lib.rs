@@ -101,3 +101,12 @@ pub use server::{serve, serve_with_components, serve_with_defaults};
 pub use starter::WebStarter;
 #[cfg(feature = "otel")]
 pub use trace::RequestTracing;
+
+/// Common imports for building a klauthed web service: `use klauthed_web::prelude::*;`.
+pub mod prelude {
+    pub use crate::{
+        AppError, AppResult, AuthenticatedUser, Components, Context, HealthCheck, HealthRegistry,
+        HealthStatus, Json, JwtAuth, OptionalAuthentication, RateLimit, RequestContextMiddleware,
+        SecurityHeaders, Validated, serve, serve_with_components, serve_with_defaults,
+    };
+}

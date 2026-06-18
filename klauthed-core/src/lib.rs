@@ -31,3 +31,13 @@ pub mod id;
 pub mod time;
 pub mod validation;
 pub mod wiring;
+
+/// Common imports for a klauthed service: `use klauthed_core::prelude::*;`.
+pub mod prelude {
+    pub use crate::config::{Config, ConfigBuilder, ConfigProvider, FromConfig, Profile};
+    pub use crate::context::RequestContext;
+    pub use crate::id::Id;
+    pub use crate::time::{Clock, Duration, SystemClock, Timestamp};
+    pub use crate::validation::Validate;
+    pub use crate::wiring::{AppBuilder, AppContext, Starter};
+}

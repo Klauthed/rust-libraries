@@ -46,6 +46,11 @@ pub use error::I18nError;
 pub use format::Args;
 pub use locale::Locale;
 
+/// Common imports for i18n: `use klauthed_i18n::prelude::*;`.
+pub mod prelude {
+    pub use crate::{Args, Catalog, I18nError, Locale};
+}
+
 use std::collections::HashMap;
 use std::path::Path;
 

@@ -8,6 +8,15 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Added
+
+- **Per-crate `prelude` modules** — each library crate now exposes a curated
+  `prelude` re-exporting its common types, so a service can
+  `use klauthed_web::prelude::*;` (and likewise for `core`, `error`, `data`,
+  `security`, `observability`, `discovery`, `protocol`, `platform`, `i18n`).
+  Feature-gated items (e.g. the `sql` data types) are included under the matching
+  cfg. First step of the toward-1.0 API-ergonomics pass.
+
 ## [0.4.0] - 2026-06-18
 
 ### Added

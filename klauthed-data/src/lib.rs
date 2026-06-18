@@ -102,6 +102,16 @@ pub use idempotency::{
 pub use locks::{InMemoryLockManager, LockGuard, LockManager, LockToken};
 pub use outbox::{InMemoryOutbox, Outbox, OutboxEntry, OutboxId};
 
+/// Common imports for the data layer: `use klauthed_data::prelude::*;`.
+pub mod prelude {
+    #[cfg(feature = "sql")]
+    pub use crate::{AnyPool, DataStarter, Migration, Migrator};
+    pub use crate::{
+        DataError, IdempotencyStore, InMemoryIdempotencyStore, InMemoryLockManager, InMemoryOutbox,
+        LockGuard, LockManager, LockToken, Outbox, OutboxEntry, OutboxId,
+    };
+}
+
 #[cfg(feature = "sql")]
 pub use outbox::SqlOutbox;
 
