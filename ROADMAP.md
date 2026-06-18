@@ -35,7 +35,8 @@ Theme: **harden for 1.0 and round out the web/adoption surface.**
       built-in endpoints + spec serving; services merge their own paths.
 - [x] PASETO tokens — `klauthed-security` `paseto` feature: v4.public (Ed25519)
       `PasetoV4Signer`/`PasetoV4Verifier`, sharing the JWT `Claims`. (v4.local TBD.)
-- Swagger UI bundling on top of the `openapi` feature.
+- [x] Swagger UI — `klauthed-web` `swagger-ui` feature: `serve_swagger_ui`,
+      assets vendored (no network at build/run).
 - Discovery ↔ config push-refresh (bus event → `ReloadableConfig::reload_now`).
 - Kubernetes discovery backend.
 - Actix passkey (WebAuthn) HTTP endpoints in `klauthed-web`.

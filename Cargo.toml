@@ -126,6 +126,9 @@ dashmap      = "6"
 
 # ── OpenAPI ───────────────────────────────────────────────────────────────────
 utoipa       = { version = "5", features = ["actix_extras"] }
+# `vendored` bundles the Swagger UI assets (no network download at build time);
+# `actix-web` enables the actix `SwaggerUi` service.
+utoipa-swagger-ui = { version = "9", default-features = false, features = ["actix-web", "vendored"] }
 
 # ── Testing ───────────────────────────────────────────────────────────────────
 proptest     = "1"

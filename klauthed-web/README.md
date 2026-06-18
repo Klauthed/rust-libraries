@@ -33,6 +33,8 @@ The HTTP layer every klauthed service shares, built on [actix-web](https://actix
 - **openapi** (feature `openapi`) — generate an OpenAPI 3.1 spec with `utoipa`:
   built-in endpoints ship annotated (`openapi::base_openapi`), `serve_spec`
   exposes the JSON, and `utoipa` is re-exported so services merge their own paths.
+  Feature `swagger-ui` adds `serve_swagger_ui` — an interactive Swagger UI with
+  assets vendored into the binary (no build- or run-time network access).
 
 Optional `data-sql` / `data-redis` features add ready-made health checks and rate-limit
 stores.

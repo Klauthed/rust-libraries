@@ -49,6 +49,38 @@ async fn spec_handler(doc: web::Data<utoipa::openapi::OpenApi>) -> HttpResponse 
     HttpResponse::Ok().json(doc.get_ref())
 }
 
+/// Mount an interactive **Swagger UI** at `ui_path` (e.g. `/swagger-ui`) backed
+/// by `doc`, also serving the spec JSON at `spec_path`. The UI assets are
+/// vendored into the binary — no network access at build or run time.
+/// (feature `swagger-ui`)
+///
+/// ```no_run
+/// use actix_web::{App, HttpServer};
+/// use klauthed_web::openapi;
+///
+/// # async fn run() -> std::io::Result<()> {
+/// HttpServer::new(|| {
+///     App::new().configure(|cfg| {
+///         openapi::serve_swagger_ui(cfg, "/swagger-ui", "/api-docs/openapi.json", openapi::base_openapi());
+///     })
+/// })
+/// .bind(("0.0.0.0", 8080))?
+/// .run()
+/// .await
+/// # }
+/// ```
+#[cfg(feature = "swagger-ui")]
+pub fn serve_swagger_ui(
+    cfg: &mut web::ServiceConfig,
+    ui_path: &str,
+    spec_path: &str,
+    doc: utoipa::openapi::OpenApi,
+) {
+    let pattern = format!("{}/{{_:.*}}", ui_path.trim_end_matches('/'));
+    let ui = utoipa_swagger_ui::SwaggerUi::new(pattern).url(spec_path.to_owned(), doc);
+    cfg.service(ui);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -69,5 +101,33 @@ mod tests {
         assert!(doc.get("openapi").and_then(Value::as_str).is_some_and(|v| v.starts_with("3.")));
         assert!(doc.pointer("/paths/~1health").is_some(), "missing /health path: {doc}");
         assert!(doc.pointer("/paths/~1health~1ready").is_some(), "missing /health/ready path");
+    }
+}
+
+#[cfg(all(test, feature = "swagger-ui"))]
+mod swagger_ui_tests {
+    use super::*;
+    use actix_web::{App, test as http_test};
+
+    #[actix_web::test]
+    async fn serves_swagger_ui_and_spec() {
+        let app = http_test::init_service(App::new().configure(|cfg| {
+            serve_swagger_ui(cfg, "/swagger-ui", "/api-docs/openapi.json", base_openapi());
+        }))
+        .await;
+
+        // The spec JSON is served at the configured path.
+        let req = http_test::TestRequest::get().uri("/api-docs/openapi.json").to_request();
+        let resp = http_test::call_service(&app, req).await;
+        assert!(resp.status().is_success(), "spec: {}", resp.status());
+
+        // The Swagger UI is served (index, or a redirect to it).
+        let req = http_test::TestRequest::get().uri("/swagger-ui/").to_request();
+        let resp = http_test::call_service(&app, req).await;
+        assert!(
+            resp.status().is_success() || resp.status().is_redirection(),
+            "ui: {}",
+            resp.status()
+        );
     }
 }

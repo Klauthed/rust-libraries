@@ -10,6 +10,9 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Swagger UI** (`klauthed-web`, feature `swagger-ui`): `openapi::serve_swagger_ui`
+  mounts an interactive Swagger UI backed by the generated spec, with the UI
+  assets vendored into the binary (no build-time or runtime network access).
 - **PASETO v4 tokens** (`klauthed-security`, feature `paseto`): `PasetoV4Signer` /
   `PasetoV4Verifier` mint and verify v4.public (Ed25519) tokens from the same
   `Claims` as JWT — a misuse-resistant alternative (versioned protocol, no `alg`

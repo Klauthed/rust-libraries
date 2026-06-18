@@ -41,6 +41,10 @@ otel = [
 # as JSON; services merge their own annotated paths into the document.
 openapi = ["dep:utoipa"]
 
+# Serve an interactive Swagger UI (assets vendored into the binary) alongside the
+# generated spec. Implies `openapi`.
+swagger-ui = ["openapi", "dep:utoipa-swagger-ui"]
+
 [dependencies]
 klauthed-error.workspace = true
 klauthed-core.workspace = true
@@ -64,8 +68,9 @@ redis = { workspace = true, optional = true }
 klauthed-observability = { workspace = true, optional = true }
 opentelemetry          = { workspace = true, optional = true }
 tracing-opentelemetry  = { workspace = true, optional = true }
-# OpenAPI spec generation (`openapi` feature).
+# OpenAPI spec generation (`openapi` feature) + bundled Swagger UI (`swagger-ui`).
 utoipa                 = { workspace = true, optional = true }
+utoipa-swagger-ui      = { workspace = true, optional = true }
 
 [dev-dependencies]
 serde_json.workspace = true
