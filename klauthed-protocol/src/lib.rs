@@ -43,6 +43,8 @@ pub use error::ProtocolError;
 /// Common imports for the protocol wire types: `use klauthed_protocol::prelude::*;`.
 pub mod prelude {
     pub use crate::ProtocolError;
+    // The `oauth2` module is gated on the `oidc` feature (which `oauth2` implies).
+    #[cfg(feature = "oidc")]
     pub use crate::oauth2::{TokenResponse, TokenType};
 }
 
