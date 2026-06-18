@@ -1,7 +1,7 @@
 //! Config push-refresh endpoint (`config-refresh` feature).
 //!
 //! [`serve_refresh`] mounts an HTTP route that pokes a
-//! [`RefreshTrigger`](klauthed_core::config::RefreshTrigger), so an operator or a
+//! [`RefreshTrigger`], so an operator or a
 //! config-bus webhook can force a live configuration reload — the Spring Cloud
 //! `/actuator/refresh` analog. Pair it with
 //! [`ReloadableConfig::start_with_refresh`](klauthed_core::config::ReloadableConfig::start_with_refresh).
