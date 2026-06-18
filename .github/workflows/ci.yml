@@ -19,6 +19,7 @@ jobs:
   fmt:
     name: rustfmt
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - name: Check formatting
@@ -27,6 +28,7 @@ jobs:
   clippy:
     name: clippy
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
@@ -38,6 +40,7 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
@@ -49,6 +52,7 @@ jobs:
   docs:
     name: docs
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       RUSTDOCFLAGS: -D warnings
     steps:
@@ -62,6 +66,7 @@ jobs:
   coverage:
     name: coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
@@ -81,6 +86,7 @@ jobs:
   msrv:
     name: msrv (1.95)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
@@ -98,6 +104,7 @@ jobs:
   deny:
     name: cargo-deny
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       # Install a prebuilt cargo-deny from its GitHub release (no Docker Hub
@@ -111,6 +118,7 @@ jobs:
   osv:
     name: osv-scanner
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - uses: taiki-e/install-action@v2
@@ -125,6 +133,7 @@ jobs:
   feature-check:
     name: feature-check
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
@@ -141,6 +150,7 @@ jobs:
   integration:
     name: integration (live infra)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # Spin up the backends the `#[ignore]`d live tests need, so the data-layer
     # and health-check paths are actually exercised — not just compiled.
     services:
