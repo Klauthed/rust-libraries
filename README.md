@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/Klauthed/rust-libraries/actions/workflows/ci.yml/badge.svg)](https://github.com/Klauthed/rust-libraries/actions/workflows/ci.yml)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
+[![Guide](https://img.shields.io/badge/guide-mdBook-brightgreen.svg)](https://klauthed.github.io/rust-libraries/)
 
 A Cargo workspace of `klauthed-*` crates that give Rust services **Spring-Boot-like
 ergonomics** — typed configuration, a uniform error model, pre-built data/security/web
@@ -12,7 +13,8 @@ plumbing, and observability — so each service writes domain logic instead of b
 
 📖 **[CAPABILITIES.md](CAPABILITIES.md)** — a single, guided tour of every crate's
 capabilities, features, and entry points. · 🗺️ **[ROADMAP.md](ROADMAP.md)** — what's
-next. · 📚 **[guide/](guide/)** — the narrative mdBook guide (`mdbook serve guide`).
+next. · 📚 **[Guide](https://klauthed.github.io/rust-libraries/)** — the narrative
+mdBook guide ([source](guide/); or `mdbook serve guide` to read it locally).
 
 ## Crates
 
