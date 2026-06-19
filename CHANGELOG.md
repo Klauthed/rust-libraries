@@ -8,6 +8,8 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-19
+
 ### Added
 
 - **Interval scheduler** (`klauthed-platform`, `scheduler` feature; `scheduler` on
