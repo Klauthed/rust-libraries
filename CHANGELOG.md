@@ -14,7 +14,9 @@ All crates share a single version and are released together.
   `cargo klauthed new <name>` subcommand generates a ready-to-run actix-web
   service (config + telemetry + web with `/hello` and the framework health
   probes, plus tests, config, and a README). The generated project depends on the
-  umbrella `klauthed` crate at the matching `major.minor`.
+  umbrella `klauthed` crate at the matching `major.minor`. A `--with-jwt` flag
+  scaffolds JWT auth instead — a `/login` endpoint plus a protected `/api/me`
+  route (enabling the `security` feature).
 
 ## [0.5.0] - 2026-06-19
 

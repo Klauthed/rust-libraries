@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 # One dependency, feature-gated. Add `data`, `security`, `discovery`, … as you grow;
 # see https://klauthed.github.io/rust-libraries/ for the feature map.
-klauthed = { version = "__KLAUTHED_REQ__", features = ["core", "web", "observability"] }
+klauthed = { version = "__KLAUTHED_REQ__", features = [__FEATURES__] }
 
 actix-web = "4"
 tokio = { version = "1", features = ["full"] }

@@ -39,6 +39,10 @@ enum Command {
         /// Directory to create the service in (default: `./<name>`).
         #[arg(long)]
         path: Option<PathBuf>,
+        /// Include JWT authentication: a `/login` endpoint and a protected
+        /// `/api/me` route (enables the `security` feature).
+        #[arg(long)]
+        with_jwt: bool,
     },
 }
 
@@ -52,9 +56,10 @@ fn main() -> ExitCode {
     }
 
     match Cli::parse_from(args).command {
-        Command::New { name, path } => {
+        Command::New { name, path, with_jwt } => {
             let dir = path.unwrap_or_else(|| PathBuf::from(&name));
-            match scaffold::scaffold(&name, &dir) {
+            let options = scaffold::Options { with_jwt };
+            match scaffold::scaffold(&name, &dir, &options) {
                 Ok(_) => {
                     print_success(&name, &dir);
                     ExitCode::SUCCESS

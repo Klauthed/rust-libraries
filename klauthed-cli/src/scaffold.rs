@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 // `__KLAUTHED_REQ__`.
 const CARGO_TMPL: &str = include_str!("../templates/Cargo.toml.tmpl");
 const MAIN_TMPL: &str = include_str!("../templates/main.rs.tmpl");
+const MAIN_JWT_TMPL: &str = include_str!("../templates/main.jwt.rs.tmpl");
 const CONFIG_TMPL: &str = include_str!("../templates/config.default.toml.tmpl");
 const GITIGNORE_TMPL: &str = include_str!("../templates/gitignore.tmpl");
 const README_TMPL: &str = include_str!("../templates/README.md.tmpl");
@@ -53,6 +54,24 @@ impl std::error::Error for ScaffoldError {
     }
 }
 
+/// Options controlling what a scaffolded service includes.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Options {
+    /// Include JWT authentication: the `security` feature plus `/login` and a
+    /// JWT-protected `/api/me` route.
+    pub with_jwt: bool,
+}
+
+/// The `klauthed` features the generated project enables, as a TOML array body
+/// (e.g. `"core", "web", "observability"`).
+fn feature_list(options: &Options) -> String {
+    let mut features = vec!["core", "web", "observability"];
+    if options.with_jwt {
+        features.push("security");
+    }
+    features.iter().map(|f| format!("\"{f}\"")).collect::<Vec<_>>().join(", ")
+}
+
 /// The `major.minor` klauthed version requirement that generated projects depend
 /// on. Derived from this CLI's own version, since the whole suite shares one
 /// version and ships together (CLI `0.6.x` scaffolds against `klauthed = "0.6"`).
@@ -77,19 +96,23 @@ pub fn validate_name(name: &str) -> Result<(), ScaffoldError> {
     }
 }
 
-fn render(template: &str, name: &str) -> String {
-    template.replace("__NAME__", name).replace("__KLAUTHED_REQ__", &klauthed_req())
+fn render(template: &str, name: &str, options: &Options) -> String {
+    template
+        .replace("__NAME__", name)
+        .replace("__KLAUTHED_REQ__", &klauthed_req())
+        .replace("__FEATURES__", &feature_list(options))
 }
 
 /// The files a scaffolded service is made of, as `(relative path, rendered
 /// contents)`. Pure (no I/O) so it can be unit-tested.
-fn files(name: &str) -> Vec<(PathBuf, String)> {
+fn files(name: &str, options: &Options) -> Vec<(PathBuf, String)> {
+    let main_template = if options.with_jwt { MAIN_JWT_TMPL } else { MAIN_TMPL };
     vec![
-        (PathBuf::from("Cargo.toml"), render(CARGO_TMPL, name)),
-        (["src", "main.rs"].iter().collect(), render(MAIN_TMPL, name)),
-        (["config", "default.toml"].iter().collect(), render(CONFIG_TMPL, name)),
-        (PathBuf::from(".gitignore"), render(GITIGNORE_TMPL, name)),
-        (PathBuf::from("README.md"), render(README_TMPL, name)),
+        (PathBuf::from("Cargo.toml"), render(CARGO_TMPL, name, options)),
+        (["src", "main.rs"].iter().collect(), render(main_template, name, options)),
+        (["config", "default.toml"].iter().collect(), render(CONFIG_TMPL, name, options)),
+        (PathBuf::from(".gitignore"), render(GITIGNORE_TMPL, name, options)),
+        (PathBuf::from("README.md"), render(README_TMPL, name, options)),
     ]
 }
 
@@ -101,7 +124,7 @@ fn files(name: &str) -> Vec<(PathBuf, String)> {
 /// # Errors
 /// Returns [`ScaffoldError`] if the name is invalid, the target is non-empty, or
 /// a filesystem operation fails.
-pub fn scaffold(name: &str, dir: &Path) -> Result<Vec<PathBuf>, ScaffoldError> {
+pub fn scaffold(name: &str, dir: &Path, options: &Options) -> Result<Vec<PathBuf>, ScaffoldError> {
     validate_name(name)?;
 
     if dir.exists() {
@@ -113,7 +136,7 @@ pub fn scaffold(name: &str, dir: &Path) -> Result<Vec<PathBuf>, ScaffoldError> {
     }
 
     let mut written = Vec::new();
-    for (rel, contents) in files(name) {
+    for (rel, contents) in files(name, options) {
         let target = dir.join(&rel);
         write_file(&target, &contents)?;
         written.push(rel);
@@ -146,15 +169,32 @@ mod tests {
 
     #[test]
     fn templates_render_the_name_and_version() {
-        let cargo = render(CARGO_TMPL, "my-service");
+        let opts = Options::default();
+        let cargo = render(CARGO_TMPL, "my-service", &opts);
         assert!(cargo.contains("name = \"my-service\""));
         assert!(cargo.contains(&format!("klauthed = {{ version = \"{}\"", klauthed_req())));
         assert!(!cargo.contains("__NAME__"));
         assert!(!cargo.contains("__KLAUTHED_REQ__"));
+        assert!(!cargo.contains("__FEATURES__"));
 
-        let main = render(MAIN_TMPL, "my-service");
+        let main = render(MAIN_TMPL, "my-service", &opts);
         assert!(main.contains("hello from my-service"));
         assert!(!main.contains("__NAME__"));
+    }
+
+    #[test]
+    fn with_jwt_adds_the_security_feature_and_auth_routes() {
+        let opts = Options { with_jwt: true };
+        let cargo = render(CARGO_TMPL, "svc", &opts);
+        assert!(cargo.contains("\"security\""), "jwt scaffold enables the security feature");
+
+        let main = render(MAIN_JWT_TMPL, "svc", &opts);
+        assert!(main.contains("/login") && main.contains("/api"));
+        assert!(main.contains("JwtSigner") && main.contains("JwtAuth"));
+
+        // The default (no-jwt) scaffold stays minimal.
+        let base = render(CARGO_TMPL, "svc", &Options::default());
+        assert!(!base.contains("\"security\""));
     }
 
     #[test]

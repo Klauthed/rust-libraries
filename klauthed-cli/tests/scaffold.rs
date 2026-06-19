@@ -52,6 +52,29 @@ fn new_via_cargo_subcommand_argv_is_accepted() {
 }
 
 #[test]
+fn new_with_jwt_includes_auth() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let dir = tmp.path().join("svc");
+
+    let status = Command::new(BIN)
+        .arg("new")
+        .arg("authy")
+        .arg("--with-jwt")
+        .arg("--path")
+        .arg(&dir)
+        .status()
+        .expect("run cargo-klauthed");
+    assert!(status.success());
+
+    let cargo = fs::read_to_string(dir.join("Cargo.toml")).expect("read Cargo.toml");
+    assert!(cargo.contains("\"security\""), "jwt scaffold enables the security feature");
+
+    let main = fs::read_to_string(dir.join("src/main.rs")).expect("read main.rs");
+    assert!(main.contains("/login"));
+    assert!(main.contains("JwtAuth"));
+}
+
+#[test]
 fn new_refuses_a_nonempty_target() {
     let tmp = tempfile::tempdir().expect("tempdir");
     fs::write(tmp.path().join("existing"), "x").expect("seed file");

@@ -40,8 +40,9 @@ The fastest path to a running service is the scaffolding CLI:
 
 ```sh
 cargo install klauthed-cli
-cargo klauthed new my-service   # generates ./my-service
-cd my-service && cargo run      # serves /hello, /health, /health/ready
+cargo klauthed new my-service              # generates ./my-service
+cargo klauthed new my-api --with-jwt       # …or with a /login + protected /api/me
+cd my-service && cargo run                 # serves /hello, /health, /health/ready
 ```
 
 Or add the umbrella crate to an existing project and turn on the pieces you need:
