@@ -125,3 +125,84 @@ impl<E> Default for EventLog<E> {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct Opened;
+    impl DomainEvent for Opened {
+        fn event_type(&self) -> &'static str {
+            "account.opened"
+        }
+    }
+
+    struct Migrated;
+    impl DomainEvent for Migrated {
+        fn event_type(&self) -> &'static str {
+            "account.migrated"
+        }
+        fn schema_version(&self) -> u32 {
+            3
+        }
+    }
+
+    #[test]
+    fn domain_event_schema_version_defaults_to_one_and_can_override() {
+        assert_eq!(Opened.schema_version(), 1);
+        assert_eq!(Migrated.schema_version(), 3);
+    }
+
+    #[test]
+    fn event_log_records_takes_and_tracks_version() {
+        let mut log: EventLog<&str> = EventLog::new();
+        assert_eq!(log.version(), 0);
+        assert!(log.is_empty());
+        assert_eq!(log.len(), 0);
+
+        log.record("e1");
+        log.record("e2");
+        assert_eq!(log.version(), 2);
+        assert_eq!(log.len(), 2);
+        assert!(!log.is_empty());
+        assert_eq!(log.pending(), &["e1", "e2"]);
+
+        // `take` drains pending events but leaves the (persistent) version.
+        let taken = log.take();
+        assert_eq!(taken, vec!["e1", "e2"]);
+        assert!(log.is_empty());
+        assert_eq!(log.version(), 2);
+
+        // Recording continues to advance the version after a take.
+        log.record("e3");
+        assert_eq!(log.version(), 3);
+        assert_eq!(log.pending(), &["e3"]);
+    }
+
+    #[test]
+    fn event_log_with_version_and_default() {
+        let log: EventLog<&str> = EventLog::with_version(7);
+        assert_eq!(log.version(), 7);
+        assert!(log.is_empty());
+
+        let default: EventLog<&str> = EventLog::default();
+        assert_eq!(default.version(), 0);
+        assert!(default.is_empty());
+    }
+
+    #[test]
+    fn event_envelope_wraps_payload_with_metadata() {
+        let occurred_at = Timestamp::from_unix_seconds(1_700_000_000);
+        let envelope = EventEnvelope::new("acct-1".to_owned(), "Account", 5, occurred_at, Opened);
+
+        assert_eq!(envelope.event_type, "account.opened");
+        assert_eq!(envelope.aggregate_id, "acct-1");
+        assert_eq!(envelope.aggregate_type, "Account");
+        assert_eq!(envelope.sequence, 5);
+        assert_eq!(envelope.occurred_at, occurred_at);
+
+        // Each occurrence mints a distinct id.
+        let other = EventEnvelope::new("acct-1".to_owned(), "Account", 6, occurred_at, Opened);
+        assert_ne!(envelope.event_id, other.event_id);
+    }
+}

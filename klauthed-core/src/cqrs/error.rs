@@ -63,3 +63,43 @@ impl DomainError for CqrsError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Debug)]
+    struct SampleError;
+    impl std::fmt::Display for SampleError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "sample handler failure")
+        }
+    }
+    impl std::error::Error for SampleError {}
+    impl DomainError for SampleError {
+        fn category(&self) -> ErrorCategory {
+            ErrorCategory::BadRequest
+        }
+        fn code(&self) -> ErrorCode {
+            ErrorCode::from("sample.error")
+        }
+    }
+
+    #[test]
+    fn no_handler_is_internal_with_a_stable_code_and_no_source() {
+        let err = CqrsError::no_handler::<String>();
+        assert_eq!(err.category(), ErrorCategory::Internal);
+        assert_eq!(err.code().as_str(), "cqrs.no_handler");
+        assert!(err.to_string().contains("no handler registered"));
+        assert!(std::error::Error::source(&err).is_none());
+    }
+
+    #[test]
+    fn handler_delegates_category_code_display_and_source() {
+        let err = CqrsError::handler(SampleError);
+        assert_eq!(err.category(), ErrorCategory::BadRequest);
+        assert_eq!(err.code().as_str(), "sample.error");
+        assert_eq!(err.to_string(), "sample handler failure");
+        assert!(std::error::Error::source(&err).is_some());
+    }
+}
