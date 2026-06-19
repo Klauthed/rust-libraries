@@ -49,7 +49,8 @@ impl Scheduler {
     }
 
     /// Register `task` to run every `period`. The first run happens one `period`
-    /// after [`start`](Self::start) (not immediately).
+    /// after [`start`](Self::start) (not immediately). Runs are sequential per
+    /// task; a panic in one run is isolated and the schedule continues.
     #[must_use]
     pub fn every<F, Fut>(mut self, period: Duration, task: F) -> Self
     where
@@ -87,7 +88,12 @@ fn spawn_task(period: Duration, task: TaskFn, mut stop: watch::Receiver<()>) -> 
         ticker.tick().await;
         loop {
             tokio::select! {
-                _ = ticker.tick() => task().await,
+                _ = ticker.tick() => {
+                    // Run each tick in its own task and await it, so a panic in one
+                    // run is isolated (surfaces as a JoinError) and the recurring
+                    // schedule keeps going instead of silently dying.
+                    let _ = tokio::spawn(task()).await;
+                }
                 // Resolves when the handle signals stop or is dropped (sender gone).
                 _ = stop.changed() => break,
             }
@@ -155,6 +161,35 @@ mod tests {
         tokio::time::advance(Duration::from_secs(120)).await;
         tokio::task::yield_now().await;
         assert!(rx.try_recv().is_err(), "no runs after shutdown");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_panicking_run_does_not_stop_the_schedule() {
+        let (tx, mut rx) = mpsc::unbounded_channel::<u32>();
+        let runs = std::sync::atomic::AtomicU32::new(0);
+        let runs = Arc::new(runs);
+        let handle = Scheduler::new()
+            .every(Duration::from_secs(10), move || {
+                let tx = tx.clone();
+                let runs = runs.clone();
+                async move {
+                    let n = runs.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                    let _ = tx.send(n);
+                    if n == 0 {
+                        panic!("boom on the first run");
+                    }
+                }
+            })
+            .start();
+
+        tokio::time::advance(Duration::from_secs(10)).await;
+        assert_eq!(rx.recv().await, Some(0), "first run executed (and panics)");
+
+        // Despite the panic, the schedule keeps going.
+        tokio::time::advance(Duration::from_secs(10)).await;
+        assert_eq!(rx.recv().await, Some(1), "schedule survived the panic");
+
+        handle.shutdown().await;
     }
 
     #[tokio::test(start_paused = true)]
