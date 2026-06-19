@@ -12,7 +12,7 @@ use crate::error::DataError;
 /// Returns [`DataError::UnsupportedMessagingBackend`] if the config selects a
 /// different broker. Credentials, TLS, the connection timeout and the reconnect
 /// budget are all taken from the typed config.
-pub async fn connect_nats(config: &MessagingConfig) -> Result<Client, DataError> {
+pub async fn connect(config: &MessagingConfig) -> Result<Client, DataError> {
     let MessagingConfig::Nats(nats) = config else {
         return Err(DataError::UnsupportedMessagingBackend(config.backend()));
     };
@@ -64,7 +64,7 @@ mod tests {
     #[tokio::test]
     async fn rejects_non_nats_backend() {
         let config = MessagingConfig::Kafka(KafkaConfig::default());
-        let err = connect_nats(&config).await.unwrap_err();
+        let err = connect(&config).await.unwrap_err();
         assert!(matches!(err, DataError::UnsupportedMessagingBackend(_)));
     }
 

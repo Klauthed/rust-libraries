@@ -13,7 +13,7 @@ use crate::error::DataError;
 /// are honored.
 /// lapin 4.x integrates with the ambient tokio runtime, so no executor setup is
 /// required.
-pub async fn connect_rabbitmq(config: &MessagingConfig) -> Result<Connection, DataError> {
+pub async fn connect(config: &MessagingConfig) -> Result<Connection, DataError> {
     let MessagingConfig::RabbitMq(rabbit) = config else {
         return Err(DataError::UnsupportedMessagingBackend(config.backend()));
     };
@@ -32,7 +32,7 @@ mod tests {
     #[tokio::test]
     async fn rejects_non_rabbitmq_backend() {
         let config = MessagingConfig::Nats(NatsConfig::default());
-        let err = connect_rabbitmq(&config).await.unwrap_err();
+        let err = connect(&config).await.unwrap_err();
         assert!(matches!(err, DataError::UnsupportedMessagingBackend(_)));
     }
 }

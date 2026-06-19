@@ -18,6 +18,14 @@ All crates share a single version and are released together.
   schedule alongside interval tasks. The CLI's `--with-scheduler` scaffold now
   demonstrates both an interval and a cron task.
 
+### Changed
+
+- **`klauthed-data` messaging connectors** — the per-backend modules now expose a
+  plain `connect` (`messaging::nats::connect`) instead of a stuttering
+  `connect_nats`; the canonical `messaging::connect_nats` / `connect_rabbitmq` /
+  `connect_kafka` paths are unchanged (re-exported). Documented the suite's API
+  naming conventions in CONTRIBUTING.
+
 ## [0.6.0] - 2026-06-19
 
 ### Added

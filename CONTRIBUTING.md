@@ -121,6 +121,28 @@ needs a one-time bootstrap before the CI release can manage it:
 From then on the normal tag-triggered release publishes it via OIDC like every
 other crate.
 
+## API conventions
+
+Naming patterns the crates follow, so new code stays consistent:
+
+- **Constructors** — `T::new(…)` for the common case; `T::builder() -> TBuilder`
+  for types with many optional fields. Conversions are `from_*` / `try_from_*`.
+- **Builder/setter methods** — a consuming setter named after the field
+  (`Claims::builder(…).issuer("…").audience("…")`) returning `Self` and marked
+  `#[must_use]`. Reserve the `with_*` prefix for configuring an *already
+  constructed* value (e.g. `ConfigBuilder::with_provider`) or to disambiguate.
+- **Accessors** — a field accessor is named after the field, no `get_` prefix
+  (`event.action()`, not `get_action()`). The `get_*` prefix is only for **keyed**
+  lookups (`Config::get_string(key)`, like `HashMap::get`).
+- **Errors** — one `<Crate>Error` per crate (e.g. `DataError`), with finer-grained
+  per-area errors inside larger crates (`ConfigError`, `ValidationError`).
+  `klauthed_web::AppError` is the HTTP-facing application error.
+- **Connectors** (`klauthed-data`) — `<module>::connect(&config)` when a module
+  has a single backend (`db::connect`, `storage::connect`); `connect_<backend>`
+  when it has several (`messaging::connect_nats`, `cache::connect_redis`).
+- **Preludes** — every crate exposes `prelude` with its common types, and
+  re-exports its workhorse types at the crate root.
+
 ## Stability policy
 
 What the suite commits to. These tighten at 1.0; the pre-1.0 caveats note where

@@ -14,7 +14,7 @@ use crate::error::DataError;
 /// Returns [`DataError::UnsupportedMessagingBackend`] for a different broker.
 /// TLS is reported as unsupported rather than silently downgraded — wiring it
 /// needs a `rustls::ClientConfig`, which this connector does not yet build.
-pub async fn connect_kafka(config: &MessagingConfig) -> Result<Client, DataError> {
+pub async fn connect(config: &MessagingConfig) -> Result<Client, DataError> {
     let MessagingConfig::Kafka(kafka) = config else {
         return Err(DataError::UnsupportedMessagingBackend(config.backend()));
     };
@@ -59,14 +59,14 @@ mod tests {
     #[tokio::test]
     async fn rejects_non_kafka_backend() {
         let config = MessagingConfig::Nats(NatsConfig::default());
-        let err = connect_kafka(&config).await.unwrap_err();
+        let err = connect(&config).await.unwrap_err();
         assert!(matches!(err, DataError::UnsupportedMessagingBackend(_)));
     }
 
     #[tokio::test]
     async fn rejects_tls_until_supported() {
         let config = MessagingConfig::Kafka(KafkaConfig { tls: true, ..Default::default() });
-        let err = connect_kafka(&config).await.unwrap_err();
+        let err = connect(&config).await.unwrap_err();
         assert!(matches!(err, DataError::Messaging(_)));
     }
 
