@@ -1,0 +1,78 @@
+#![deny(unsafe_code)]
+#![deny(missing_docs)]
+#![cfg_attr(
+    not(test),
+    deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing)
+)]
+
+//! `cargo-klauthed` — scaffolding CLI for the [klauthed](https://klauthed.github.io/rust-libraries/)
+//! framework.
+//!
+//! Installed as a cargo subcommand (`cargo install klauthed-cli`), so:
+//!
+//! ```sh
+//! cargo klauthed new my-service   # generates ./my-service, ready to `cargo run`
+//! ```
+
+mod scaffold;
+
+use std::path::PathBuf;
+use std::process::ExitCode;
+
+use clap::{Parser, Subcommand};
+
+/// Scaffolding CLI for the klauthed framework.
+#[derive(Parser)]
+#[command(name = "cargo-klauthed", bin_name = "cargo klauthed", version, about)]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    /// Scaffold a new klauthed service into a new directory.
+    New {
+        /// Name of the service (also the crate name): letters, digits, `-`/`_`,
+        /// starting with a letter.
+        name: String,
+        /// Directory to create the service in (default: `./<name>`).
+        #[arg(long)]
+        path: Option<PathBuf>,
+    },
+}
+
+fn main() -> ExitCode {
+    // When invoked as `cargo klauthed …`, cargo runs us with argv
+    // `[cargo-klauthed, klauthed, …]`; drop the injected subcommand name so the
+    // binary also works when run directly as `cargo-klauthed …`.
+    let mut args: Vec<std::ffi::OsString> = std::env::args_os().collect();
+    if args.get(1).and_then(|a| a.to_str()) == Some("klauthed") {
+        args.remove(1);
+    }
+
+    match Cli::parse_from(args).command {
+        Command::New { name, path } => {
+            let dir = path.unwrap_or_else(|| PathBuf::from(&name));
+            match scaffold::scaffold(&name, &dir) {
+                Ok(_) => {
+                    print_success(&name, &dir);
+                    ExitCode::SUCCESS
+                }
+                Err(error) => {
+                    eprintln!("error: {error}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+    }
+}
+
+fn print_success(name: &str, dir: &std::path::Path) {
+    let dir = dir.display();
+    println!("Created klauthed service '{name}' at {dir}\n");
+    println!("  cd {dir}");
+    println!("  cargo run\n");
+    println!("Then try:  curl localhost:8080/hello");
+    println!("Docs:      https://klauthed.github.io/rust-libraries/");
+}

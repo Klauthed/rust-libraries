@@ -1,0 +1,24 @@
+[package]
+name = "klauthed-cli"
+version = "0.6.0"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Scaffolding CLI for the klauthed framework: `cargo klauthed new <name>` generates a ready-to-run service."
+keywords = ["klauthed", "scaffold", "generator", "cargo-subcommand", "cli"]
+categories = ["command-line-utilities", "development-tools::cargo-plugins"]
+
+# Installed as a cargo subcommand: `cargo install klauthed-cli` puts `cargo-klauthed`
+# on PATH, so `cargo klauthed new my-service` works (and the binary also runs
+# directly as `cargo-klauthed new my-service`).
+[[bin]]
+name = "cargo-klauthed"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

@@ -1,0 +1,14 @@
+[package]
+name = "__NAME__"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# One dependency, feature-gated. Add `data`, `security`, `discovery`, … as you grow;
+# see https://klauthed.github.io/rust-libraries/ for the feature map.
+klauthed = { version = "__KLAUTHED_REQ__", features = ["core", "web", "observability"] }
+
+actix-web = "4"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+serde = { version = "1", features = ["derive"] }

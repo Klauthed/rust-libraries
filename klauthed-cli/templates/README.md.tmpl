@@ -1,0 +1,39 @@
+# __NAME__
+
+A [klauthed](https://klauthed.github.io/rust-libraries/) service, scaffolded with
+`cargo klauthed new`.
+
+## Run
+
+```sh
+cargo run
+```
+
+The server binds the address from `config/default.toml` (default
+`0.0.0.0:8080`). Then:
+
+```sh
+curl localhost:8080/hello          # -> {"message":"hello from __NAME__"}
+curl localhost:8080/health         # liveness  (provided by the framework)
+curl localhost:8080/health/ready   # readiness (provided by the framework)
+```
+
+## Test
+
+```sh
+cargo test
+```
+
+## Layout
+
+| Path                  | What                                                       |
+|-----------------------|------------------------------------------------------------|
+| `src/main.rs`         | Service entry point: config + telemetry + routes.          |
+| `config/default.toml` | Base configuration; override per-profile or via env vars.  |
+
+## Next steps
+
+Add more of the framework by turning on `klauthed` features in `Cargo.toml`
+(`data`, `security`, `discovery`, `platform`, …) — see the
+[guide](https://klauthed.github.io/rust-libraries/) for the full feature map and
+how to wire databases, JWT auth, and more.

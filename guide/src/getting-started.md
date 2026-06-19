@@ -1,12 +1,28 @@
 # Getting started
 
+## Scaffold a new service
+
+The quickest start is the scaffolding CLI, installed as a cargo subcommand:
+
+```sh
+cargo install klauthed-cli
+cargo klauthed new my-service
+cd my-service && cargo run
+```
+
+This generates a ready-to-run service — `Cargo.toml`, `src/main.rs`,
+`config/default.toml`, a README, and tests — that already serves `/hello` plus
+the framework's `/health` and `/health/ready` probes. Grow it by enabling more
+`klauthed` features (below). The rest of this page shows what that wiring looks
+like by hand.
+
 ## Add the dependency
 
 Depend on the umbrella crate and enable the pieces you need as cargo features:
 
 ```toml
 [dependencies]
-klauthed = { version = "0.3", features = ["web", "data", "security", "observability"] }
+klauthed = { version = "0.6", features = ["web", "data", "security", "observability"] }
 ```
 
 Each top-level feature re-exports the matching crate as a module

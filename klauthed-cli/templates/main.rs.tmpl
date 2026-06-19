@@ -1,0 +1,76 @@
+//! __NAME__ — a klauthed service.
+//!
+//! Wires profile-aware configuration, telemetry, and the actix-web layer with
+//! health probes and uniform error rendering. `serve_with_defaults` already
+//! mounts `GET /health` and `GET /health/ready` and the request-context
+//! middleware, so `configure` only adds this service's own routes.
+//!
+//! Run it with `cargo run`. Configuration is read from `config/default.toml`
+//! (and `config/{profile}.toml`, then environment variables) — see the guide at
+//! https://klauthed.github.io/rust-libraries/.
+
+use actix_web::{HttpResponse, web};
+use klauthed::core::config::{ConfigBuilder, Profile};
+use klauthed::observability::TelemetryConfig;
+use serde::Serialize;
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    let profile = Profile::detect();
+
+    // Telemetry first, so config loading and binding are traced.
+    let telemetry = TelemetryConfig::for_profile(&profile, "__NAME__");
+    let _telemetry = klauthed::observability::init(&telemetry).expect("telemetry init");
+
+    // `build()` applies the conventional provider chain (config/default.toml,
+    // config/{profile}.toml, then environment) when none are registered.
+    let config = ConfigBuilder::new(profile).build().await.expect("configuration");
+    let server = config.server().unwrap_or_default();
+
+    tracing::info!(bind = %server.bind_address(), "__NAME__ starting");
+    klauthed::web::server::serve_with_defaults(&server, configure)?.await
+}
+
+/// Register this service's routes and app data. Health probes and the
+/// request-context middleware are already mounted by `serve_with_defaults`.
+///
+/// Handlers can return `Result<HttpResponse, klauthed::web::AppError>` to get the
+/// framework's uniform JSON error rendering for free.
+fn configure(cfg: &mut web::ServiceConfig) {
+    cfg.route("/hello", web::get().to(hello));
+}
+
+#[derive(Serialize)]
+struct Hello {
+    message: String,
+}
+
+async fn hello() -> HttpResponse {
+    HttpResponse::Ok().json(Hello { message: "hello from __NAME__".to_owned() })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::http::StatusCode;
+    use actix_web::{App, test};
+
+    #[actix_web::test]
+    async fn health_is_up() {
+        let app = test::init_service(
+            App::new().configure(klauthed::web::health::configure).configure(configure),
+        )
+        .await;
+        let req = test::TestRequest::get().uri("/health").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::OK);
+    }
+
+    #[actix_web::test]
+    async fn hello_returns_ok() {
+        let app = test::init_service(App::new().configure(configure)).await;
+        let req = test::TestRequest::get().uri("/hello").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::OK);
+    }
+}

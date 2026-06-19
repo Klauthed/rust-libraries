@@ -36,6 +36,8 @@ tracks intent, not a commitment — scope shifts as we learn.
 
 Theme: **continue toward a stable 1.0.**
 
+- [x] Service scaffolding CLI (`klauthed-cli`): `cargo klauthed new <name>`
+      generates a ready-to-run service.
 - API consistency: naming conventions and re-export-completeness review per crate
   (the `#[must_use]` builder pass landed in 0.5.0).
 - Broaden test / fuzz / property coverage on the remaining surface.

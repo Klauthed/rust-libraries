@@ -8,6 +8,14 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Added
+
+- **`klauthed-cli` — service scaffolding** (`cargo install klauthed-cli`): the
+  `cargo klauthed new <name>` subcommand generates a ready-to-run actix-web
+  service (config + telemetry + web with `/hello` and the framework health
+  probes, plus tests, config, and a README). The generated project depends on the
+  umbrella `klauthed` crate at the matching `major.minor`.
+
 ## [0.5.0] - 2026-06-19
 
 ### Added
