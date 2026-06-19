@@ -11,7 +11,7 @@
 //! # async fn run() {
 //! let handle = Scheduler::new()
 //!     .every(Duration::from_secs(60), || async {
-//!         tracing::info!("minutely tick");
+//!         // … do periodic work …
 //!     })
 //!     .start();
 //!
