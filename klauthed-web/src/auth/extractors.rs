@@ -179,3 +179,89 @@ impl FromRequest for OptionalAuthentication {
         ready(Ok(OptionalAuthentication(claims)))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::dev::Payload;
+    use actix_web::test::TestRequest;
+    use klauthed_core::time::{Duration, SystemClock};
+
+    fn claims_with(sub: &str, scope: Option<&str>) -> Claims {
+        let mut builder = Claims::builder(sub, &SystemClock, Duration::hours(1));
+        if let Some(scope) = scope {
+            builder = builder.claim("scope", scope);
+        }
+        builder.build()
+    }
+
+    #[actix_web::test]
+    async fn authenticated_user_extracts_present_claims() {
+        let req = TestRequest::default().to_http_request();
+        req.extensions_mut().insert(claims_with("alice", None));
+
+        let user = AuthenticatedUser::from_request(&req, &mut Payload::None).await.unwrap();
+        assert_eq!(user.sub(), Some("alice"));
+        assert_eq!(user.claims().sub.as_deref(), Some("alice"));
+        // `Deref<Target = Claims>` reaches Claims fields directly.
+        assert!(user.custom.is_empty());
+        // `From<AuthenticatedUser>` and `into_claims` both yield the owned claims.
+        let from_into: Claims = user.clone().into();
+        assert_eq!(from_into.sub.as_deref(), Some("alice"));
+        assert_eq!(user.into_claims().sub.as_deref(), Some("alice"));
+    }
+
+    #[actix_web::test]
+    async fn authenticated_user_without_claims_is_unauthorized() {
+        let req = TestRequest::default().to_http_request();
+        let result = AuthenticatedUser::from_request(&req, &mut Payload::None).await;
+        assert!(result.is_err(), "missing claims must be rejected");
+    }
+
+    #[test]
+    fn scopes_are_parsed_and_required() {
+        let user = AuthenticatedUser(claims_with("svc", Some("read write admin")));
+        assert_eq!(user.scopes(), vec!["read", "write", "admin"]);
+        assert!(user.has_scope("read"));
+        assert!(user.has_scopes(&["read", "admin"]));
+        assert!(!user.has_scope("delete"));
+        assert!(user.require_scope("write").is_ok());
+        assert!(user.require_scopes(&["read", "write"]).is_ok());
+        assert!(user.require_scope("delete").is_err());
+        assert!(user.require_scopes(&["read", "delete"]).is_err());
+    }
+
+    #[test]
+    fn missing_scope_claim_yields_no_scopes() {
+        let user = AuthenticatedUser(claims_with("svc", None));
+        assert!(user.scopes().is_empty());
+        assert!(!user.has_scope("read"));
+        assert!(user.require_scope("read").is_err());
+    }
+
+    #[test]
+    fn non_string_scope_claim_yields_no_scopes() {
+        let mut claims = claims_with("svc", None);
+        claims.custom.insert("scope".into(), serde_json::json!(42));
+        let user = AuthenticatedUser(claims);
+        assert!(user.scopes().is_empty());
+    }
+
+    #[actix_web::test]
+    async fn optional_authentication_reflects_presence() {
+        // Authenticated request.
+        let req = TestRequest::default().to_http_request();
+        req.extensions_mut().insert(claims_with("bob", None));
+        let auth = OptionalAuthentication::from_request(&req, &mut Payload::None).await.unwrap();
+        assert!(auth.is_authenticated());
+        assert_eq!(auth.claims().and_then(|c| c.sub.as_deref()), Some("bob"));
+        assert_eq!(auth.into_inner().and_then(|c| c.sub).as_deref(), Some("bob"));
+
+        // Anonymous request never fails and carries no claims.
+        let req = TestRequest::default().to_http_request();
+        let auth = OptionalAuthentication::from_request(&req, &mut Payload::None).await.unwrap();
+        assert!(!auth.is_authenticated());
+        assert!(auth.claims().is_none());
+        assert!(auth.into_inner().is_none());
+    }
+}
