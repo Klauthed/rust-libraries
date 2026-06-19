@@ -29,6 +29,7 @@ CRATES=(
   klauthed-data
   klauthed-platform
   klauthed-web
+  klauthed-cli
 )
 
 echo "Adding owner '${TEAM}' to ${#CRATES[@]} crates"

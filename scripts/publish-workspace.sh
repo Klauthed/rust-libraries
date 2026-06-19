@@ -27,6 +27,7 @@ CRATES=(
   klauthed-platform
   klauthed-web
   klauthed
+  klauthed-cli
 )
 
 VERSION="$(grep -m1 '^version' klauthed-core/Cargo.toml | sed 's/.*"\(.*\)".*/\1/')"
