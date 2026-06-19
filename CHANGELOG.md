@@ -10,6 +10,11 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Interval scheduler** (`klauthed-platform`, `scheduler` feature; `scheduler` on
+  the umbrella): a lightweight `Scheduler` that runs async tasks on a fixed period
+  on the Tokio runtime, with a `SchedulerHandle` that stops them on `shutdown()`
+  or drop. Fills the recurring-background-work gap alongside the existing
+  `JobQueue`.
 - **`klauthed-cli` — service scaffolding** (`cargo install klauthed-cli`): the
   `cargo klauthed new <name>` subcommand generates a ready-to-run actix-web
   service (config + telemetry + web with `/hello` and the framework health

@@ -37,6 +37,7 @@
 //! Pass-through features forward to a sub-crate's own feature and pull in the
 //! owning crate: `vault`/`config-server`/`hot-reload`/`task-local`/`tz` (core),
 //! `sealed`/`webauthn` (security), `context-scope` (web),
+//! `scheduler` (platform),
 //! `metrics`/`otel` (observability), `consul`/`eureka`/`agent` (discovery),
 //! `postgres`/`mysql`/`sqlite`, `redis`/`cache-memory`,
 //! `nats`/`rabbitmq`/`kafka`, `storage`/`storage-s3`/`storage-gcs`/`storage-azure`.

@@ -34,12 +34,18 @@ klauthed-data = { workspace = true, optional = true, features = ["sql", "sqlite"
 # For HttpWebhookSender: real HTTP delivery of webhook events.
 reqwest = { version = "0.12", optional = true, default-features = false, features = ["json", "rustls-tls"] }
 
+# Async runtime for the `scheduler` feature (recurring background tasks).
+tokio = { workspace = true, optional = true }
+
 [features]
 audit-outbox  = ["dep:klauthed-data"]
 webhook-http  = ["dep:reqwest"]
+# In-process interval scheduler for recurring background tasks.
+scheduler     = ["dep:tokio"]
 
 [dev-dependencies]
-tokio = { workspace = true }
+# `test-util` enables `#[tokio::test(start_paused = true)]` for the scheduler tests.
+tokio = { workspace = true, features = ["test-util"] }
 # Required only by the `audit-outbox` SQLite integration tests; harmless otherwise.
 sqlx = { workspace = true, features = ["sqlite"] }
 

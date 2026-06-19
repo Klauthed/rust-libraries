@@ -60,6 +60,8 @@ pub mod audit;
 pub mod error;
 pub mod featureflag;
 pub mod jobs;
+#[cfg(feature = "scheduler")]
+pub mod scheduler;
 pub mod tenancy;
 pub mod webhooks;
 
@@ -71,6 +73,8 @@ pub use featureflag::{FeatureFlag, FeatureFlags, InMemoryFeatureFlags};
 pub use jobs::{
     DEFAULT_MAX_ATTEMPTS, EnqueuedJob, InMemoryJobQueue, Job, JobId, JobQueue, JobStatus,
 };
+#[cfg(feature = "scheduler")]
+pub use scheduler::{Scheduler, SchedulerHandle};
 pub use tenancy::{
     InMemoryTenantResolver, Tenant, TenantId, TenantResolver, TenantStatus, tenant_from_context,
 };
@@ -81,6 +85,8 @@ pub use webhooks::{
 
 /// Common imports for the platform services: `use klauthed_platform::prelude::*;`.
 pub mod prelude {
+    #[cfg(feature = "scheduler")]
+    pub use crate::Scheduler;
     pub use crate::{
         Audit, AuditSink, FeatureFlag, FeatureFlags, InMemoryAuditSink, InMemoryFeatureFlags,
         InMemoryJobQueue, InMemoryTenantResolver, Job, JobQueue, PlatformError, Tenant,
