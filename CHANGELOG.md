@@ -15,7 +15,8 @@ All crates share a single version and are released together.
   `minute hour day-of-month month day-of-week`, with ranges/lists/steps and the
   standard day-of-month/day-of-week OR rule, evaluated in UTC), plus
   `Scheduler::cron(Cron::parse("0 * * * *")?, task)` to run tasks on a calendar
-  schedule alongside interval tasks.
+  schedule alongside interval tasks. The CLI's `--with-scheduler` scaffold now
+  demonstrates both an interval and a cron task.
 
 ## [0.6.0] - 2026-06-19
 

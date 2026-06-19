@@ -282,7 +282,7 @@ mod tests {
     }
 
     #[test]
-    fn with_scheduler_starts_an_interval_task() {
+    fn with_scheduler_starts_interval_and_cron_tasks() {
         let opts = Options { with_scheduler: true, ..Options::default() };
         let cargo = render(CARGO_TMPL, "svc", &opts);
         assert!(cargo.contains("\"scheduler\""));
@@ -290,6 +290,7 @@ mod tests {
         let main = render(MAIN_TMPL, "svc", &opts);
         assert!(main.contains("Scheduler::new()"));
         assert!(main.contains(".every("));
+        assert!(main.contains(".cron(") && main.contains("Cron::parse("));
         // The base scaffold has no scheduler.
         assert!(!render(MAIN_TMPL, "svc", &Options::default()).contains("Scheduler::new()"));
     }

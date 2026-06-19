@@ -23,7 +23,7 @@ use klauthed::web::{AppError, AuthenticatedUser, JwtAuth};
 use klauthed::web::app::Components;
 // __END db__
 // __IF scheduler__
-use klauthed::platform::scheduler::Scheduler;
+use klauthed::platform::scheduler::{Cron, Scheduler};
 // __END scheduler__
 // __IF jwt__
 use serde::{Deserialize, Serialize};
@@ -57,7 +57,10 @@ async fn main() -> std::io::Result<()> {
     // handle (or calling `shutdown().await`) stops the tasks.
     let _scheduler = Scheduler::new()
         .every(std::time::Duration::from_secs(60), || async {
-            tracing::info!("scheduled tick");
+            tracing::info!("interval tick");
+        })
+        .cron(Cron::parse("0 * * * *").expect("valid cron"), || async {
+            tracing::info!("hourly tick");
         })
         .start();
 // __END scheduler__
