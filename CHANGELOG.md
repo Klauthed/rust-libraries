@@ -21,9 +21,10 @@ All crates share a single version and are released together.
   probes, plus tests, config, and a README). The generated project depends on the
   umbrella `klauthed` crate at the matching `major.minor`. A `--with-jwt` flag
   adds JWT auth — a `/login` endpoint plus a protected `/api/me` route (enabling
-  the `security` feature) — and `--database postgres|mysql|sqlite` wires a
+  the `security` feature) — `--database postgres|mysql|sqlite` wires a
   connection pool into the web layer (and its readiness probe) with a `[database]`
-  config section. Flags compose.
+  config section, and `--with-scheduler` starts an interval scheduler with an
+  example recurring task. Flags compose.
 
 ### Changed
 

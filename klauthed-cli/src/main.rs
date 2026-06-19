@@ -65,6 +65,10 @@ enum Command {
         /// matching `klauthed` backend feature and adds a `[database]` config).
         #[arg(long, value_enum)]
         database: Option<DbArg>,
+        /// Start an interval scheduler with an example recurring task (enables
+        /// the `scheduler` feature).
+        #[arg(long)]
+        with_scheduler: bool,
     },
 }
 
@@ -78,10 +82,13 @@ fn main() -> ExitCode {
     }
 
     match Cli::parse_from(args).command {
-        Command::New { name, path, with_jwt, database } => {
+        Command::New { name, path, with_jwt, database, with_scheduler } => {
             let dir = path.unwrap_or_else(|| PathBuf::from(&name));
-            let options =
-                scaffold::Options { with_jwt, database: database.map(scaffold::Database::from) };
+            let options = scaffold::Options {
+                with_jwt,
+                database: database.map(scaffold::Database::from),
+                with_scheduler,
+            };
             match scaffold::scaffold(&name, &dir, &options) {
                 Ok(_) => {
                     print_success(&name, &dir);

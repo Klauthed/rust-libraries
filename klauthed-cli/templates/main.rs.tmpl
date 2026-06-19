@@ -22,6 +22,9 @@ use klauthed::web::{AppError, AuthenticatedUser, JwtAuth};
 // __IF db__
 use klauthed::web::app::Components;
 // __END db__
+// __IF scheduler__
+use klauthed::platform::scheduler::Scheduler;
+// __END scheduler__
 // __IF jwt__
 use serde::{Deserialize, Serialize};
 // __END jwt__
@@ -49,6 +52,15 @@ async fn main() -> std::io::Result<()> {
     let server = config.server().unwrap_or_default();
 
     tracing::info!(bind = %server.bind_address(), "__NAME__ starting");
+// __IF scheduler__
+    // Recurring background work. Kept alive until the server stops; dropping the
+    // handle (or calling `shutdown().await`) stops the tasks.
+    let _scheduler = Scheduler::new()
+        .every(std::time::Duration::from_secs(60), || async {
+            tracing::info!("scheduled tick");
+        })
+        .start();
+// __END scheduler__
 // __IF db__
     // Connect the pool and hand it to the web layer as a component, which wires
     // it as shared data and registers its health check into `/health/ready`.

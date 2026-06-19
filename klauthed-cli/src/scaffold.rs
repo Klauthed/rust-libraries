@@ -103,6 +103,9 @@ pub struct Options {
     pub with_jwt: bool,
     /// Wire a relational connection pool into the web layer for this backend.
     pub database: Option<Database>,
+    /// Start an interval scheduler with an example recurring task (enables the
+    /// `scheduler` feature).
+    pub with_scheduler: bool,
 }
 
 /// The `klauthed` features the generated project enables, as a TOML array body
@@ -114,6 +117,9 @@ fn feature_list(options: &Options) -> String {
     }
     if let Some(db) = options.database {
         features.push(db.feature());
+    }
+    if options.with_scheduler {
+        features.push("scheduler");
     }
     features.iter().map(|f| format!("\"{f}\"")).collect::<Vec<_>>().join(", ")
 }
@@ -169,7 +175,11 @@ fn apply_conditionals(template: &str, flags: &[(&str, bool)]) -> String {
 }
 
 fn render(template: &str, name: &str, options: &Options) -> String {
-    let flags = [("jwt", options.with_jwt), ("db", options.database.is_some())];
+    let flags = [
+        ("jwt", options.with_jwt),
+        ("db", options.database.is_some()),
+        ("scheduler", options.with_scheduler),
+    ];
     let (system, url) = match options.database {
         Some(db) => (db.system().to_owned(), db.sample_url(name)),
         None => (String::new(), String::new()),
@@ -262,7 +272,7 @@ mod tests {
 
     #[test]
     fn with_jwt_adds_security_feature_and_auth_routes() {
-        let opts = Options { with_jwt: true, database: None };
+        let opts = Options { with_jwt: true, ..Options::default() };
         let cargo = render(CARGO_TMPL, "svc", &opts);
         assert!(cargo.contains("\"security\""));
 
@@ -272,8 +282,21 @@ mod tests {
     }
 
     #[test]
+    fn with_scheduler_starts_an_interval_task() {
+        let opts = Options { with_scheduler: true, ..Options::default() };
+        let cargo = render(CARGO_TMPL, "svc", &opts);
+        assert!(cargo.contains("\"scheduler\""));
+
+        let main = render(MAIN_TMPL, "svc", &opts);
+        assert!(main.contains("Scheduler::new()"));
+        assert!(main.contains(".every("));
+        // The base scaffold has no scheduler.
+        assert!(!render(MAIN_TMPL, "svc", &Options::default()).contains("Scheduler::new()"));
+    }
+
+    #[test]
     fn with_database_wires_a_pool_and_config() {
-        let opts = Options { with_jwt: false, database: Some(Database::Postgres) };
+        let opts = Options { database: Some(Database::Postgres), ..Options::default() };
         let cargo = render(CARGO_TMPL, "svc", &opts);
         assert!(cargo.contains("\"postgres\""));
 
@@ -294,12 +317,16 @@ mod tests {
     #[test]
     fn no_placeholders_or_markers_leak_in_any_combination() {
         for with_jwt in [false, true] {
-            for database in [None, Some(Database::Postgres), Some(Database::Sqlite)] {
-                let opts = Options { with_jwt, database };
-                for template in [CARGO_TMPL, MAIN_TMPL, CONFIG_TMPL, README_TMPL, GITIGNORE_TMPL] {
-                    let out = render(template, "svc", &opts);
-                    for leak in ["__IF", "__END", "__NAME__", "__FEATURES__", "__DB_"] {
-                        assert!(!out.contains(leak), "{leak} leaked for {opts:?}");
+            for with_scheduler in [false, true] {
+                for database in [None, Some(Database::Postgres), Some(Database::Sqlite)] {
+                    let opts = Options { with_jwt, database, with_scheduler };
+                    for template in
+                        [CARGO_TMPL, MAIN_TMPL, CONFIG_TMPL, README_TMPL, GITIGNORE_TMPL]
+                    {
+                        let out = render(template, "svc", &opts);
+                        for leak in ["__IF", "__END", "__NAME__", "__FEATURES__", "__DB_"] {
+                            assert!(!out.contains(leak), "{leak} leaked for {opts:?}");
+                        }
                     }
                 }
             }

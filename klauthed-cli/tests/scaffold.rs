@@ -102,6 +102,28 @@ fn new_with_database_wires_a_pool() {
 }
 
 #[test]
+fn new_with_scheduler_starts_an_interval_task() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let dir = tmp.path().join("svc");
+
+    let status = Command::new(BIN)
+        .arg("new")
+        .arg("cron-svc")
+        .arg("--with-scheduler")
+        .arg("--path")
+        .arg(&dir)
+        .status()
+        .expect("run cargo-klauthed");
+    assert!(status.success());
+
+    let cargo = fs::read_to_string(dir.join("Cargo.toml")).expect("read Cargo.toml");
+    assert!(cargo.contains("\"scheduler\""), "scheduler scaffold enables the feature");
+
+    let main = fs::read_to_string(dir.join("src/main.rs")).expect("read main.rs");
+    assert!(main.contains("Scheduler::new()"));
+}
+
+#[test]
 fn new_refuses_a_nonempty_target() {
     let tmp = tempfile::tempdir().expect("tempdir");
     fs::write(tmp.path().join("existing"), "x").expect("seed file");
