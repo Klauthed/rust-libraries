@@ -4,11 +4,11 @@ use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-// Templates embedded at compile time; rendered by substituting `__NAME__` and
-// `__KLAUTHED_REQ__`.
+// Templates embedded at compile time. They carry `// __IF flag__` / `// __END
+// flag__` conditional blocks (see `apply_conditionals`) plus `__NAME__`-style
+// placeholders, rendered by [`render`].
 const CARGO_TMPL: &str = include_str!("../templates/Cargo.toml.tmpl");
 const MAIN_TMPL: &str = include_str!("../templates/main.rs.tmpl");
-const MAIN_JWT_TMPL: &str = include_str!("../templates/main.jwt.rs.tmpl");
 const CONFIG_TMPL: &str = include_str!("../templates/config.default.toml.tmpl");
 const GITIGNORE_TMPL: &str = include_str!("../templates/gitignore.tmpl");
 const README_TMPL: &str = include_str!("../templates/README.md.tmpl");
@@ -54,12 +54,55 @@ impl std::error::Error for ScaffoldError {
     }
 }
 
+/// The relational backend a scaffolded service is wired for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Database {
+    /// PostgreSQL.
+    Postgres,
+    /// MySQL / MariaDB.
+    Mysql,
+    /// SQLite.
+    Sqlite,
+}
+
+impl Database {
+    /// The `klauthed` cargo feature that enables this backend (also pulls in
+    /// `data` and, alongside `web`, the web `data-sql` integration).
+    fn feature(self) -> &'static str {
+        match self {
+            Self::Postgres => "postgres",
+            Self::Mysql => "mysql",
+            Self::Sqlite => "sqlite",
+        }
+    }
+
+    /// The `[database] system` value for `config/default.toml`.
+    fn system(self) -> &'static str {
+        match self {
+            Self::Postgres => "postgres",
+            Self::Mysql => "mysql",
+            Self::Sqlite => "sqlite",
+        }
+    }
+
+    /// A sample connection URL for `config/default.toml`.
+    fn sample_url(self, name: &str) -> String {
+        match self {
+            Self::Postgres => format!("postgres://localhost:5432/{name}"),
+            Self::Mysql => format!("mysql://localhost:3306/{name}"),
+            Self::Sqlite => format!("sqlite://{name}.db?mode=rwc"),
+        }
+    }
+}
+
 /// Options controlling what a scaffolded service includes.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Options {
     /// Include JWT authentication: the `security` feature plus `/login` and a
     /// JWT-protected `/api/me` route.
     pub with_jwt: bool,
+    /// Wire a relational connection pool into the web layer for this backend.
+    pub database: Option<Database>,
 }
 
 /// The `klauthed` features the generated project enables, as a TOML array body
@@ -68,6 +111,9 @@ fn feature_list(options: &Options) -> String {
     let mut features = vec!["core", "web", "observability"];
     if options.with_jwt {
         features.push("security");
+    }
+    if let Some(db) = options.database {
+        features.push(db.feature());
     }
     features.iter().map(|f| format!("\"{f}\"")).collect::<Vec<_>>().join(", ")
 }
@@ -96,20 +142,52 @@ pub fn validate_name(name: &str) -> Result<(), ScaffoldError> {
     }
 }
 
+/// Keep only the conditional blocks whose condition matches `flags`, dropping all
+/// `// __IF …__` / `// __END …__` marker lines. A condition is a flag name, or
+/// `!name` for its negation; blocks nest.
+fn apply_conditionals(template: &str, flags: &[(&str, bool)]) -> String {
+    let is_set = |name: &str| flags.iter().find(|(f, _)| *f == name).is_some_and(|(_, v)| *v);
+
+    let mut out = String::with_capacity(template.len());
+    let mut include_stack: Vec<bool> = Vec::new();
+    for line in template.lines() {
+        let trimmed = line.trim();
+        if let Some(cond) = trimmed.strip_prefix("// __IF ").and_then(|s| s.strip_suffix("__")) {
+            let included = match cond.strip_prefix('!') {
+                Some(name) => !is_set(name),
+                None => is_set(cond),
+            };
+            include_stack.push(included);
+        } else if trimmed.strip_prefix("// __END ").and_then(|s| s.strip_suffix("__")).is_some() {
+            include_stack.pop();
+        } else if include_stack.iter().all(|&inc| inc) {
+            out.push_str(line);
+            out.push('\n');
+        }
+    }
+    out
+}
+
 fn render(template: &str, name: &str, options: &Options) -> String {
-    template
+    let flags = [("jwt", options.with_jwt), ("db", options.database.is_some())];
+    let (system, url) = match options.database {
+        Some(db) => (db.system().to_owned(), db.sample_url(name)),
+        None => (String::new(), String::new()),
+    };
+    apply_conditionals(template, &flags)
         .replace("__NAME__", name)
         .replace("__KLAUTHED_REQ__", &klauthed_req())
         .replace("__FEATURES__", &feature_list(options))
+        .replace("__DB_SYSTEM__", &system)
+        .replace("__DB_URL__", &url)
 }
 
 /// The files a scaffolded service is made of, as `(relative path, rendered
 /// contents)`. Pure (no I/O) so it can be unit-tested.
 fn files(name: &str, options: &Options) -> Vec<(PathBuf, String)> {
-    let main_template = if options.with_jwt { MAIN_JWT_TMPL } else { MAIN_TMPL };
     vec![
         (PathBuf::from("Cargo.toml"), render(CARGO_TMPL, name, options)),
-        (["src", "main.rs"].iter().collect(), render(main_template, name, options)),
+        (["src", "main.rs"].iter().collect(), render(MAIN_TMPL, name, options)),
         (["config", "default.toml"].iter().collect(), render(CONFIG_TMPL, name, options)),
         (PathBuf::from(".gitignore"), render(GITIGNORE_TMPL, name, options)),
         (PathBuf::from("README.md"), render(README_TMPL, name, options)),
@@ -168,38 +246,68 @@ mod tests {
     }
 
     #[test]
-    fn templates_render_the_name_and_version() {
+    fn base_template_renders_name_version_and_no_markers() {
         let opts = Options::default();
         let cargo = render(CARGO_TMPL, "my-service", &opts);
         assert!(cargo.contains("name = \"my-service\""));
         assert!(cargo.contains(&format!("klauthed = {{ version = \"{}\"", klauthed_req())));
-        assert!(!cargo.contains("__NAME__"));
-        assert!(!cargo.contains("__KLAUTHED_REQ__"));
-        assert!(!cargo.contains("__FEATURES__"));
 
         let main = render(MAIN_TMPL, "my-service", &opts);
         assert!(main.contains("hello from my-service"));
-        assert!(!main.contains("__NAME__"));
+        assert!(main.contains("serve_with_defaults"));
+        // The base scaffold is minimal: no auth, no database.
+        assert!(!main.contains("/login"));
+        assert!(!main.contains("serve_with_components"));
     }
 
     #[test]
-    fn with_jwt_adds_the_security_feature_and_auth_routes() {
-        let opts = Options { with_jwt: true };
+    fn with_jwt_adds_security_feature_and_auth_routes() {
+        let opts = Options { with_jwt: true, database: None };
         let cargo = render(CARGO_TMPL, "svc", &opts);
-        assert!(cargo.contains("\"security\""), "jwt scaffold enables the security feature");
+        assert!(cargo.contains("\"security\""));
 
-        let main = render(MAIN_JWT_TMPL, "svc", &opts);
+        let main = render(MAIN_TMPL, "svc", &opts);
         assert!(main.contains("/login") && main.contains("/api"));
         assert!(main.contains("JwtSigner") && main.contains("JwtAuth"));
+    }
 
-        // The default (no-jwt) scaffold stays minimal.
-        let base = render(CARGO_TMPL, "svc", &Options::default());
-        assert!(!base.contains("\"security\""));
+    #[test]
+    fn with_database_wires_a_pool_and_config() {
+        let opts = Options { with_jwt: false, database: Some(Database::Postgres) };
+        let cargo = render(CARGO_TMPL, "svc", &opts);
+        assert!(cargo.contains("\"postgres\""));
+
+        let main = render(MAIN_TMPL, "svc", &opts);
+        assert!(main.contains("serve_with_components"));
+        assert!(main.contains("db::connect"));
+        assert!(!main.contains("serve_with_defaults"));
+
+        let config = render(CONFIG_TMPL, "svc", &opts);
+        assert!(config.contains("[database]"));
+        assert!(config.contains("system = \"postgres\""));
+        assert!(config.contains("postgres://localhost:5432/svc"));
+
+        // The base scaffold has no database section.
+        assert!(!render(CONFIG_TMPL, "svc", &Options::default()).contains("[database]"));
+    }
+
+    #[test]
+    fn no_placeholders_or_markers_leak_in_any_combination() {
+        for with_jwt in [false, true] {
+            for database in [None, Some(Database::Postgres), Some(Database::Sqlite)] {
+                let opts = Options { with_jwt, database };
+                for template in [CARGO_TMPL, MAIN_TMPL, CONFIG_TMPL, README_TMPL, GITIGNORE_TMPL] {
+                    let out = render(template, "svc", &opts);
+                    for leak in ["__IF", "__END", "__NAME__", "__FEATURES__", "__DB_"] {
+                        assert!(!out.contains(leak), "{leak} leaked for {opts:?}");
+                    }
+                }
+            }
+        }
     }
 
     #[test]
     fn klauthed_req_is_major_minor() {
-        // Whatever this crate's version is, the requirement is its major.minor.
         let v = env!("CARGO_PKG_VERSION");
         let expected: String = v.split('.').take(2).collect::<Vec<_>>().join(".");
         assert_eq!(klauthed_req(), expected);

@@ -15,8 +15,18 @@ All crates share a single version and are released together.
   service (config + telemetry + web with `/hello` and the framework health
   probes, plus tests, config, and a README). The generated project depends on the
   umbrella `klauthed` crate at the matching `major.minor`. A `--with-jwt` flag
-  scaffolds JWT auth instead — a `/login` endpoint plus a protected `/api/me`
-  route (enabling the `security` feature).
+  adds JWT auth — a `/login` endpoint plus a protected `/api/me` route (enabling
+  the `security` feature) — and `--database postgres|mysql|sqlite` wires a
+  connection pool into the web layer (and its readiness probe) with a `[database]`
+  config section. Flags compose.
+
+### Changed
+
+- The umbrella `klauthed` crate's `postgres` / `mysql` / `sqlite` / `redis`
+  features now also forward `klauthed-web?/data-sql` (or `data-redis`), so a SQL
+  pool / Redis connection can be wired into the web `Components` (and its health
+  probe) when both `web` and a backend are enabled — previously there was no way
+  to enable that integration through the umbrella crate.
 
 ## [0.5.0] - 2026-06-19
 

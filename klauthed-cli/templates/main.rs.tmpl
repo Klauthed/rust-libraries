@@ -1,19 +1,40 @@
 //! __NAME__ — a klauthed service.
 //!
 //! Wires profile-aware configuration, telemetry, and the actix-web layer with
-//! health probes and uniform error rendering. `serve_with_defaults` already
-//! mounts `GET /health` and `GET /health/ready` and the request-context
-//! middleware, so `configure` only adds this service's own routes.
+//! health probes and uniform error rendering. The server already mounts
+//! `GET /health` and `GET /health/ready` and the request-context middleware, so
+//! `configure` only adds this service's own routes.
 //!
 //! Run it with `cargo run`. Configuration is read from `config/default.toml`
-//! (and `config/{profile}.toml`, then environment variables) — see the guide at
+//! (and `config/{profile}.toml`, then environment) — see the guide at
 //! https://klauthed.github.io/rust-libraries/.
 
 use actix_web::{HttpResponse, web};
 use klauthed::core::config::{ConfigBuilder, Profile};
+// __IF jwt__
+use klauthed::core::time::{Duration, SystemClock};
+// __END jwt__
 use klauthed::observability::TelemetryConfig;
+// __IF jwt__
+use klauthed::security::{Claims, JwtSigner, JwtVerifier};
+use klauthed::web::{AppError, AuthenticatedUser, JwtAuth};
+// __END jwt__
+// __IF db__
+use klauthed::web::app::Components;
+// __END db__
+// __IF jwt__
+use serde::{Deserialize, Serialize};
+// __END jwt__
+// __IF !jwt__
 use serde::Serialize;
+// __END !jwt__
 
+// __IF jwt__
+// Demo signing key. A real service sources this from configuration / Vault (see
+// the `vault` feature), never the binary.
+const JWT_SECRET: &[u8] = b"__NAME__-demo-secret-change-me";
+
+// __END jwt__
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let profile = Profile::detect();
@@ -28,16 +49,33 @@ async fn main() -> std::io::Result<()> {
     let server = config.server().unwrap_or_default();
 
     tracing::info!(bind = %server.bind_address(), "__NAME__ starting");
+// __IF db__
+    // Connect the pool and hand it to the web layer as a component, which wires
+    // it as shared data and registers its health check into `/health/ready`.
+    let pool = klauthed::data::db::connect(&config.database().expect("database config"))
+        .await
+        .expect("database pool");
+    let components = Components::new().pool("db", pool);
+    klauthed::web::server::serve_with_components(&server, components, configure)?.await
+// __END db__
+// __IF !db__
     klauthed::web::server::serve_with_defaults(&server, configure)?.await
+// __END !db__
 }
 
 /// Register this service's routes and app data. Health probes and the
-/// request-context middleware are already mounted by `serve_with_defaults`.
-///
-/// Handlers can return `Result<HttpResponse, klauthed::web::AppError>` to get the
-/// framework's uniform JSON error rendering for free.
+/// request-context middleware are already mounted by the server.
 fn configure(cfg: &mut web::ServiceConfig) {
+// __IF jwt__
+    cfg.app_data(web::Data::new(JwtVerifier::hs256(JWT_SECRET)));
+    cfg.app_data(web::Data::new(JwtSigner::hs256(JWT_SECRET)));
+// __END jwt__
     cfg.route("/hello", web::get().to(hello));
+// __IF jwt__
+    cfg.route("/login", web::post().to(login));
+    // Everything under /api requires a valid Bearer token.
+    cfg.service(web::scope("/api").wrap(JwtAuth::new()).route("/me", web::get().to(me)));
+// __END jwt__
 }
 
 #[derive(Serialize)]
@@ -49,6 +87,41 @@ async fn hello() -> HttpResponse {
     HttpResponse::Ok().json(Hello { message: "hello from __NAME__".to_owned() })
 }
 
+// __IF jwt__
+#[derive(Serialize, Deserialize)]
+struct LoginRequest {
+    username: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct LoginResponse {
+    token: String,
+}
+
+/// Issue a 1-hour HS256 token for the supplied username (demo: no password check).
+async fn login(
+    body: web::Json<LoginRequest>,
+    signer: web::Data<JwtSigner>,
+) -> Result<HttpResponse, AppError> {
+    let claims = Claims::builder(body.username.as_str(), &SystemClock, Duration::hours(1))
+        .issuer("__NAME__")
+        .build();
+    let token = signer.encode(&claims)?;
+    Ok(HttpResponse::Ok().json(LoginResponse { token }))
+}
+
+#[derive(Serialize, Deserialize)]
+struct MeResponse {
+    sub: String,
+}
+
+/// Return the authenticated subject. `JwtAuth` has already validated the token.
+async fn me(user: AuthenticatedUser) -> Result<HttpResponse, AppError> {
+    let sub = user.sub().unwrap_or_default().to_owned();
+    Ok(HttpResponse::Ok().json(MeResponse { sub }))
+}
+
+// __END jwt__
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -73,4 +146,33 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::OK);
     }
+// __IF jwt__
+
+    #[actix_web::test]
+    async fn protected_route_requires_a_token() {
+        let app = test::init_service(App::new().configure(configure)).await;
+        let req = test::TestRequest::get().uri("/api/me").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[actix_web::test]
+    async fn login_then_call_protected_route() {
+        let app = test::init_service(App::new().configure(configure)).await;
+
+        let req = test::TestRequest::post()
+            .uri("/login")
+            .set_json(LoginRequest { username: "alice".to_owned() })
+            .to_request();
+        let body: LoginResponse = test::call_and_read_body_json(&app, req).await;
+        assert!(!body.token.is_empty());
+
+        let req = test::TestRequest::get()
+            .uri("/api/me")
+            .insert_header(("authorization", format!("Bearer {}", body.token)))
+            .to_request();
+        let me: MeResponse = test::call_and_read_body_json(&app, req).await;
+        assert_eq!(me.sub, "alice");
+    }
+// __END jwt__
 }

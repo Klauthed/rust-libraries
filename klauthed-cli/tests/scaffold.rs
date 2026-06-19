@@ -75,6 +75,33 @@ fn new_with_jwt_includes_auth() {
 }
 
 #[test]
+fn new_with_database_wires_a_pool() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let dir = tmp.path().join("svc");
+
+    let status = Command::new(BIN)
+        .arg("new")
+        .arg("data-svc")
+        .arg("--database")
+        .arg("postgres")
+        .arg("--path")
+        .arg(&dir)
+        .status()
+        .expect("run cargo-klauthed");
+    assert!(status.success());
+
+    let cargo = fs::read_to_string(dir.join("Cargo.toml")).expect("read Cargo.toml");
+    assert!(cargo.contains("\"postgres\""), "database scaffold enables the backend feature");
+
+    let main = fs::read_to_string(dir.join("src/main.rs")).expect("read main.rs");
+    assert!(main.contains("serve_with_components"));
+    assert!(main.contains("db::connect"));
+
+    let config = fs::read_to_string(dir.join("config/default.toml")).expect("read config");
+    assert!(config.contains("[database]"));
+}
+
+#[test]
 fn new_refuses_a_nonempty_target() {
     let tmp = tempfile::tempdir().expect("tempdir");
     fs::write(tmp.path().join("existing"), "x").expect("seed file");

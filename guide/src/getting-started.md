@@ -12,10 +12,11 @@ cd my-service && cargo run
 
 This generates a ready-to-run service — `Cargo.toml`, `src/main.rs`,
 `config/default.toml`, a README, and tests — that already serves `/hello` plus
-the framework's `/health` and `/health/ready` probes. Add `--with-jwt` to instead
-scaffold a `/login` endpoint and a JWT-protected `/api/me` route. Grow it by
-enabling more `klauthed` features (below). The rest of this page shows what that
-wiring looks like by hand.
+the framework's `/health` and `/health/ready` probes. Add `--with-jwt` to also
+scaffold a `/login` endpoint and a JWT-protected `/api/me` route, and
+`--database postgres|mysql|sqlite` to wire a connection pool into the web layer
+(and its readiness probe). Grow it by enabling more `klauthed` features (below).
+The rest of this page shows what that wiring looks like by hand.
 
 ## Add the dependency
 

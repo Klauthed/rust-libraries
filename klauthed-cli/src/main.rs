@@ -19,7 +19,25 @@ mod scaffold;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
+
+/// Relational backend choices for `--database`.
+#[derive(Clone, Copy, ValueEnum)]
+enum DbArg {
+    Postgres,
+    Mysql,
+    Sqlite,
+}
+
+impl From<DbArg> for scaffold::Database {
+    fn from(value: DbArg) -> Self {
+        match value {
+            DbArg::Postgres => Self::Postgres,
+            DbArg::Mysql => Self::Mysql,
+            DbArg::Sqlite => Self::Sqlite,
+        }
+    }
+}
 
 /// Scaffolding CLI for the klauthed framework.
 #[derive(Parser)]
@@ -43,6 +61,10 @@ enum Command {
         /// `/api/me` route (enables the `security` feature).
         #[arg(long)]
         with_jwt: bool,
+        /// Wire a relational connection pool into the web layer (enables the
+        /// matching `klauthed` backend feature and adds a `[database]` config).
+        #[arg(long, value_enum)]
+        database: Option<DbArg>,
     },
 }
 
@@ -56,9 +78,10 @@ fn main() -> ExitCode {
     }
 
     match Cli::parse_from(args).command {
-        Command::New { name, path, with_jwt } => {
+        Command::New { name, path, with_jwt, database } => {
             let dir = path.unwrap_or_else(|| PathBuf::from(&name));
-            let options = scaffold::Options { with_jwt };
+            let options =
+                scaffold::Options { with_jwt, database: database.map(scaffold::Database::from) };
             match scaffold::scaffold(&name, &dir, &options) {
                 Ok(_) => {
                     print_success(&name, &dir);

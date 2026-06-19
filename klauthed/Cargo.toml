@@ -68,10 +68,13 @@ kubernetes    = ["discovery", "klauthed-discovery/kubernetes"]
 agent         = ["discovery", "klauthed-discovery/agent"]
 metrics       = ["observability", "klauthed-observability/metrics"]
 otel          = ["observability", "klauthed-observability/otel", "klauthed-web?/otel"]
-postgres      = ["data", "klauthed-data/postgres"]
-mysql         = ["data", "klauthed-data/mysql"]
-sqlite        = ["data", "klauthed-data/sqlite"]
-redis         = ["data", "klauthed-data/redis"]
+# The `klauthed-web?/data-sql` / `data-redis` forwards let a SQL pool / Redis
+# connection be wired into the web `Components` (and its health probe) when both
+# `web` and a backend are enabled; they are no-ops without `web`.
+postgres      = ["data", "klauthed-data/postgres", "klauthed-web?/data-sql"]
+mysql         = ["data", "klauthed-data/mysql", "klauthed-web?/data-sql"]
+sqlite        = ["data", "klauthed-data/sqlite", "klauthed-web?/data-sql"]
+redis         = ["data", "klauthed-data/redis", "klauthed-web?/data-redis"]
 cache-memory  = ["data", "klauthed-data/cache-memory"]
 nats          = ["data", "klauthed-data/nats"]
 rabbitmq      = ["data", "klauthed-data/rabbitmq"]
