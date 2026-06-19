@@ -4,7 +4,8 @@
 //! Standard 5-field syntax — `minute hour day-of-month month day-of-week` — with
 //! `*`, single values, ranges (`a-b`), lists (`a,b,c`), and steps (`*/n`,
 //! `a-b/n`). Day-of-week is `0..=6` with Sunday `0` (`7` is also accepted as
-//! Sunday). Schedules are evaluated in **UTC**.
+//! Sunday). Schedules are evaluated in **UTC** by default, or in a named IANA
+//! timezone via [`Cron::parse_in_timezone`] (DST is handled correctly).
 //!
 //! Day-of-month / day-of-week follow the usual cron rule: if both are restricted
 //! (neither is `*`), a day matches when **either** matches; if one is `*`, only
@@ -17,7 +18,8 @@
 
 use std::fmt;
 
-use time::{Duration, OffsetDateTime};
+use klauthed_core::time::{TimeZone, Timestamp};
+use time::{Duration, OffsetDateTime, UtcOffset};
 
 /// An invalid cron expression.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -44,23 +46,42 @@ impl Field {
     }
 }
 
-/// A parsed 5-field cron schedule.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// A parsed 5-field cron schedule, evaluated in UTC or a named timezone.
+#[derive(Debug, Clone)]
 pub struct Cron {
     minute: Field,
     hour: Field,
     dom: Field,
     month: Field,
     dow: Field,
+    /// The zone schedule fields are evaluated in; `None` means UTC.
+    tz: Option<TimeZone>,
 }
 
 impl Cron {
-    /// Parse a 5-field cron expression.
+    /// Parse a 5-field cron expression, evaluated in **UTC**.
     ///
     /// # Errors
     /// Returns [`CronError`] if the expression doesn't have five fields or a
     /// field is malformed or out of range.
     pub fn parse(expr: &str) -> Result<Self, CronError> {
+        Self::parse_fields(expr, None)
+    }
+
+    /// Parse a 5-field cron expression evaluated in the named IANA `timezone`
+    /// (e.g. `"America/New_York"`), so e.g. `"0 9 * * *"` fires at 09:00 local
+    /// time year-round, across DST transitions.
+    ///
+    /// # Errors
+    /// Returns [`CronError`] if the expression is malformed or `timezone` is not
+    /// a known IANA zone name.
+    pub fn parse_in_timezone(expr: &str, timezone: &str) -> Result<Self, CronError> {
+        let tz = TimeZone::get(timezone)
+            .ok_or_else(|| CronError(format!("unknown timezone '{timezone}'")))?;
+        Self::parse_fields(expr, Some(tz))
+    }
+
+    fn parse_fields(expr: &str, tz: Option<TimeZone>) -> Result<Self, CronError> {
         let parts: Vec<&str> = expr.split_whitespace().collect();
         let [minute, hour, dom, month, dow] = parts.as_slice() else {
             return Err(CronError(format!("expected 5 fields, got {}", parts.len())));
@@ -71,6 +92,7 @@ impl Cron {
             dom: parse_field(dom, 1, 31, false)?,
             month: parse_field(month, 1, 12, false)?,
             dow: parse_field(dow, 0, 7, true)?,
+            tz,
         })
     }
 
@@ -91,7 +113,18 @@ impl Cron {
         None
     }
 
+    /// The civil time `t` is matched against, in the schedule's zone (UTC by
+    /// default). Stepping happens in absolute time, so converting each candidate
+    /// here makes DST transitions fall out naturally.
+    fn local(&self, t: OffsetDateTime) -> OffsetDateTime {
+        match &self.tz {
+            Some(tz) => Timestamp::from_offset_datetime(t).to_zone(tz),
+            None => t.to_offset(UtcOffset::UTC),
+        }
+    }
+
     fn matches(&self, t: OffsetDateTime) -> bool {
+        let t = self.local(t);
         self.minute.contains(t.minute())
             && self.hour.contains(t.hour())
             && self.month.contains(u8::from(t.month()))
@@ -274,5 +307,28 @@ mod tests {
     fn impossible_expression_returns_none() {
         let cron = Cron::parse("0 0 30 2 *").unwrap(); // February 30th
         assert_eq!(cron.next_after(datetime!(2026-01-01 00:00:00 UTC)), None);
+    }
+
+    #[test]
+    fn unknown_timezone_is_rejected() {
+        assert!(Cron::parse_in_timezone("* * * * *", "Mars/Phobos").is_err());
+        assert!(Cron::parse_in_timezone("0 12 * * *", "America/New_York").is_ok());
+    }
+
+    #[test]
+    fn timezone_cron_fires_at_local_time_across_dst() {
+        // "noon in New York" — the resulting UTC instant differs by DST.
+        let cron = Cron::parse_in_timezone("0 12 * * *", "America/New_York").unwrap();
+
+        // Summer: EDT (UTC-4) → 12:00 local is 16:00 UTC.
+        assert_eq!(
+            cron.next_after(datetime!(2026-06-19 08:00:00 UTC)),
+            Some(datetime!(2026-06-19 16:00:00 UTC))
+        );
+        // Winter: EST (UTC-5) → 12:00 local is 17:00 UTC.
+        assert_eq!(
+            cron.next_after(datetime!(2026-01-15 08:00:00 UTC)),
+            Some(datetime!(2026-01-15 17:00:00 UTC))
+        );
     }
 }

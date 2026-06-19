@@ -13,8 +13,9 @@ All crates share a single version and are released together.
 - **Cron schedules** for the `Scheduler` (`klauthed-platform`, `scheduler`
   feature): a chrono-free `Cron` parser + next-occurrence calculator (5-field
   `minute hour day-of-month month day-of-week`, with ranges/lists/steps and the
-  standard day-of-month/day-of-week OR rule, evaluated in UTC), plus
-  `Scheduler::cron(Cron::parse("0 * * * *")?, task)` to run tasks on a calendar
+  standard day-of-month/day-of-week OR rule), in UTC (`Cron::parse`) or a named
+  IANA timezone (`Cron::parse_in_timezone("0 9 * * *", "America/New_York")`, DST
+  handled), plus `Scheduler::cron(schedule, task)` to run tasks on a calendar
   schedule alongside interval tasks. The CLI's `--with-scheduler` scaffold now
   demonstrates both an interval and a cron task.
 

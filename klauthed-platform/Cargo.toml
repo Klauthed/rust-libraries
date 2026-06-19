@@ -43,7 +43,8 @@ time = { workspace = true, optional = true }
 audit-outbox  = ["dep:klauthed-data"]
 webhook-http  = ["dep:reqwest"]
 # In-process interval + cron scheduler for recurring background tasks.
-scheduler     = ["dep:tokio", "dep:time"]
+# `klauthed-core/tz` powers timezone-aware cron schedules.
+scheduler     = ["dep:tokio", "dep:time", "klauthed-core/tz"]
 
 [dev-dependencies]
 # `test-util` enables `#[tokio::test(start_paused = true)]` for the scheduler tests.
