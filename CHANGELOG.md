@@ -8,6 +8,8 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-19
+
 ### Added
 
 - **`#[must_use]` on all builders** — every builder method returning `Self`
