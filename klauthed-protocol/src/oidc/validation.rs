@@ -51,12 +51,14 @@ impl IdTokenValidation {
     }
 
     /// Require the ID token to carry a matching `nonce`.
+    #[must_use]
     pub fn with_nonce(mut self, nonce: impl Into<String>) -> Self {
         self.expected_nonce = Some(nonce.into());
         self
     }
 
     /// Set the allowed clock-skew leeway, in seconds.
+    #[must_use]
     pub fn with_leeway(mut self, leeway: i64) -> Self {
         self.leeway = leeway;
         self

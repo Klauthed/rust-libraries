@@ -96,18 +96,21 @@ impl VaultProvider {
     }
 
     /// Set the KV v2 mount path (default `"secret"`).
+    #[must_use]
     pub fn kv_mount(mut self, mount: impl Into<String>) -> Self {
         self.kv_mount = mount.into();
         self
     }
 
     /// Set the Vault Enterprise namespace (`X-Vault-Namespace`).
+    #[must_use]
     pub fn namespace(mut self, namespace: impl Into<String>) -> Self {
         self.namespace = Some(namespace.into());
         self
     }
 
     /// Mount the KV data at `path` under config `key` (dotted keys nest).
+    #[must_use]
     pub fn with_secret(mut self, key: impl Into<String>, path: impl Into<String>) -> Self {
         self.secrets.push(SecretMapping { key: key.into(), path: path.into() });
         self
@@ -116,6 +119,7 @@ impl VaultProvider {
     /// Discover and read every secret beneath `base_path` via KV `LIST`,
     /// mounting each under a config key derived from its path relative to
     /// `base_path` (slashes become dots).
+    #[must_use]
     pub fn with_base_path(mut self, base_path: impl Into<String>) -> Self {
         self.base_path = Some(base_path.into().trim_matches('/').to_owned());
         self

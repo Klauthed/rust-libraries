@@ -43,6 +43,7 @@ impl AppError {
     }
 
     /// Override the stable error code.
+    #[must_use]
     pub fn with_code(mut self, code: impl Into<ErrorCode>) -> Self {
         self.code = code.into();
         self

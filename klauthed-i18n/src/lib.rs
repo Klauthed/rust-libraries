@@ -156,6 +156,7 @@ impl I18nBuilder {
     }
 
     /// Set the fallback locale.
+    #[must_use]
     pub fn default_locale(mut self, locale: impl Into<Locale>) -> Self {
         self.default = locale.into();
         self

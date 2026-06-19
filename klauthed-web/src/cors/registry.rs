@@ -82,6 +82,7 @@ impl InMemoryOriginRegistry {
     }
 
     /// Add one origin (builder form, for chaining).
+    #[must_use]
     pub fn with_origin(self, origin: impl Into<String>) -> Self {
         self.insert(origin.into());
         self

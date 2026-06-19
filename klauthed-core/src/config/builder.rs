@@ -33,6 +33,7 @@ impl ConfigBuilder {
     }
 
     /// Append a provider to the chain (higher precedence than those before it).
+    #[must_use]
     pub fn with_provider<P>(mut self, provider: P) -> Self
     where
         P: ConfigProvider + 'static,
@@ -43,6 +44,7 @@ impl ConfigBuilder {
 
     /// Append a boxed provider — handy when the concrete type is only known at
     /// runtime (e.g. conditionally a Vault provider).
+    #[must_use]
     pub fn with_boxed_provider(mut self, provider: Box<dyn ConfigProvider>) -> Self {
         self.providers.push(provider);
         self

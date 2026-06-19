@@ -44,48 +44,56 @@ impl RequestContext {
     // ── Builders ──────────────────────────────────────────────────────────────
 
     /// Override the request id (e.g. when reconstructing a propagated context).
+    #[must_use]
     pub fn with_request_id(mut self, id: RequestId) -> Self {
         self.request_id = id;
         self
     }
 
     /// Set the inbound correlation / trace id.
+    #[must_use]
     pub fn with_correlation_id(mut self, id: impl Into<String>) -> Self {
         self.correlation_id = Some(id.into());
         self
     }
 
     /// Set the tenant identifier.
+    #[must_use]
     pub fn with_tenant(mut self, tenant: impl Into<String>) -> Self {
         self.tenant = Some(tenant.into());
         self
     }
 
     /// Set the authenticated principal / subject.
+    #[must_use]
     pub fn with_principal(mut self, principal: impl Into<String>) -> Self {
         self.principal = Some(principal.into());
         self
     }
 
     /// Set the preferred locale (BCP-47, e.g. `en-US`).
+    #[must_use]
     pub fn with_locale(mut self, locale: impl Into<String>) -> Self {
         self.locale = Some(locale.into());
         self
     }
 
     /// Set the arrival time (defaults to construction time).
+    #[must_use]
     pub fn with_received_at(mut self, at: Timestamp) -> Self {
         self.received_at = at;
         self
     }
 
     /// Set an absolute deadline for the work.
+    #[must_use]
     pub fn with_deadline(mut self, deadline: Timestamp) -> Self {
         self.deadline = Some(deadline);
         self
     }
 
     /// Insert a metadata entry (builder form).
+    #[must_use]
     pub fn with_metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.metadata.insert(key.into(), value.into());
         self

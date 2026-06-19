@@ -32,7 +32,9 @@ tracks intent, not a commitment — scope shifts as we learn.
 Theme: **toward a stable 1.0 — API ergonomics and policy.**
 
 - [x] Per-crate `prelude` modules re-exporting each crate's common types.
-- API consistency pass (builder patterns, naming, re-export surface).
+- API consistency pass (builder patterns, naming, re-export surface) — in
+  progress: `#[must_use]` now on every builder method workspace-wide; naming and
+  re-export-surface review ongoing.
 - [x] GitHub Pages deployment for the mdBook guide (`Pages` workflow).
 - [x] Committed SemVer + deprecation policy and an explicit MSRV policy
       (CONTRIBUTING.md "Stability policy").

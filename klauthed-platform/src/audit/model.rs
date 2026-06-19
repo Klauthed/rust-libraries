@@ -138,30 +138,35 @@ impl AuditEventBuilder {
     }
 
     /// Override the event id.
+    #[must_use]
     pub fn id(mut self, id: AuditId) -> Self {
         self.id = id;
         self
     }
 
     /// Set an explicit occurrence time (otherwise taken from the clock at build).
+    #[must_use]
     pub fn occurred_at(mut self, at: Timestamp) -> Self {
         self.occurred_at = Some(at);
         self
     }
 
     /// Set the actor / principal.
+    #[must_use]
     pub fn actor(mut self, actor: impl Into<String>) -> Self {
         self.actor = Some(actor.into());
         self
     }
 
     /// Set the tenant.
+    #[must_use]
     pub fn tenant(mut self, tenant: impl Into<String>) -> Self {
         self.tenant = Some(tenant.into());
         self
     }
 
     /// Set the affected resource (type and id together).
+    #[must_use]
     pub fn resource(mut self, ty: impl Into<String>, id: impl Into<String>) -> Self {
         self.resource_type = Some(ty.into());
         self.resource_id = Some(id.into());
@@ -169,17 +174,20 @@ impl AuditEventBuilder {
     }
 
     /// Set the outcome (default [`Success`](AuditOutcome::Success)).
+    #[must_use]
     pub fn outcome(mut self, outcome: AuditOutcome) -> Self {
         self.outcome = outcome;
         self
     }
 
     /// Mark the outcome as [`Failure`](AuditOutcome::Failure).
+    #[must_use]
     pub fn failed(self) -> Self {
         self.outcome(AuditOutcome::Failure)
     }
 
     /// Insert a metadata entry.
+    #[must_use]
     pub fn metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
@@ -187,6 +195,7 @@ impl AuditEventBuilder {
 
     /// Copy `actor`, `tenant`, and the request-id metadata from a
     /// [`RequestContext`] (without overwriting values already set).
+    #[must_use]
     pub fn from_context(mut self, ctx: &RequestContext) -> Self {
         if self.actor.is_none() {
             self.actor = ctx.principal().map(str::to_owned);

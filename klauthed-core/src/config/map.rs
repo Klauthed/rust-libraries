@@ -67,6 +67,7 @@ impl ConfigMap {
     /// `{"database.url": "...", "database.pool.max": 10}` becomes
     /// `{"database": {"url": "...", "pool": {"max": 10}}}`. Keys without a `.`
     /// are carried over unchanged.
+    #[must_use]
     pub fn expand_dotted(self) -> ConfigMap {
         let mut root = ConfigMap::new();
         for (key, value) in self.0 {

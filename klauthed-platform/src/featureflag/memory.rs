@@ -33,12 +33,14 @@ impl InMemoryFeatureFlags {
     }
 
     /// Set the global default for `flag` (builder form).
+    #[must_use]
     pub fn with_global(mut self, flag: &FeatureFlag, enabled: bool) -> Self {
         self.rules.entry(flag.clone()).or_default().global = enabled;
         self
     }
 
     /// Override `flag` for a specific tenant (builder form).
+    #[must_use]
     pub fn with_tenant_override(
         mut self,
         tenant: impl Into<String>,
@@ -50,12 +52,14 @@ impl InMemoryFeatureFlags {
     }
 
     /// Set the global multivariate value for `flag` (builder form).
+    #[must_use]
     pub fn with_global_variant(mut self, flag: &FeatureFlag, variant: impl Into<String>) -> Self {
         self.rules.entry(flag.clone()).or_default().global_variant = Some(variant.into());
         self
     }
 
     /// Override `flag`'s multivariate value for a tenant (builder form).
+    #[must_use]
     pub fn with_tenant_variant(
         mut self,
         tenant: impl Into<String>,

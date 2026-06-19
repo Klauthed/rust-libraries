@@ -81,18 +81,21 @@ impl CursorPageRequest {
     }
 
     /// Set the `after` cursor (forward pagination).
+    #[must_use]
     pub fn after(mut self, cursor: Cursor) -> Self {
         self.after = Some(cursor);
         self
     }
 
     /// Set the `before` cursor (backward pagination).
+    #[must_use]
     pub fn before(mut self, cursor: Cursor) -> Self {
         self.before = Some(cursor);
         self
     }
 
     /// Set the sort keys.
+    #[must_use]
     pub fn sort(mut self, keys: Vec<SortKey>) -> Self {
         self.sort = keys;
         self

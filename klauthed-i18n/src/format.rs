@@ -22,6 +22,7 @@ impl Args {
     }
 
     /// Set a named argument (builder form). Any `Display` value works.
+    #[must_use]
     pub fn set(mut self, key: impl Into<String>, value: impl Display) -> Self {
         self.values.insert(key.into(), value.to_string());
         self

@@ -23,6 +23,7 @@ impl Locale {
 
     /// The primary language subtag (`en-us` → `en`). Returns a clone when the
     /// locale is already a bare language.
+    #[must_use]
     pub fn primary(&self) -> Locale {
         match self.0.split_once(['-', '_']) {
             Some((lang, _)) => Locale(lang.to_owned()),

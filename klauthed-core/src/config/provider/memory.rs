@@ -32,6 +32,7 @@ impl MemoryProvider {
     }
 
     /// Builder-style insert of a single top-level key.
+    #[must_use]
     pub fn set(mut self, key: impl Into<String>, value: impl Into<Value>) -> Self {
         self.values.insert(key.into(), value.into());
         self

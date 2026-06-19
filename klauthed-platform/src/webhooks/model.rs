@@ -45,12 +45,14 @@ impl WebhookEndpoint {
     }
 
     /// Override the endpoint id (builder style).
+    #[must_use]
     pub fn with_id(mut self, id: WebhookEndpointId) -> Self {
         self.id = id;
         self
     }
 
     /// Subscribe to an event type (builder style; duplicates are ignored).
+    #[must_use]
     pub fn subscribe(mut self, event_type: impl Into<String>) -> Self {
         let ty = event_type.into();
         if !self.event_types.contains(&ty) {
@@ -60,6 +62,7 @@ impl WebhookEndpoint {
     }
 
     /// Set the active flag (builder style).
+    #[must_use]
     pub fn with_active(mut self, active: bool) -> Self {
         self.active = active;
         self
@@ -130,6 +133,7 @@ impl WebhookEvent {
     }
 
     /// Override the event id (builder style).
+    #[must_use]
     pub fn with_id(mut self, id: WebhookEventId) -> Self {
         self.id = id;
         self

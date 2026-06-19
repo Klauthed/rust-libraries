@@ -87,48 +87,56 @@ impl TestContextBuilder {
     }
 
     /// Set the seed used to derive the (deterministic) request id.
+    #[must_use]
     pub fn seed(mut self, seed: u64) -> Self {
         self.seed = seed;
         self
     }
 
     /// Pin the arrival time (`received_at`).
+    #[must_use]
     pub fn received_at(mut self, at: Timestamp) -> Self {
         self.received_at = at;
         self
     }
 
     /// Set an absolute deadline.
+    #[must_use]
     pub fn deadline(mut self, deadline: Timestamp) -> Self {
         self.deadline = Some(deadline);
         self
     }
 
     /// Set the tenant identifier.
+    #[must_use]
     pub fn tenant(mut self, tenant: impl Into<String>) -> Self {
         self.tenant = Some(tenant.into());
         self
     }
 
     /// Set the authenticated principal / subject.
+    #[must_use]
     pub fn principal(mut self, principal: impl Into<String>) -> Self {
         self.principal = Some(principal.into());
         self
     }
 
     /// Set the preferred locale (BCP-47, e.g. `en-US`).
+    #[must_use]
     pub fn locale(mut self, locale: impl Into<String>) -> Self {
         self.locale = Some(locale.into());
         self
     }
 
     /// Set the inbound correlation / trace id.
+    #[must_use]
     pub fn correlation_id(mut self, id: impl Into<String>) -> Self {
         self.correlation_id = Some(id.into());
         self
     }
 
     /// Add a metadata entry.
+    #[must_use]
     pub fn metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.metadata.push((key.into(), value.into()));
         self

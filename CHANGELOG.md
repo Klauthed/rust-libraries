@@ -10,6 +10,9 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **`#[must_use]` on all builders** — every builder method returning `Self`
+  across the workspace is now `#[must_use]`, so dropping a builder chain is a
+  compile-time warning. Part of the toward-1.0 API-consistency pass.
 - **Stability policy** (CONTRIBUTING.md): a committed public-API/SemVer
   definition, a deprecation policy (`#[deprecated]`, kept ≥1 minor release), and
   an explicit MSRV policy (1.95; raising it is a minor bump).

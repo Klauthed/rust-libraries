@@ -67,30 +67,35 @@ impl Tenant {
     // ── Builders ──────────────────────────────────────────────────────────────
 
     /// Override the id (e.g. when rehydrating from storage).
+    #[must_use]
     pub fn with_id(mut self, id: TenantId) -> Self {
         self.id = id;
         self
     }
 
     /// Set the display name.
+    #[must_use]
     pub fn with_name(mut self, name: impl Into<String>) -> Self {
         self.name = Some(name.into());
         self
     }
 
     /// Set the lifecycle status.
+    #[must_use]
     pub fn with_status(mut self, status: TenantStatus) -> Self {
         self.status = status;
         self
     }
 
     /// Set the creation timestamp.
+    #[must_use]
     pub fn with_created_at(mut self, at: Timestamp) -> Self {
         self.created_at = at;
         self
     }
 
     /// Insert a metadata entry (builder form).
+    #[must_use]
     pub fn with_metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
