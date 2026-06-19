@@ -2607,7 +2607,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "klauthed-core",
  "klauthed-data",
@@ -2625,7 +2625,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-core"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -2649,7 +2649,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-data"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "async-nats",
  "async-trait",
@@ -2675,7 +2675,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-discovery"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "async-trait",
  "klauthed-error",
@@ -2690,14 +2690,14 @@ dependencies = [
 
 [[package]]
 name = "klauthed-error"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "klauthed-examples"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "klauthed-core",
  "klauthed-data",
@@ -2713,7 +2713,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-i18n"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "klauthed-error",
  "klauthed-macros",
@@ -2722,7 +2722,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-macros"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "heck",
  "klauthed-error",
@@ -2733,7 +2733,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-observability"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "http 1.4.1",
  "klauthed-core",
@@ -2754,7 +2754,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-platform"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "async-trait",
  "hex",
@@ -2772,7 +2772,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-protocol"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "klauthed-error",
  "klauthed-macros",
@@ -2783,7 +2783,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-security"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "argon2",
  "async-trait",
@@ -2814,7 +2814,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-testing"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "async-trait",
  "klauthed-core",
@@ -2827,7 +2827,7 @@ dependencies = [
 
 [[package]]
 name = "klauthed-web"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -4211,7 +4211,7 @@ dependencies = [
 
 [[package]]
 name = "reference-service"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "actix-web",
  "klauthed-core",

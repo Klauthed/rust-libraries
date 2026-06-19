@@ -27,19 +27,21 @@ tracks intent, not a commitment — scope shifts as we learn.
   guide, and a runnable reference service dogfooding the suite. Per-job CI
   timeouts. See [CHANGELOG](CHANGELOG.md).
 
-## 0.5.0 (in progress)
+- **0.5.0** — toward-1.0 API ergonomics & policy: per-crate `prelude` modules,
+  `#[must_use]` on every builder method, a committed stability policy
+  (SemVer/deprecation/MSRV in CONTRIBUTING.md), and a GitHub Pages workflow for
+  the mdBook guide. See [CHANGELOG](CHANGELOG.md).
 
-Theme: **toward a stable 1.0 — API ergonomics and policy.**
+## 0.6.0 (in progress)
 
-- [x] Per-crate `prelude` modules re-exporting each crate's common types.
-- API consistency pass (builder patterns, naming, re-export surface) — in
-  progress: `#[must_use]` now on every builder method workspace-wide; naming and
-  re-export-surface review ongoing.
-- [x] GitHub Pages deployment for the mdBook guide (`Pages` workflow).
-- [x] Committed SemVer + deprecation policy and an explicit MSRV policy
-      (CONTRIBUTING.md "Stability policy").
+Theme: **continue toward a stable 1.0.**
+
+- API consistency: naming conventions and re-export-completeness review per crate
+  (the `#[must_use]` builder pass landed in 0.5.0).
+- Broaden test / fuzz / property coverage on the remaining surface.
+- Candidate features as they arise.
 
 ## Toward 1.0
 
-Broad API review per crate, committed SemVer + deprecation policy, MSRV policy,
-and broad test / fuzz coverage.
+A final broad API review per crate, the committed SemVer + deprecation policy now
+in place (CONTRIBUTING.md), the MSRV policy, and broad test / fuzz coverage.
