@@ -101,6 +101,26 @@ GitHub Actions**, with owner `klauthed`, repo `rust-libraries`, workflow
 > Publishing lives only in CI so there's a single, auditable publish path, no
 > long-lived token, and no risk of a local double-publish.
 
+### Adding a new crate to the release
+
+A trusted-publishing token **cannot create a new crate** (crates.io returns
+`403 … do not support creating new crates`). So a brand-new `klauthed-*` crate
+needs a one-time bootstrap before the CI release can manage it:
+
+1. Add it to the `CRATES` arrays in [`scripts/publish-workspace.sh`](scripts/publish-workspace.sh)
+   and [`scripts/add-owners.sh`](scripts/add-owners.sh) (in dependency order).
+2. Publish it **once, manually**, with a scoped API token, to create it on
+   crates.io:
+
+   ```sh
+   CARGO_REGISTRY_TOKEN=<crates.io token> cargo publish -p klauthed-<name>
+   ```
+3. Configure Trusted Publishing for it (the per-crate setup above) and add the
+   org owner (`cargo owner --add github:klauthed:owners klauthed-<name>`).
+
+From then on the normal tag-triggered release publishes it via OIDC like every
+other crate.
+
 ## Stability policy
 
 What the suite commits to. These tighten at 1.0; the pre-1.0 caveats note where
