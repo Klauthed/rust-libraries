@@ -1,8 +1,9 @@
-//! A lightweight interval scheduler for recurring background tasks.
+//! A lightweight scheduler for recurring background tasks.
 //!
-//! Register async tasks to run on a fixed period, [`start`](Scheduler::start)
-//! them on the current Tokio runtime, and stop them — either explicitly via
-//! [`SchedulerHandle::shutdown`] or by dropping the handle.
+//! Register async tasks to run on a fixed period ([`every`](Scheduler::every)) or
+//! a [`Cron`] calendar schedule ([`cron`](Scheduler::cron)),
+//! [`start`](Scheduler::start) them on the current Tokio runtime, and stop them —
+//! either explicitly via [`SchedulerHandle::shutdown`] or by dropping the handle.
 //!
 //! ```no_run
 //! use std::time::Duration;
@@ -28,9 +29,12 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 
+use klauthed_core::time::{Clock, SystemClock};
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
 use tokio::time::MissedTickBehavior;
+
+pub use crate::cron::{Cron, CronError};
 
 type TaskFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
 type TaskFn = Arc<dyn Fn() -> TaskFuture + Send + Sync>;
@@ -39,6 +43,7 @@ type TaskFn = Arc<dyn Fn() -> TaskFuture + Send + Sync>;
 #[derive(Default, Clone)]
 pub struct Scheduler {
     tasks: Vec<(Duration, TaskFn)>,
+    cron_tasks: Vec<(Cron, TaskFn)>,
 }
 
 impl Scheduler {
@@ -62,6 +67,29 @@ impl Scheduler {
         self
     }
 
+    /// Register `task` to run on a cron `schedule` (evaluated in UTC). Runs are
+    /// sequential per task; a panic in one run is isolated and the schedule
+    /// continues.
+    ///
+    /// ```
+    /// use klauthed_platform::scheduler::{Cron, Scheduler};
+    /// # fn build() -> Scheduler {
+    /// Scheduler::new().cron(Cron::parse("0 * * * *").unwrap(), || async {
+    ///     // top of every hour
+    /// })
+    /// # }
+    /// ```
+    #[must_use]
+    pub fn cron<F, Fut>(mut self, schedule: Cron, task: F) -> Self
+    where
+        F: Fn() -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        let task: TaskFn = Arc::new(move || Box::pin(task()));
+        self.cron_tasks.push((schedule, task));
+        self
+    }
+
     /// Spawn every registered task on the current Tokio runtime, returning a
     /// [`SchedulerHandle`] that stops them when shut down or dropped.
     ///
@@ -70,13 +98,38 @@ impl Scheduler {
     #[must_use]
     pub fn start(self) -> SchedulerHandle {
         let (stop_tx, stop_rx) = watch::channel(());
-        let handles = self
+        let mut handles: Vec<JoinHandle<()>> = self
             .tasks
             .into_iter()
             .map(|(period, task)| spawn_task(period, task, stop_rx.clone()))
             .collect();
+        handles.extend(
+            self.cron_tasks
+                .into_iter()
+                .map(|(schedule, task)| spawn_cron(schedule, task, stop_rx.clone())),
+        );
         SchedulerHandle { _stop: stop_tx, handles }
     }
+}
+
+fn spawn_cron(schedule: Cron, task: TaskFn, mut stop: watch::Receiver<()>) -> JoinHandle<()> {
+    tokio::spawn(async move {
+        loop {
+            let now = SystemClock.now_datetime();
+            let Some(next) = schedule.next_after(now) else {
+                // An impossible schedule (e.g. Feb 30) never fires; stop quietly.
+                break;
+            };
+            let wait = std::time::Duration::try_from(next - now).unwrap_or(Duration::ZERO);
+            tokio::select! {
+                _ = tokio::time::sleep(wait) => {
+                    // Isolate a panicking run, like the interval scheduler.
+                    let _ = tokio::spawn(task()).await;
+                }
+                _ = stop.changed() => break,
+            }
+        }
+    })
 }
 
 fn spawn_task(period: Duration, task: TaskFn, mut stop: watch::Receiver<()>) -> JoinHandle<()> {

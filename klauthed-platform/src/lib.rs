@@ -57,6 +57,8 @@
 //! ```
 
 pub mod audit;
+#[cfg(feature = "scheduler")]
+mod cron;
 pub mod error;
 pub mod featureflag;
 pub mod jobs;
@@ -74,7 +76,7 @@ pub use jobs::{
     DEFAULT_MAX_ATTEMPTS, EnqueuedJob, InMemoryJobQueue, Job, JobId, JobQueue, JobStatus,
 };
 #[cfg(feature = "scheduler")]
-pub use scheduler::{Scheduler, SchedulerHandle};
+pub use scheduler::{Cron, CronError, Scheduler, SchedulerHandle};
 pub use tenancy::{
     InMemoryTenantResolver, Tenant, TenantId, TenantResolver, TenantStatus, tenant_from_context,
 };
