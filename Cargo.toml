@@ -143,19 +143,19 @@ proptest     = "1"
 criterion    = { version = "0.5", default-features = false }
 
 # ── Workspace crates ─────────────────────────────────────────────────────────
-klauthed               = { path = "klauthed",               version = "0.6.0" }
-klauthed-core          = { path = "klauthed-core",         version = "0.6.0", default-features = false }
-klauthed-data          = { path = "klauthed-data",         version = "0.6.0" }
-klauthed-discovery     = { path = "klauthed-discovery",    version = "0.6.0" }
-klauthed-error         = { path = "klauthed-error",        version = "0.6.0" }
-klauthed-i18n          = { path = "klauthed-i18n",          version = "0.6.0" }
-klauthed-macros        = { path = "klauthed-macros",       version = "0.6.0" }
-klauthed-observability = { path = "klauthed-observability",version = "0.6.0" }
-klauthed-platform      = { path = "klauthed-platform",     version = "0.6.0" }
-klauthed-protocol      = { path = "klauthed-protocol",     version = "0.6.0" }
-klauthed-security      = { path = "klauthed-security",     version = "0.6.0" }
-klauthed-testing       = { path = "klauthed-testing",      version = "0.6.0" }
-klauthed-web           = { path = "klauthed-web",          version = "0.6.0" }
+klauthed               = { path = "klauthed",               version = "0.7.0" }
+klauthed-core          = { path = "klauthed-core",         version = "0.7.0", default-features = false }
+klauthed-data          = { path = "klauthed-data",         version = "0.7.0" }
+klauthed-discovery     = { path = "klauthed-discovery",    version = "0.7.0" }
+klauthed-error         = { path = "klauthed-error",        version = "0.7.0" }
+klauthed-i18n          = { path = "klauthed-i18n",          version = "0.7.0" }
+klauthed-macros        = { path = "klauthed-macros",       version = "0.7.0" }
+klauthed-observability = { path = "klauthed-observability",version = "0.7.0" }
+klauthed-platform      = { path = "klauthed-platform",     version = "0.7.0" }
+klauthed-protocol      = { path = "klauthed-protocol",     version = "0.7.0" }
+klauthed-security      = { path = "klauthed-security",     version = "0.7.0" }
+klauthed-testing       = { path = "klauthed-testing",      version = "0.7.0" }
+klauthed-web           = { path = "klauthed-web",          version = "0.7.0" }
 
 [profile.release]
 lto           = "thin"

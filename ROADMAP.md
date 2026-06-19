@@ -31,17 +31,20 @@ tracks intent, not a commitment — scope shifts as we learn.
   `#[must_use]` on every builder method, a committed stability policy
   (SemVer/deprecation/MSRV in CONTRIBUTING.md), and a GitHub Pages workflow for
   the mdBook guide. See [CHANGELOG](CHANGELOG.md).
+- **0.6.0** — a service scaffolding CLI (`klauthed-cli`: `cargo klauthed new`
+  with `--with-jwt` / `--database` / `--with-scheduler`), an interval `Scheduler`
+  in `klauthed-platform`, umbrella `data-sql`/`data-redis` feature forwarding, and
+  added auth/event/cqrs test coverage. See [CHANGELOG](CHANGELOG.md).
 
-## 0.6.0 (in progress)
+## 0.7.0 (in progress)
 
 Theme: **continue toward a stable 1.0.**
 
-- [x] Service scaffolding CLI (`klauthed-cli`): `cargo klauthed new <name>`
-      generates a ready-to-run service.
 - API consistency: naming conventions and re-export-completeness review per crate
   (the `#[must_use]` builder pass landed in 0.5.0).
 - Broaden test / fuzz / property coverage on the remaining surface.
-- Candidate features as they arise.
+- Candidate features as they arise (e.g. cron/calendar schedules building on the
+  0.6.0 interval scheduler).
 
 ## Toward 1.0
 
