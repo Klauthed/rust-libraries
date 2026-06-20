@@ -25,7 +25,7 @@ jobs:
     name: publish to crates.io
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev pkg-config
       - uses: Swatinem/rust-cache@v2
