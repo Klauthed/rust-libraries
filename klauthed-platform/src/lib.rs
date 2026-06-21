@@ -62,6 +62,7 @@ mod cron;
 pub mod error;
 pub mod featureflag;
 pub mod jobs;
+pub mod metering;
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
 pub mod tenancy;
@@ -76,6 +77,7 @@ pub use jobs::{
     DEFAULT_MAX_ATTEMPTS, EnqueuedJob, InMemoryJobQueue, Job, JobHandler, JobId, JobQueue,
     JobStatus, JobWorker,
 };
+pub use metering::{InMemoryMeter, Meter};
 #[cfg(feature = "scheduler")]
 pub use scheduler::{Cron, CronError, Scheduler, SchedulerHandle};
 pub use tenancy::{
@@ -92,7 +94,7 @@ pub mod prelude {
     pub use crate::Scheduler;
     pub use crate::{
         Audit, AuditSink, FeatureFlag, FeatureFlags, InMemoryAuditSink, InMemoryFeatureFlags,
-        InMemoryJobQueue, InMemoryTenantResolver, Job, JobHandler, JobQueue, JobWorker,
-        PlatformError, Tenant, TenantResolver, WebhookSender,
+        InMemoryJobQueue, InMemoryMeter, InMemoryTenantResolver, Job, JobHandler, JobQueue,
+        JobWorker, Meter, PlatformError, Tenant, TenantResolver, WebhookSender,
     };
 }

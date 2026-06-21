@@ -10,6 +10,10 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Usage metering** (`klauthed-platform`): a `Meter` trait and an
+  `InMemoryMeter` for per-tenant usage accounting — `record`/`usage`/`reset` by
+  `(tenant, metric)` — for quotas and usage-based billing. A peer of the existing
+  tenancy/audit/feature-flag services.
 - **Job worker** (`klauthed-platform`): a `JobHandler` trait and a `JobWorker`
   that drains a `JobQueue` — `run_once` claims due jobs, runs the handler, and
   marks each succeeded or failed (the queue applies retry/backoff). Completes the
