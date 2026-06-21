@@ -63,6 +63,7 @@ pub mod error;
 pub mod featureflag;
 pub mod jobs;
 pub mod metering;
+pub mod notifications;
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
 pub mod tenancy;
@@ -78,6 +79,7 @@ pub use jobs::{
     JobStatus, JobWorker,
 };
 pub use metering::{InMemoryMeter, Meter};
+pub use notifications::{Channel, Notification, Notifier, RecordingNotifier};
 #[cfg(feature = "scheduler")]
 pub use scheduler::{Cron, CronError, Scheduler, SchedulerHandle};
 pub use tenancy::{
@@ -95,6 +97,7 @@ pub mod prelude {
     pub use crate::{
         Audit, AuditSink, FeatureFlag, FeatureFlags, InMemoryAuditSink, InMemoryFeatureFlags,
         InMemoryJobQueue, InMemoryMeter, InMemoryTenantResolver, Job, JobHandler, JobQueue,
-        JobWorker, Meter, PlatformError, Tenant, TenantResolver, WebhookSender,
+        JobWorker, Meter, Notification, Notifier, PlatformError, Tenant, TenantResolver,
+        WebhookSender,
     };
 }

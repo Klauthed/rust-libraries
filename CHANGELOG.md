@@ -10,6 +10,10 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **User notifications** (`klauthed-platform`): a `Notifier` trait, a
+  `Notification` / `Channel` (email / SMS / push) model, and a
+  `RecordingNotifier` for tests. User-facing messaging, distinct from `webhooks`
+  (system events to endpoint URLs). Completes the platform's declared service set.
 - **Usage metering** (`klauthed-platform`): a `Meter` trait and an
   `InMemoryMeter` for per-tenant usage accounting — `record`/`usage`/`reset` by
   `(tenant, metric)` — for quotas and usage-based billing. A peer of the existing
