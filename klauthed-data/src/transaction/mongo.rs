@@ -91,9 +91,19 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires a running MongoDB replica set"]
     async fn commits_on_ok_and_aborts_on_err() {
-        let client = Client::with_uri_str("mongodb://127.0.0.1:27017/?replicaSet=rs0")
-            .await
-            .expect("connect mongodb");
+        let url = std::env::var("MONGODB_URL")
+            .unwrap_or_else(|_| "mongodb://127.0.0.1:27017".to_string());
+        let client = Client::with_uri_str(&url).await.expect("connect mongodb");
+
+        // Transactions require a replica set; skip on a standalone deployment
+        // (e.g. CI's mongo service container, which can't be a replica set).
+        let hello =
+            client.database("admin").run_command(doc! { "hello": 1 }).await.expect("hello command");
+        if hello.get_str("setName").is_err() {
+            eprintln!("skipping MongoTransact test: MongoDB is not a replica set");
+            return;
+        }
+
         let collection = client.database("klauthed_test").collection::<Document>("transact_items");
         collection.drop().await.ok();
 
