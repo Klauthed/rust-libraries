@@ -75,6 +75,7 @@ pub mod passkey;
 pub mod ratelimit;
 #[cfg(feature = "config-refresh")]
 pub mod refresh;
+pub mod resilience;
 pub mod server;
 pub mod starter;
 #[cfg(feature = "otel")]
@@ -99,6 +100,7 @@ pub use health::{HealthCheck, HealthRegistry, HealthStatus};
 #[cfg(feature = "webauthn")]
 pub use passkey::{CeremonyStore, InMemoryCeremonyStore, PasskeyApi};
 pub use ratelimit::{KeyBy, RateLimit};
+pub use resilience::{CircuitBreaker, CircuitError, RetryPolicy};
 pub use server::{serve, serve_with_components, serve_with_defaults};
 pub use starter::WebStarter;
 #[cfg(feature = "otel")]

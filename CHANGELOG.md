@@ -10,6 +10,11 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Resilience patterns** (`klauthed-web::resilience`): `RetryPolicy` — retry a
+  fallible async operation with capped exponential backoff — and `CircuitBreaker`
+  — fail fast after N consecutive failures, then half-open probe after a cooldown
+  (clock-injectable, so the cooldown is deterministically testable). For hardening
+  outbound calls and other fallible async work.
 - **Transactional executors** (`klauthed-data`): `SqlxTransact` (feature `sql`)
   and `MongoTransact` (feature `mongodb`) — the concrete production counterparts to
   the `Transact` trait + `NoopTransact`. `run(async |handle| …)` begins a
