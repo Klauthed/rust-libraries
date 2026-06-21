@@ -81,14 +81,15 @@ pub mod migrate;
 #[cfg(feature = "sql")]
 pub mod starter;
 
+pub mod eventbus;
 pub mod pagination;
 pub mod saga;
 
 // ── Stub modules reserved for future implementation ───────────────────────────
-pub mod eventbus;
 pub mod transaction;
 
 pub use error::DataError;
+pub use eventbus::{EventBus, EventHandler, InMemoryEventBus};
 
 #[cfg(feature = "sql")]
 pub use migrate::{Migration, Migrator};
@@ -109,9 +110,9 @@ pub mod prelude {
     #[cfg(feature = "sql")]
     pub use crate::{AnyPool, DataStarter, Migration, Migrator};
     pub use crate::{
-        DataError, IdempotencyStore, InMemoryIdempotencyStore, InMemoryLockManager, InMemoryOutbox,
-        LockGuard, LockManager, LockToken, Outbox, OutboxEntry, OutboxId, OutboxPublisher,
-        OutboxRelay, Saga, SagaError,
+        DataError, EventBus, EventHandler, IdempotencyStore, InMemoryEventBus,
+        InMemoryIdempotencyStore, InMemoryLockManager, InMemoryOutbox, LockGuard, LockManager,
+        LockToken, Outbox, OutboxEntry, OutboxId, OutboxPublisher, OutboxRelay, Saga, SagaError,
     };
 }
 

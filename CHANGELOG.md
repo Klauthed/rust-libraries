@@ -10,6 +10,10 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **In-process event bus** (`klauthed-data`): an `EventBus` publish trait, an
+  `EventHandler` subscriber trait, and an `InMemoryEventBus` that fans every
+  published event out to all subscribers — for decoupled in-process domain-event
+  handling. Fills the previously-stubbed `eventbus` module.
 - **Saga orchestration** (`klauthed-data`): a `Saga` of compensable steps — each a
   forward action paired with a compensation — run by `execute()`, which on the
   first failure runs the completed steps' compensations in reverse (returning a
