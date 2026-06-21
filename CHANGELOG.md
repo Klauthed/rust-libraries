@@ -10,12 +10,13 @@ All crates share a single version and are released together.
 
 ### Added
 
-- **`SqlxTransact`** (`klauthed-data`, feature `sql`): a sqlx-backed transactional
-  executor. `run(async |tx| …)` begins a transaction, passes the handle to the
-  closure, and commits on `Ok` / rolls back on `Err` — the concrete production
-  counterpart to the `Transact` trait + `NoopTransact`. (It passes the handle
-  rather than implementing the connection-less trait, since sqlx statements only
-  join a transaction when run on its connection.)
+- **Transactional executors** (`klauthed-data`): `SqlxTransact` (feature `sql`)
+  and `MongoTransact` (feature `mongodb`) — the concrete production counterparts to
+  the `Transact` trait + `NoopTransact`. `run(async |handle| …)` begins a
+  transaction, passes the connection/session handle to the closure, and commits on
+  `Ok` / rolls back on `Err`. (They pass the handle rather than implementing the
+  connection-less trait, since statements only join a transaction when issued on
+  its connection/session.) Adds a `DataError::Transaction` variant.
 - **In-process event bus** (`klauthed-data`): an `EventBus` publish trait, an
   `EventHandler` subscriber trait, and an `InMemoryEventBus` that fans every
   published event out to all subscribers — for decoupled in-process domain-event

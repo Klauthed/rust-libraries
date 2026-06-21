@@ -135,3 +135,6 @@ pub use locks::mongo::MongoLockManager;
 
 #[cfg(feature = "mongodb")]
 pub use idempotency::mongo::MongoIdempotencyStore;
+
+#[cfg(feature = "mongodb")]
+pub use transaction::MongoTransact;

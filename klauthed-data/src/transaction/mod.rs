@@ -13,21 +13,20 @@
 //! [`NoopTransact`] simply calls the closure with no transaction semantics —
 //! sufficient for verifying business logic without a real database.
 //!
-//! For a real relational transaction, [`SqlxTransact`] (feature `sql`) begins a
-//! sqlx transaction and **passes the handle to the closure** (sqlx statements
-//! only join a transaction when they run on its connection), committing on `Ok`
-//! and rolling back on `Err`.
-//!
-//! # Future work
-//!
-//! * `MongoTransact` — wraps a MongoDB client session for multi-document
-//!   atomicity.
+//! For a real transaction, [`SqlxTransact`] (feature `sql`) and [`MongoTransact`]
+//! (feature `mongodb`) begin a transaction and **pass the handle to the closure**
+//! — statements only join a transaction when issued on its connection / session —
+//! committing on `Ok` and rolling back on `Err`.
 
+#[cfg(feature = "mongodb")]
+pub mod mongo;
 pub mod noop;
 #[cfg(feature = "sql")]
 pub mod sql;
 pub mod transact;
 
+#[cfg(feature = "mongodb")]
+pub use mongo::MongoTransact;
 pub use noop::NoopTransact;
 #[cfg(feature = "sql")]
 pub use sql::SqlxTransact;

@@ -36,6 +36,10 @@ pub enum DataError {
     #[error("transactional outbox error: {0}")]
     Outbox(String),
 
+    /// A transaction failed to begin, commit, or roll back.
+    #[error("transaction error: {0}")]
+    Transaction(String),
+
     /// The idempotency store encountered an error.
     #[error("idempotency store error: {0}")]
     Idempotency(String),
@@ -115,6 +119,7 @@ impl DataError {
             DataError::MissingUrl(_) => (Internal, ErrorCode::new("data.missing_url")),
             DataError::Messaging(_) => (Internal, ErrorCode::new("data.messaging")),
             DataError::Outbox(_) => (Internal, ErrorCode::new("data.outbox")),
+            DataError::Transaction(_) => (Internal, ErrorCode::new("data.transaction")),
             DataError::Idempotency(_) => (Internal, ErrorCode::new("data.idempotency")),
             DataError::Migration(_) => (Internal, ErrorCode::new("data.migration")),
             // Another holder owns the lock — a conflict from the caller's view.
