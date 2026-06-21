@@ -10,6 +10,11 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Job worker** (`klauthed-platform`): a `JobHandler` trait and a `JobWorker`
+  that drains a `JobQueue` — `run_once` claims due jobs, runs the handler, and
+  marks each succeeded or failed (the queue applies retry/backoff). Completes the
+  background-jobs lifecycle (store → claim → process → outcome); compose with the
+  scheduler for a long-running worker.
 - **Resilience patterns** (`klauthed-web::resilience`): `RetryPolicy` — retry a
   fallible async operation with capped exponential backoff — and `CircuitBreaker`
   — fail fast after N consecutive failures, then half-open probe after a cooldown

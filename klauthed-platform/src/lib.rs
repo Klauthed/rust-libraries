@@ -73,7 +73,8 @@ pub use audit::{
 pub use error::PlatformError;
 pub use featureflag::{FeatureFlag, FeatureFlags, InMemoryFeatureFlags};
 pub use jobs::{
-    DEFAULT_MAX_ATTEMPTS, EnqueuedJob, InMemoryJobQueue, Job, JobId, JobQueue, JobStatus,
+    DEFAULT_MAX_ATTEMPTS, EnqueuedJob, InMemoryJobQueue, Job, JobHandler, JobId, JobQueue,
+    JobStatus, JobWorker,
 };
 #[cfg(feature = "scheduler")]
 pub use scheduler::{Cron, CronError, Scheduler, SchedulerHandle};
@@ -91,7 +92,7 @@ pub mod prelude {
     pub use crate::Scheduler;
     pub use crate::{
         Audit, AuditSink, FeatureFlag, FeatureFlags, InMemoryAuditSink, InMemoryFeatureFlags,
-        InMemoryJobQueue, InMemoryTenantResolver, Job, JobQueue, PlatformError, Tenant,
-        TenantResolver, WebhookSender,
+        InMemoryJobQueue, InMemoryTenantResolver, Job, JobHandler, JobQueue, JobWorker,
+        PlatformError, Tenant, TenantResolver, WebhookSender,
     };
 }

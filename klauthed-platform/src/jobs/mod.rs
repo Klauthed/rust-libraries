@@ -1,12 +1,12 @@
-//! Background-job queueing abstraction (store only — no worker runtime).
+//! Background jobs: a queue/store plus a simple worker.
 //!
-//! This module models the *queue/store* side of background work: a typed
+//! This module models the *queue/store* side of background work — a typed
 //! [`JobId`], the [`JobStatus`] lifecycle, an [`EnqueuedJob`] record, and the
-//! async [`JobQueue`] trait. Actually *running* a job (a worker loop, retries on
-//! a real executor, etc.) is intentionally out of scope — callers
-//! [`dequeue_due`](JobQueue::dequeue_due) jobs, execute them however they like,
-//! and report back with [`mark_succeeded`](JobQueue::mark_succeeded) /
-//! [`mark_failed`](JobQueue::mark_failed).
+//! async [`JobQueue`] trait — and a [`JobWorker`] that drains it: claim due jobs,
+//! run a [`JobHandler`], and report each outcome via
+//! [`mark_succeeded`](JobQueue::mark_succeeded) / [`mark_failed`](JobQueue::mark_failed).
+//! You can still drive the queue by hand instead — [`dequeue_due`](JobQueue::dequeue_due)
+//! and report back yourself.
 //!
 //! [`InMemoryJobQueue`] is a thread-safe, deterministic implementation driven by
 //! an injected [`Clock`](klauthed_core::time::Clock), so scheduling and retry-backoff are fully testable with
@@ -33,15 +33,16 @@
 //! assert!(!JobStatus::Running.is_terminal());
 //! ```
 //!
-//! Future work (out of scope here): a Postgres/Redis-backed [`JobQueue`], a
-//! worker runtime that polls [`dequeue_due`](JobQueue::dequeue_due), dead-letter
-//! handling, and metering of job throughput.
+//! Future work (out of scope here): a Postgres/Redis-backed [`JobQueue`],
+//! dead-letter handling, and metering of job throughput.
 
 pub mod model;
 pub mod queue;
+pub mod worker;
 
 pub use model::{DEFAULT_MAX_ATTEMPTS, EnqueuedJob, Job, JobId, JobStatus};
 pub use queue::{InMemoryJobQueue, JobQueue};
+pub use worker::{JobHandler, JobWorker};
 
 #[cfg(test)]
 mod tests;
