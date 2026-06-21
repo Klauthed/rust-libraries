@@ -67,7 +67,7 @@ consul        = ["discovery", "klauthed-discovery/consul"]
 eureka        = ["discovery", "klauthed-discovery/eureka"]
 kubernetes    = ["discovery", "klauthed-discovery/kubernetes"]
 agent         = ["discovery", "klauthed-discovery/agent"]
-metrics       = ["observability", "klauthed-observability/metrics"]
+metrics       = ["observability", "klauthed-observability/metrics", "klauthed-web?/metrics"]
 otel          = ["observability", "klauthed-observability/otel", "klauthed-web?/otel"]
 # The `klauthed-web?/data-sql` / `data-redis` forwards let a SQL pool / Redis
 # connection be wired into the web `Components` (and its health probe) when both

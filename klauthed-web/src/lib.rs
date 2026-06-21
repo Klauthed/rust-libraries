@@ -65,6 +65,8 @@ pub mod error;
 pub mod extract;
 pub mod headers;
 pub mod health; // folder: health/{status,registry,routes,checks}.rs
+#[cfg(feature = "metrics")]
+pub mod metrics;
 pub mod oauth; // folder: oauth/{config,util,handlers}.rs
 #[cfg(feature = "openapi")]
 pub mod openapi;

@@ -10,6 +10,10 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Prometheus `/metrics` endpoint** (`klauthed-web`, `metrics` feature; `metrics`
+  on the umbrella): `metrics::serve_metrics(cfg, handle)` mounts `GET /metrics`
+  rendering the exposition format from klauthed-observability's `MetricsHandle`,
+  for Prometheus scraping.
 - **Cron schedules** for the `Scheduler` (`klauthed-platform`, `scheduler`
   feature): a chrono-free `Cron` parser + next-occurrence calculator (5-field
   `minute hour day-of-month month day-of-week`, with ranges/lists/steps and the

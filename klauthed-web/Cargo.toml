@@ -37,6 +37,10 @@ otel = [
     "dep:tracing-opentelemetry",
 ]
 
+# A Prometheus `GET /metrics` scrape endpoint (the `metrics` module) rendered from
+# klauthed-observability's metrics handle.
+metrics = ["dep:klauthed-observability", "klauthed-observability/metrics"]
+
 # Generate an OpenAPI 3.1 spec (utoipa) for the built-in endpoints and serve it
 # as JSON; services merge their own annotated paths into the document.
 openapi = ["dep:utoipa"]
