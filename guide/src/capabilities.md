@@ -36,8 +36,8 @@ and cursor **pagination**.
 The actix-web layer: context / security-headers / CSRF / CORS / rate-limit /
 `JwtAuth` middleware, validating extractors, a uniform `AppError`, health probes,
 the OAuth2/OIDC server endpoints, **OpenAPI generation** + **Swagger UI**, a
-**`POST /refresh`** config endpoint, and **passkey HTTP endpoints** (feature
-`webauthn`).
+**`POST /refresh`** config endpoint, a Prometheus **`GET /metrics`** scrape
+endpoint (feature `metrics`), and **passkey HTTP endpoints** (feature `webauthn`).
 
 ## klauthed-discovery
 
@@ -51,10 +51,33 @@ Structured tracing, Prometheus **metrics**, and **OpenTelemetry** OTLP export wi
 W3C trace-context propagation — paired with klauthed-web's `RequestTracing`
 middleware for end-to-end distributed traces.
 
+## klauthed-platform
+
+Cross-cutting platform services — each a trait with an in-memory implementation:
+multi-tenancy (`TenantResolver`), audit logging (`AuditSink`), HMAC-signed
+outbound `WebhookSender`, a background `JobQueue`, and feature flags.
+
+The **`scheduler`** feature adds an in-process `Scheduler` for recurring work,
+with fixed intervals or cron schedules (UTC or a named IANA timezone, DST-aware):
+
+```rust,ignore
+use std::time::Duration;
+use klauthed_platform::scheduler::{Cron, Scheduler};
+
+let handle = Scheduler::new()
+    .every(Duration::from_secs(30), || async { /* every 30s */ })
+    .cron(Cron::parse_in_timezone("0 2 * * *", "America/New_York")?, || async {
+        // 02:00 New York time, daily (handles DST)
+    })
+    .start();
+// handle.shutdown().await; — or drop it to stop the tasks
+```
+
+A panic in one run is isolated, so a bad run never silently kills the schedule.
+
 ## The rest
 
 - **klauthed-protocol** — spec-accurate OAuth2 / OIDC / SCIM / JWKS wire types.
-- **klauthed-platform** — tenancy, audit, webhooks, jobs, feature flags.
 - **klauthed-i18n** — locales, message bundles, formatting.
 - **klauthed-error** — the `DomainError` kernel (see [Architecture](architecture.md)).
 - **klauthed-testing** — assertions, a controllable clock, builders, in-memory repos.
