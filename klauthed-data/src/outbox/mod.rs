@@ -21,6 +21,9 @@
 //! # }
 //! ```
 
+pub mod relay;
+pub use relay::{OutboxPublisher, OutboxRelay};
+
 #[cfg(feature = "sql")]
 pub mod sql;
 

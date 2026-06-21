@@ -8,6 +8,14 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Added
+
+- **Outbox relay** (`klauthed-data`): an `OutboxPublisher` sink trait and an
+  `OutboxRelay` that drains an `Outbox` (fetch unpublished → publish → mark
+  published) in batches, completing the transactional-outbox pattern. Stops at
+  the first publish failure for at-least-once delivery; call `drain` periodically
+  (e.g. from the platform scheduler).
+
 ## [0.7.0] - 2026-06-21
 
 ### Added
