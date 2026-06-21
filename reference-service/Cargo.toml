@@ -14,6 +14,7 @@ klauthed-core.workspace = true
 klauthed-web.workspace = true
 klauthed-security.workspace = true
 klauthed-observability.workspace = true
+klauthed-platform = { workspace = true, features = ["scheduler"] }
 
 actix-web.workspace = true
 tokio = { workspace = true }

@@ -1,8 +1,9 @@
 //! A small **reference service** wiring the klauthed crates together end to end:
 //! profile-aware configuration ([`klauthed_core`]), telemetry init
 //! ([`klauthed_observability`]), the actix-web layer with health probes and
-//! uniform error rendering ([`klauthed_web`]), and JWT issue/verify
-//! ([`klauthed_security`]).
+//! uniform error rendering ([`klauthed_web`]), JWT issue/verify
+//! ([`klauthed_security`]), and a scheduled background task
+//! ([`klauthed_platform`]).
 //!
 //! Endpoints:
 //! * `GET  /health`, `GET /health/ready` — liveness / readiness (framework).
@@ -17,6 +18,7 @@ use actix_web::{HttpResponse, web};
 use klauthed_core::config::{ConfigBuilder, Profile};
 use klauthed_core::time::{Duration, SystemClock};
 use klauthed_observability::TelemetryConfig;
+use klauthed_platform::scheduler::{Cron, Scheduler};
 use klauthed_security::{Claims, JwtSigner, JwtVerifier};
 use klauthed_web::{AppError, AuthenticatedUser, JwtAuth};
 use serde::{Deserialize, Serialize};
@@ -35,6 +37,15 @@ async fn main() -> std::io::Result<()> {
 
     let config = ConfigBuilder::new(profile).build().await.expect("configuration");
     let server = config.server().unwrap_or_default();
+
+    // Recurring background work (klauthed-platform `scheduler`). The handle is
+    // held for the server's lifetime; dropping it (or `shutdown().await`) stops
+    // the tasks. A panic in one run is isolated and the schedule continues.
+    let _scheduler = Scheduler::new()
+        .cron(Cron::parse("0 * * * *").expect("valid cron"), || async {
+            tracing::info!("hourly maintenance tick");
+        })
+        .start();
 
     tracing::info!(bind = %server.bind_address(), "reference-service starting");
     klauthed_web::server::serve_with_defaults(&server, configure)?.await

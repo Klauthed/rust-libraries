@@ -4302,6 +4302,7 @@ dependencies = [
  "actix-web",
  "klauthed-core",
  "klauthed-observability",
+ "klauthed-platform",
  "klauthed-security",
  "klauthed-web",
  "serde",
