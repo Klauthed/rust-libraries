@@ -8,6 +8,8 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-19
+
 ### Added
 
 - **Prometheus `/metrics` endpoint** (`klauthed-web`, `metrics` feature; `metrics`
