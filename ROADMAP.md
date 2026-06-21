@@ -35,16 +35,19 @@ tracks intent, not a commitment — scope shifts as we learn.
   with `--with-jwt` / `--database` / `--with-scheduler`), an interval `Scheduler`
   in `klauthed-platform`, umbrella `data-sql`/`data-redis` feature forwarding, and
   added auth/event/cqrs test coverage. See [CHANGELOG](CHANGELOG.md).
+- **0.7.0** — cron schedules (UTC + named-timezone, DST-aware) on the `Scheduler`,
+  a Prometheus `GET /metrics` endpoint (`klauthed-web`), and an API naming
+  consistency pass (de-stuttered messaging connectors + documented conventions).
+  See [CHANGELOG](CHANGELOG.md).
 
-## 0.7.0 (in progress)
+## 0.8.0 (in progress)
 
 Theme: **continue toward a stable 1.0.**
 
 - API consistency: naming conventions and re-export-completeness review per crate
   (the `#[must_use]` builder pass landed in 0.5.0).
 - Broaden test / fuzz / property coverage on the remaining surface.
-- Candidate features as they arise (e.g. cron/calendar schedules building on the
-  0.6.0 interval scheduler).
+- Candidate features as they arise.
 
 ## Toward 1.0
 
