@@ -10,19 +10,25 @@
 //! dependency injection. This keeps the trait object-safe and avoids leaking
 //! driver-specific types into business logic.
 //!
-//! In production, implementations commit on `Ok` and roll back on `Err`.
-//! In tests, [`NoopTransact`] simply calls the closure with no transaction
-//! semantics — sufficient for verifying business logic without a real database.
+//! [`NoopTransact`] simply calls the closure with no transaction semantics —
+//! sufficient for verifying business logic without a real database.
+//!
+//! For a real relational transaction, [`SqlxTransact`] (feature `sql`) begins a
+//! sqlx transaction and **passes the handle to the closure** (sqlx statements
+//! only join a transaction when they run on its connection), committing on `Ok`
+//! and rolling back on `Err`.
 //!
 //! # Future work
 //!
-//! * `SqlxTransact<DB>` — wraps a `sqlx::Pool<DB>`, begins a transaction, and
-//!   provides the `Transaction` handle to the closure.
 //! * `MongoTransact` — wraps a MongoDB client session for multi-document
 //!   atomicity.
 
 pub mod noop;
+#[cfg(feature = "sql")]
+pub mod sql;
 pub mod transact;
 
 pub use noop::NoopTransact;
+#[cfg(feature = "sql")]
+pub use sql::SqlxTransact;
 pub use transact::Transact;

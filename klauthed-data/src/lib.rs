@@ -95,6 +95,8 @@ pub use migrate::{Migration, Migrator};
 pub use sqlx::AnyPool;
 #[cfg(feature = "sql")]
 pub use starter::DataStarter;
+#[cfg(feature = "sql")]
+pub use transaction::SqlxTransact;
 
 pub use idempotency::{
     IdempotencyRecord, IdempotencyStatus, IdempotencyStore, InMemoryIdempotencyStore, Outcome,
@@ -107,7 +109,7 @@ pub use transaction::{NoopTransact, Transact};
 /// Common imports for the data layer: `use klauthed_data::prelude::*;`.
 pub mod prelude {
     #[cfg(feature = "sql")]
-    pub use crate::{AnyPool, DataStarter, Migration, Migrator};
+    pub use crate::{AnyPool, DataStarter, Migration, Migrator, SqlxTransact};
     pub use crate::{
         DataError, EventBus, EventHandler, IdempotencyStore, InMemoryEventBus,
         InMemoryIdempotencyStore, InMemoryLockManager, InMemoryOutbox, LockGuard, LockManager,
