@@ -10,6 +10,11 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Saga orchestration** (`klauthed-data`): a `Saga` of compensable steps — each a
+  forward action paired with a compensation — run by `execute()`, which on the
+  first failure runs the completed steps' compensations in reverse (returning a
+  `SagaError` with the failed step index). Fills the previously-stubbed `saga`
+  module; pure and in-memory.
 - **Outbox relay** (`klauthed-data`): an `OutboxPublisher` sink trait and an
   `OutboxRelay` that drains an `Outbox` (fetch unpublished → publish → mark
   published) in batches, completing the transactional-outbox pattern. Stops at

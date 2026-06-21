@@ -81,10 +81,11 @@ pub mod migrate;
 #[cfg(feature = "sql")]
 pub mod starter;
 
-// ── Stub modules reserved for future implementation ───────────────────────────
-pub mod eventbus;
 pub mod pagination;
 pub mod saga;
+
+// ── Stub modules reserved for future implementation ───────────────────────────
+pub mod eventbus;
 pub mod transaction;
 
 pub use error::DataError;
@@ -101,6 +102,7 @@ pub use idempotency::{
 };
 pub use locks::{InMemoryLockManager, LockGuard, LockManager, LockToken};
 pub use outbox::{InMemoryOutbox, Outbox, OutboxEntry, OutboxId, OutboxPublisher, OutboxRelay};
+pub use saga::{Saga, SagaError};
 
 /// Common imports for the data layer: `use klauthed_data::prelude::*;`.
 pub mod prelude {
@@ -109,7 +111,7 @@ pub mod prelude {
     pub use crate::{
         DataError, IdempotencyStore, InMemoryIdempotencyStore, InMemoryLockManager, InMemoryOutbox,
         LockGuard, LockManager, LockToken, Outbox, OutboxEntry, OutboxId, OutboxPublisher,
-        OutboxRelay,
+        OutboxRelay, Saga, SagaError,
     };
 }
 
