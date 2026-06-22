@@ -8,6 +8,8 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-22
+
 ### Added
 
 - **User notifications** (`klauthed-platform`): a `Notifier` trait, a
