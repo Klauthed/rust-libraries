@@ -40,12 +40,20 @@ tracks intent, not a commitment — scope shifts as we learn.
   consistency pass (de-stuttered messaging connectors + documented conventions).
   See [CHANGELOG](CHANGELOG.md).
 
-## 0.8.0 (in progress)
+- **0.8.0** — reliability & background-work patterns: user notifications, usage
+  metering, and a job worker (`klauthed-platform`); resilience patterns
+  (`RetryPolicy` + `CircuitBreaker`, `klauthed-web`); and data patterns —
+  transactional executors (`SqlxTransact` / `MongoTransact`), an in-process event
+  bus, saga orchestration, and an outbox relay. The reference service now dogfoods
+  the queue → worker → scheduler → notifications pipeline. See [CHANGELOG](CHANGELOG.md).
 
-Theme: **continue toward a stable 1.0.**
+## 0.9.0 (in progress)
 
-- API consistency: naming conventions and re-export-completeness review per crate
-  (the `#[must_use]` builder pass landed in 0.5.0).
+Theme: **durable backends & toward a stable 1.0.**
+
+- Durable `JobQueue` backends (Postgres / Redis) behind the existing trait,
+  exercised by the live-infra integration job.
+- API consistency and re-export-completeness review per crate.
 - Broaden test / fuzz / property coverage on the remaining surface.
 - Candidate features as they arise.
 
