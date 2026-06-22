@@ -17,8 +17,8 @@
 //!
 //! ```text
 //! let queue = InMemoryJobQueue::new(clock);
-//! let job = queue.enqueue("send_email".into(), payload).await;     // Queued
-//! let due = queue.dequeue_due(None).await;                          // now Running
+//! let job = queue.enqueue("send_email".into(), payload).await?;    // Queued
+//! let due = queue.dequeue_due(None).await?;                         // now Running
 //! queue.mark_succeeded(due[0].id()).await?;                         // Succeeded
 //! ```
 //!

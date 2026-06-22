@@ -148,7 +148,7 @@ async fn login(
         .build();
     let token = signer.encode(&claims)?;
     // Hand the welcome notification off to the background worker.
-    queue.enqueue(WELCOME_JOB.into(), serde_json::json!({ "username": body.username })).await;
+    queue.enqueue(WELCOME_JOB.into(), serde_json::json!({ "username": body.username })).await?;
     Ok(HttpResponse::Ok().json(LoginResponse { token }))
 }
 

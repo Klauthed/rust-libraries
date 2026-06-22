@@ -16,18 +16,18 @@ fn queue(max_attempts: u32) -> (Arc<FixedClock>, InMemoryJobQueue) {
 #[tokio::test]
 async fn enqueue_then_dequeue_due_marks_running() {
     let (_clock, q) = queue(5);
-    let job = q.enqueue("k".into(), serde_json::json!({"a": 1})).await;
+    let job = q.enqueue("k".into(), serde_json::json!({"a": 1})).await.unwrap();
     assert_eq!(job.status(), JobStatus::Queued);
     assert_eq!(job.attempts(), 0);
 
-    let due = q.dequeue_due(None).await;
+    let due = q.dequeue_due(None).await.unwrap();
     assert_eq!(due.len(), 1);
     assert_eq!(due[0].id(), job.id());
     assert_eq!(due[0].status(), JobStatus::Running);
     assert_eq!(due[0].attempts(), 1);
 
     // No longer queued, so a second poll returns nothing.
-    assert!(q.dequeue_due(None).await.is_empty());
+    assert!(q.dequeue_due(None).await.unwrap().is_empty());
 }
 
 #[tokio::test]
@@ -35,15 +35,15 @@ async fn future_job_is_not_due_until_clock_advances() {
     let (clock, q) = queue(5);
     let now = clock.now();
     let run_at = now.checked_add(Duration::seconds(60)).unwrap();
-    let job = q.schedule("k".into(), serde_json::json!(null), run_at).await;
+    let job = q.schedule("k".into(), serde_json::json!(null), run_at).await.unwrap();
 
     // Not due yet.
-    assert!(q.dequeue_due(None).await.is_empty());
+    assert!(q.dequeue_due(None).await.unwrap().is_empty());
     assert_eq!(q.get(job.id()).unwrap().status(), JobStatus::Queued);
 
     // Advance past run_at.
     clock.advance(Duration::seconds(61));
-    let due = q.dequeue_due(None).await;
+    let due = q.dequeue_due(None).await.unwrap();
     assert_eq!(due.len(), 1);
     assert_eq!(due[0].id(), job.id());
 }
@@ -54,23 +54,25 @@ async fn dequeue_due_respects_limit_and_ordering() {
     let base = clock.now();
     // Three jobs with increasing run_at, all already due.
     clock.set(base.checked_add(Duration::seconds(100)).unwrap());
-    let a = q.schedule("k".into(), serde_json::json!("a"), base).await;
+    let a = q.schedule("k".into(), serde_json::json!("a"), base).await.unwrap();
     let b = q
         .schedule(
             "k".into(),
             serde_json::json!("b"),
             base.checked_add(Duration::seconds(1)).unwrap(),
         )
-        .await;
+        .await
+        .unwrap();
     let _c = q
         .schedule(
             "k".into(),
             serde_json::json!("c"),
             base.checked_add(Duration::seconds(2)).unwrap(),
         )
-        .await;
+        .await
+        .unwrap();
 
-    let due = q.dequeue_due(Some(2)).await;
+    let due = q.dequeue_due(Some(2)).await.unwrap();
     assert_eq!(due.len(), 2);
     assert_eq!(due[0].id(), a.id());
     assert_eq!(due[1].id(), b.id());
@@ -79,10 +81,10 @@ async fn dequeue_due_respects_limit_and_ordering() {
 #[tokio::test]
 async fn mark_failed_requeues_with_backoff_until_max_then_stays_failed() {
     let (clock, q) = queue(3);
-    let job = q.enqueue("k".into(), serde_json::json!(null)).await;
+    let job = q.enqueue("k".into(), serde_json::json!(null)).await.unwrap();
 
     // Attempt 1.
-    let due = q.dequeue_due(None).await;
+    let due = q.dequeue_due(None).await.unwrap();
     assert_eq!(due[0].attempts(), 1);
     q.mark_failed(job.id(), "boom-1".into()).await.unwrap();
     let after1 = q.get(job.id()).unwrap();
@@ -93,7 +95,7 @@ async fn mark_failed_requeues_with_backoff_until_max_then_stays_failed() {
 
     // Advance and run attempt 2.
     clock.advance(Duration::seconds(2));
-    let due = q.dequeue_due(None).await;
+    let due = q.dequeue_due(None).await.unwrap();
     assert_eq!(due.len(), 1);
     assert_eq!(due[0].attempts(), 2);
     q.mark_failed(job.id(), "boom-2".into()).await.unwrap();
@@ -104,7 +106,7 @@ async fn mark_failed_requeues_with_backoff_until_max_then_stays_failed() {
 
     // Advance and run attempt 3 (== max_attempts).
     clock.advance(Duration::seconds(3));
-    let due = q.dequeue_due(None).await;
+    let due = q.dequeue_due(None).await.unwrap();
     assert_eq!(due[0].attempts(), 3);
     q.mark_failed(job.id(), "boom-3".into()).await.unwrap();
     let after3 = q.get(job.id()).unwrap();
@@ -114,16 +116,16 @@ async fn mark_failed_requeues_with_backoff_until_max_then_stays_failed() {
 
     // A failed job is never due again.
     clock.advance(Duration::seconds(3600));
-    assert!(q.dequeue_due(None).await.is_empty());
+    assert!(q.dequeue_due(None).await.unwrap().is_empty());
 }
 
 #[tokio::test]
 async fn mark_succeeded_is_terminal_and_clears_error() {
     let (_clock, q) = queue(5);
-    let job = q.enqueue("k".into(), serde_json::json!(null)).await;
-    q.dequeue_due(None).await;
+    let job = q.enqueue("k".into(), serde_json::json!(null)).await.unwrap();
+    q.dequeue_due(None).await.unwrap();
     q.mark_failed(job.id(), "transient".into()).await.unwrap();
-    q.dequeue_due(None).await; // not due (backoff) — but force success anyway
+    q.dequeue_due(None).await.unwrap(); // not due (backoff) — but force success anyway
     q.mark_succeeded(job.id()).await.unwrap();
     let done = q.get(job.id()).unwrap();
     assert_eq!(done.status(), JobStatus::Succeeded);
@@ -142,24 +144,24 @@ async fn mark_unknown_job_is_not_found() {
 #[tokio::test]
 async fn fresh_queued_job_never_stalls() {
     let (_clock, q) = queue(5);
-    q.enqueue("k".into(), serde_json::json!(null)).await;
+    q.enqueue("k".into(), serde_json::json!(null)).await.unwrap();
     // Still Queued — not Running — so it must not appear in stall recovery.
-    let recovered = q.dequeue_stalled(Duration::ZERO).await;
+    let recovered = q.dequeue_stalled(Duration::ZERO).await.unwrap();
     assert!(recovered.is_empty());
 }
 
 #[tokio::test]
 async fn running_job_within_stall_window_is_not_recovered() {
     let (clock, q) = queue(5);
-    let job = q.enqueue("k".into(), serde_json::json!(null)).await;
+    let job = q.enqueue("k".into(), serde_json::json!(null)).await.unwrap();
     // Dequeue: status -> Running, run_at stays at t=0.
-    q.dequeue_due(None).await;
+    q.dequeue_due(None).await.unwrap();
 
     // Advance by exactly stall_after (not *strictly* greater).
     let stall_after = Duration::seconds(30);
     clock.advance(stall_after);
 
-    let recovered = q.dequeue_stalled(stall_after).await;
+    let recovered = q.dequeue_stalled(stall_after).await.unwrap();
     assert!(recovered.is_empty(), "job still within window must not be recovered");
     assert_eq!(q.get(job.id()).unwrap().status(), JobStatus::Running);
 }
@@ -167,15 +169,15 @@ async fn running_job_within_stall_window_is_not_recovered() {
 #[tokio::test]
 async fn running_job_past_stall_window_is_recovered_to_queued() {
     let (clock, q) = queue(5);
-    let job = q.enqueue("k".into(), serde_json::json!(null)).await;
+    let job = q.enqueue("k".into(), serde_json::json!(null)).await.unwrap();
     // run_at = t=0; after dequeue the job is Running at run_at=t=0.
-    q.dequeue_due(None).await;
+    q.dequeue_due(None).await.unwrap();
 
     let stall_after = Duration::seconds(30);
     // Advance past the stall window.
     clock.advance(Duration::seconds(31));
 
-    let recovered = q.dequeue_stalled(stall_after).await;
+    let recovered = q.dequeue_stalled(stall_after).await.unwrap();
     assert_eq!(recovered.len(), 1);
     assert_eq!(recovered[0].id(), job.id());
     assert_eq!(recovered[0].status(), JobStatus::Queued);
@@ -186,16 +188,16 @@ async fn running_job_past_stall_window_is_recovered_to_queued() {
 #[tokio::test]
 async fn recovered_jobs_appear_in_next_dequeue_due() {
     let (clock, q) = queue(5);
-    let job = q.enqueue("k".into(), serde_json::json!(null)).await;
-    q.dequeue_due(None).await;
+    let job = q.enqueue("k".into(), serde_json::json!(null)).await.unwrap();
+    q.dequeue_due(None).await.unwrap();
     // Simulate a stall.
     clock.advance(Duration::seconds(61));
-    let recovered = q.dequeue_stalled(Duration::seconds(60)).await;
+    let recovered = q.dequeue_stalled(Duration::seconds(60)).await.unwrap();
     assert_eq!(recovered.len(), 1);
     assert_eq!(recovered[0].id(), job.id());
 
     // The recovered job must now be picked up by dequeue_due.
-    let due = q.dequeue_due(None).await;
+    let due = q.dequeue_due(None).await.unwrap();
     assert_eq!(due.len(), 1);
     assert_eq!(due[0].id(), job.id());
     assert_eq!(due[0].status(), JobStatus::Running);
@@ -204,13 +206,13 @@ async fn recovered_jobs_appear_in_next_dequeue_due() {
 #[tokio::test]
 async fn succeeded_job_is_not_recovered_by_dequeue_stalled() {
     let (clock, q) = queue(5);
-    let job = q.enqueue("k".into(), serde_json::json!(null)).await;
-    q.dequeue_due(None).await;
+    let job = q.enqueue("k".into(), serde_json::json!(null)).await.unwrap();
+    q.dequeue_due(None).await.unwrap();
     q.mark_succeeded(job.id()).await.unwrap();
 
     // Even past the stall window, Succeeded jobs must be ignored.
     clock.advance(Duration::seconds(999));
-    let recovered = q.dequeue_stalled(Duration::ZERO).await;
+    let recovered = q.dequeue_stalled(Duration::ZERO).await.unwrap();
     assert!(recovered.is_empty());
 }
 

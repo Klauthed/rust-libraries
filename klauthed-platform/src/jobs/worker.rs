@@ -48,7 +48,7 @@ impl JobWorker {
     /// # Errors
     /// Returns [`PlatformError`] if recording an outcome against the queue fails.
     pub async fn run_once(&self) -> Result<usize, PlatformError> {
-        let jobs = self.queue.dequeue_due(Some(self.batch_size)).await;
+        let jobs = self.queue.dequeue_due(Some(self.batch_size)).await?;
         let processed = jobs.len();
         for job in &jobs {
             match self.handler.handle(job).await {
@@ -93,8 +93,8 @@ mod tests {
     #[tokio::test]
     async fn processes_due_jobs_and_marks_them_succeeded() {
         let queue = Arc::new(InMemoryJobQueue::new(Arc::new(SystemClock)));
-        let j1 = queue.enqueue("email".into(), serde_json::json!({})).await;
-        let j2 = queue.enqueue("sms".into(), serde_json::json!({})).await;
+        let j1 = queue.enqueue("email".into(), serde_json::json!({})).await.unwrap();
+        let j2 = queue.enqueue("sms".into(), serde_json::json!({})).await.unwrap();
         let handler = Recorder::new(false);
 
         let processed = JobWorker::new(queue.clone(), handler.clone()).run_once().await.unwrap();
@@ -108,7 +108,7 @@ mod tests {
     #[tokio::test]
     async fn failing_handler_marks_the_job_failed_with_its_reason() {
         let queue = Arc::new(InMemoryJobQueue::with_max_attempts(Arc::new(SystemClock), 1));
-        let job = queue.enqueue("email".into(), serde_json::json!({})).await;
+        let job = queue.enqueue("email".into(), serde_json::json!({})).await.unwrap();
 
         let processed =
             JobWorker::new(queue.clone(), Recorder::new(true)).run_once().await.unwrap();

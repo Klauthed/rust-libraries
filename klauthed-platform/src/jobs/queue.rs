@@ -18,21 +18,34 @@ use super::{DEFAULT_MAX_ATTEMPTS, EnqueuedJob, JobId, JobStatus};
 #[async_trait]
 pub trait JobQueue: Send + Sync {
     /// Enqueue `kind`/`payload` to run as soon as possible (`run_at` = now).
-    async fn enqueue(&self, kind: String, payload: serde_json::Value) -> EnqueuedJob;
+    ///
+    /// # Errors
+    /// Returns [`PlatformError`] if a durable backend fails to persist the job.
+    async fn enqueue(
+        &self,
+        kind: String,
+        payload: serde_json::Value,
+    ) -> Result<EnqueuedJob, PlatformError>;
 
     /// Enqueue `kind`/`payload` to run no earlier than `run_at`.
+    ///
+    /// # Errors
+    /// Returns [`PlatformError`] if a durable backend fails to persist the job.
     async fn schedule(
         &self,
         kind: String,
         payload: serde_json::Value,
         run_at: Timestamp,
-    ) -> EnqueuedJob;
+    ) -> Result<EnqueuedJob, PlatformError>;
 
     /// Claim up to `limit` jobs whose `run_at <= now` (and that are
     /// [`Queued`](JobStatus::Queued)), marking each [`Running`](JobStatus::Running)
     /// and bumping its attempt count. `None` means "no limit". Returned oldest
     /// (earliest `run_at`) first.
-    async fn dequeue_due(&self, limit: Option<usize>) -> Vec<EnqueuedJob>;
+    ///
+    /// # Errors
+    /// Returns [`PlatformError`] if a durable backend fails to claim jobs.
+    async fn dequeue_due(&self, limit: Option<usize>) -> Result<Vec<EnqueuedJob>, PlatformError>;
 
     /// Mark a running job [`Succeeded`](JobStatus::Succeeded).
     async fn mark_succeeded(&self, id: JobId) -> Result<(), PlatformError>;
@@ -53,7 +66,13 @@ pub trait JobQueue: Send + Sync {
     ///
     /// Calling this periodically (e.g. from a health-check loop or a cron) is
     /// the recommended pattern for detecting and recovering from crashed workers.
-    async fn dequeue_stalled(&self, stall_after: Duration) -> Vec<EnqueuedJob>;
+    ///
+    /// # Errors
+    /// Returns [`PlatformError`] if a durable backend fails to recover jobs.
+    async fn dequeue_stalled(
+        &self,
+        stall_after: Duration,
+    ) -> Result<Vec<EnqueuedJob>, PlatformError>;
 }
 
 /// Exponential backoff for the `n`-th attempt (1-based): `base * 2^(n-1)`,
@@ -129,9 +148,13 @@ impl InMemoryJobQueue {
 
 #[async_trait]
 impl JobQueue for InMemoryJobQueue {
-    async fn enqueue(&self, kind: String, payload: serde_json::Value) -> EnqueuedJob {
+    async fn enqueue(
+        &self,
+        kind: String,
+        payload: serde_json::Value,
+    ) -> Result<EnqueuedJob, PlatformError> {
         let now = self.clock.now();
-        self.insert(kind, payload, now)
+        Ok(self.insert(kind, payload, now))
     }
 
     async fn schedule(
@@ -139,11 +162,11 @@ impl JobQueue for InMemoryJobQueue {
         kind: String,
         payload: serde_json::Value,
         run_at: Timestamp,
-    ) -> EnqueuedJob {
-        self.insert(kind, payload, run_at)
+    ) -> Result<EnqueuedJob, PlatformError> {
+        Ok(self.insert(kind, payload, run_at))
     }
 
-    async fn dequeue_due(&self, limit: Option<usize>) -> Vec<EnqueuedJob> {
+    async fn dequeue_due(&self, limit: Option<usize>) -> Result<Vec<EnqueuedJob>, PlatformError> {
         let now = self.clock.now();
         let mut guard = self.jobs.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
 
@@ -160,7 +183,8 @@ impl JobQueue for InMemoryJobQueue {
             due.truncate(limit);
         }
 
-        due.into_iter()
+        Ok(due
+            .into_iter()
             .map(|(_, id)| {
                 #[allow(clippy::expect_used, reason = "id was just collected from this same guard")]
                 let job = guard.get_mut(&id).expect("job present");
@@ -168,7 +192,7 @@ impl JobQueue for InMemoryJobQueue {
                 job.attempts += 1;
                 job.clone()
             })
-            .collect()
+            .collect())
     }
 
     async fn mark_succeeded(&self, id: JobId) -> Result<(), PlatformError> {
@@ -199,7 +223,10 @@ impl JobQueue for InMemoryJobQueue {
         Ok(())
     }
 
-    async fn dequeue_stalled(&self, stall_after: Duration) -> Vec<EnqueuedJob> {
+    async fn dequeue_stalled(
+        &self,
+        stall_after: Duration,
+    ) -> Result<Vec<EnqueuedJob>, PlatformError> {
         let now = self.clock.now();
         let mut guard = self.jobs.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
 
@@ -215,6 +242,6 @@ impl JobQueue for InMemoryJobQueue {
                 recovered.push(job.clone());
             }
         }
-        recovered
+        Ok(recovered)
     }
 }
