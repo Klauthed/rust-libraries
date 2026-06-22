@@ -7,6 +7,10 @@
 //! decisions read an injected [`Clock`], matching
 //! [`InMemoryJobQueue`](super::InMemoryJobQueue).
 //!
+//! sqlx's `Any` driver does not rewrite bind placeholders, so queries are written
+//! with `?` and translated to `$n` when the pool is PostgreSQL (detected from the
+//! connection URL at construction).
+//!
 //! # Concurrent workers
 //!
 //! The portable [`dequeue_due`](JobQueue::dequeue_due) claims jobs with a
@@ -40,6 +44,15 @@ use sqlx::{AnyPool, Row};
 use super::queue::backoff_for_attempt;
 use super::{DEFAULT_MAX_ATTEMPTS, EnqueuedJob, JobId, JobQueue, JobStatus};
 use crate::error::PlatformError;
+
+/// Bind-placeholder style for the connected backend.
+#[derive(Clone, Copy)]
+enum Dialect {
+    /// `?` placeholders (SQLite, MySQL).
+    Question,
+    /// `$1`, `$2`, … placeholders (PostgreSQL).
+    Dollar,
+}
 
 /// Map a sqlx error to a [`PlatformError::Backend`].
 fn db_err(error: sqlx::Error) -> PlatformError {
@@ -107,39 +120,31 @@ pub struct SqlJobQueue {
     clock: Arc<dyn Clock>,
     default_max_attempts: u32,
     table: String,
+    dialect: Dialect,
 }
 
 impl SqlJobQueue {
     /// Default table name used by [`SqlJobQueue::new`].
     pub const DEFAULT_TABLE: &'static str = "jobs";
 
-    /// Portable DDL for the jobs table, created only if absent.
-    pub const CREATE_TABLE_SQL: &'static str = "\
-CREATE TABLE IF NOT EXISTS jobs (
-    id            TEXT   NOT NULL PRIMARY KEY,
-    kind          TEXT   NOT NULL,
-    payload       TEXT   NOT NULL,
-    run_at        BIGINT NOT NULL,
-    attempts      BIGINT NOT NULL,
-    max_attempts  BIGINT NOT NULL,
-    status        TEXT   NOT NULL,
-    created_at    BIGINT NOT NULL,
-    last_error    TEXT
-)";
-
-    /// Index supporting the `dequeue_due` claim query.
-    const CREATE_INDEX_SQL: &'static str =
-        "CREATE INDEX IF NOT EXISTS jobs_status_run_at ON jobs (status, run_at)";
-
     /// Wrap a pool, using the [`DEFAULT_TABLE`](Self::DEFAULT_TABLE) and
     /// [`DEFAULT_MAX_ATTEMPTS`] for newly enqueued jobs. `clock` drives all timing.
+    ///
+    /// The bind-placeholder dialect is detected from the pool's connection URL
+    /// (PostgreSQL → `$n`, otherwise `?`).
     #[must_use]
     pub fn new(pool: AnyPool, clock: Arc<dyn Clock>) -> Self {
+        let dialect = if pool.connect_options().database_url.scheme().starts_with("postgres") {
+            Dialect::Dollar
+        } else {
+            Dialect::Question
+        };
         Self {
             pool,
             clock,
             default_max_attempts: DEFAULT_MAX_ATTEMPTS,
             table: Self::DEFAULT_TABLE.to_owned(),
+            dialect,
         }
     }
 
@@ -155,13 +160,54 @@ CREATE TABLE IF NOT EXISTS jobs (
         &self.pool
     }
 
+    /// Translate the `?`-placeholder `sql` to the connected backend's dialect.
+    ///
+    /// These queries contain no literal `?` (only bind placeholders), so a
+    /// sequential `?` → `$n` substitution is safe for PostgreSQL.
+    fn rewrite(&self, sql: String) -> String {
+        match self.dialect {
+            Dialect::Question => sql,
+            Dialect::Dollar => {
+                let mut out = String::with_capacity(sql.len() + 8);
+                let mut n = 0u32;
+                for ch in sql.chars() {
+                    if ch == '?' {
+                        n += 1;
+                        out.push('$');
+                        out.push_str(&n.to_string());
+                    } else {
+                        out.push(ch);
+                    }
+                }
+                out
+            }
+        }
+    }
+
     /// Create the jobs table and its index if absent. Safe to call repeatedly.
     ///
     /// # Errors
     /// Returns [`PlatformError::Backend`] if the DDL fails.
     pub async fn ensure_schema(&self) -> Result<(), PlatformError> {
-        sqlx::query(Self::CREATE_TABLE_SQL).execute(&self.pool).await.map_err(db_err)?;
-        sqlx::query(Self::CREATE_INDEX_SQL).execute(&self.pool).await.map_err(db_err)?;
+        let create_table = format!(
+            "CREATE TABLE IF NOT EXISTS {} (\
+                id TEXT NOT NULL PRIMARY KEY, \
+                kind TEXT NOT NULL, \
+                payload TEXT NOT NULL, \
+                run_at BIGINT NOT NULL, \
+                attempts BIGINT NOT NULL, \
+                max_attempts BIGINT NOT NULL, \
+                status TEXT NOT NULL, \
+                created_at BIGINT NOT NULL, \
+                last_error TEXT)",
+            self.table
+        );
+        let create_index = format!(
+            "CREATE INDEX IF NOT EXISTS {table}_status_run_at ON {table} (status, run_at)",
+            table = self.table
+        );
+        sqlx::query(sqlx::AssertSqlSafe(create_table)).execute(&self.pool).await.map_err(db_err)?;
+        sqlx::query(sqlx::AssertSqlSafe(create_index)).execute(&self.pool).await.map_err(db_err)?;
         Ok(())
     }
 
@@ -185,12 +231,12 @@ CREATE TABLE IF NOT EXISTS jobs (
         let payload_str = serde_json::to_string(&job.payload).map_err(|e| {
             PlatformError::Backend { message: format!("serialize job payload: {e}") }
         })?;
-        let sql = format!(
+        let sql = self.rewrite(format!(
             "INSERT INTO {} (id, kind, payload, run_at, attempts, max_attempts, status, created_at, last_error) \
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             self.table
-        );
-        sqlx::query(sqlx::AssertSqlSafe(&*sql))
+        ));
+        sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(job.id.to_string())
             .bind(job.kind.clone())
             .bind(payload_str)
@@ -241,19 +287,19 @@ CREATE TABLE IF NOT EXISTS jobs (
             None => String::new(),
         };
         let lock_clause = if skip_locked { " FOR UPDATE SKIP LOCKED" } else { "" };
-        let select_sql = format!(
+        let select_sql = self.rewrite(format!(
             "{cols} WHERE status = 'queued' AND run_at <= ? ORDER BY run_at ASC, id ASC{limit}{lock}",
             cols = self.select_columns(),
             limit = limit_clause,
             lock = lock_clause,
-        );
-        let update_sql = format!(
+        ));
+        let update_sql = self.rewrite(format!(
             "UPDATE {} SET status = 'running', attempts = attempts + 1 WHERE id = ?",
             self.table
-        );
+        ));
 
         let mut tx = self.pool.begin().await.map_err(db_err)?;
-        let rows = sqlx::query(sqlx::AssertSqlSafe(&*select_sql))
+        let rows = sqlx::query(sqlx::AssertSqlSafe(select_sql))
             .bind(now.unix_millis())
             .fetch_all(&mut *tx)
             .await
@@ -262,7 +308,7 @@ CREATE TABLE IF NOT EXISTS jobs (
         let mut claimed = Vec::with_capacity(rows.len());
         for row in &rows {
             let mut job = row_to_job(row)?;
-            sqlx::query(sqlx::AssertSqlSafe(&*update_sql))
+            sqlx::query(sqlx::AssertSqlSafe(update_sql.clone()))
                 .bind(job.id.to_string())
                 .execute(&mut *tx)
                 .await
@@ -301,11 +347,11 @@ impl JobQueue for SqlJobQueue {
     }
 
     async fn mark_succeeded(&self, id: JobId) -> Result<(), PlatformError> {
-        let sql = format!(
+        let sql = self.rewrite(format!(
             "UPDATE {} SET status = 'succeeded', last_error = NULL WHERE id = ?",
             self.table
-        );
-        let result = sqlx::query(sqlx::AssertSqlSafe(&*sql))
+        ));
+        let result = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(id.to_string())
             .execute(&self.pool)
             .await
@@ -320,8 +366,9 @@ impl JobQueue for SqlJobQueue {
         let now = self.clock.now();
         let mut tx = self.pool.begin().await.map_err(db_err)?;
 
-        let select_sql = format!("SELECT attempts, max_attempts FROM {} WHERE id = ?", self.table);
-        let row = sqlx::query(sqlx::AssertSqlSafe(&*select_sql))
+        let select_sql =
+            self.rewrite(format!("SELECT attempts, max_attempts FROM {} WHERE id = ?", self.table));
+        let row = sqlx::query(sqlx::AssertSqlSafe(select_sql))
             .bind(id.to_string())
             .fetch_optional(&mut *tx)
             .await
@@ -333,9 +380,11 @@ impl JobQueue for SqlJobQueue {
         let max_attempts: i64 = row.try_get("max_attempts").map_err(db_err)?;
 
         if attempts >= max_attempts {
-            let sql =
-                format!("UPDATE {} SET status = 'failed', last_error = ? WHERE id = ?", self.table);
-            sqlx::query(sqlx::AssertSqlSafe(&*sql))
+            let sql = self.rewrite(format!(
+                "UPDATE {} SET status = 'failed', last_error = ? WHERE id = ?",
+                self.table
+            ));
+            sqlx::query(sqlx::AssertSqlSafe(sql))
                 .bind(reason)
                 .bind(id.to_string())
                 .execute(&mut *tx)
@@ -344,11 +393,11 @@ impl JobQueue for SqlJobQueue {
         } else {
             let delay = backoff_for_attempt(u32::try_from(attempts).unwrap_or(u32::MAX));
             let new_run_at = now.checked_add(delay).unwrap_or(now).unix_millis();
-            let sql = format!(
+            let sql = self.rewrite(format!(
                 "UPDATE {} SET status = 'queued', run_at = ?, last_error = ? WHERE id = ?",
                 self.table
-            );
-            sqlx::query(sqlx::AssertSqlSafe(&*sql))
+            ));
+            sqlx::query(sqlx::AssertSqlSafe(sql))
                 .bind(new_run_at)
                 .bind(reason)
                 .bind(id.to_string())
@@ -370,22 +419,24 @@ impl JobQueue for SqlJobQueue {
         let cutoff = now.unix_millis().saturating_sub(stall_ms);
 
         let mut tx = self.pool.begin().await.map_err(db_err)?;
-        let select_sql = format!(
+        let select_sql = self.rewrite(format!(
             "{cols} WHERE status = 'running' AND run_at < ?",
             cols = self.select_columns(),
-        );
-        let rows = sqlx::query(sqlx::AssertSqlSafe(&*select_sql))
+        ));
+        let rows = sqlx::query(sqlx::AssertSqlSafe(select_sql))
             .bind(cutoff)
             .fetch_all(&mut *tx)
             .await
             .map_err(db_err)?;
 
-        let update_sql =
-            format!("UPDATE {} SET status = 'queued', run_at = ? WHERE id = ?", self.table);
+        let update_sql = self.rewrite(format!(
+            "UPDATE {} SET status = 'queued', run_at = ? WHERE id = ?",
+            self.table
+        ));
         let mut recovered = Vec::with_capacity(rows.len());
         for row in &rows {
             let mut job = row_to_job(row)?;
-            sqlx::query(sqlx::AssertSqlSafe(&*update_sql))
+            sqlx::query(sqlx::AssertSqlSafe(update_sql.clone()))
                 .bind(now.unix_millis())
                 .bind(job.id.to_string())
                 .execute(&mut *tx)
@@ -419,6 +470,19 @@ mod tests {
         queue
     }
 
+    /// A single-connection in-memory queue sharing `clock` for time control.
+    async fn queue_with_clock(clock: Arc<FixedClock>) -> SqlJobQueue {
+        sqlx::any::install_default_drivers();
+        let pool = sqlx::any::AnyPoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        let queue = SqlJobQueue::new(pool, clock).with_max_attempts(2);
+        queue.ensure_schema().await.unwrap();
+        queue
+    }
+
     #[tokio::test]
     async fn ensure_schema_is_idempotent() {
         let queue = memory_queue().await;
@@ -446,14 +510,7 @@ mod tests {
     #[tokio::test]
     async fn scheduled_job_is_not_due_until_clock_advances() {
         let clock = Arc::new(FixedClock::at_unix_millis(0));
-        sqlx::any::install_default_drivers();
-        let pool = sqlx::any::AnyPoolOptions::new()
-            .max_connections(1)
-            .connect("sqlite::memory:")
-            .await
-            .unwrap();
-        let queue = SqlJobQueue::new(pool, clock.clone());
-        queue.ensure_schema().await.unwrap();
+        let queue = queue_with_clock(clock.clone()).await;
 
         let run_at = clock.now().checked_add(Duration::seconds(60)).unwrap();
         let job = queue.schedule("k".into(), serde_json::json!(null), run_at).await.unwrap();
@@ -471,8 +528,6 @@ mod tests {
         let job = queue.enqueue("k".into(), serde_json::json!(null)).await.unwrap();
         queue.dequeue_due(None).await.unwrap();
         queue.mark_succeeded(job.id()).await.unwrap();
-
-        // No longer due, and a second poll stays empty.
         assert!(queue.dequeue_due(None).await.unwrap().is_empty());
     }
 
@@ -486,14 +541,7 @@ mod tests {
     #[tokio::test]
     async fn mark_failed_requeues_with_backoff_then_fails_at_max() {
         let clock = Arc::new(FixedClock::at_unix_millis(0));
-        sqlx::any::install_default_drivers();
-        let pool = sqlx::any::AnyPoolOptions::new()
-            .max_connections(1)
-            .connect("sqlite::memory:")
-            .await
-            .unwrap();
-        let queue = SqlJobQueue::new(pool, clock.clone()).with_max_attempts(2);
-        queue.ensure_schema().await.unwrap();
+        let queue = queue_with_clock(clock.clone()).await; // max_attempts = 2
 
         let job = queue.enqueue("k".into(), serde_json::json!(null)).await.unwrap();
 
@@ -517,14 +565,7 @@ mod tests {
     #[tokio::test]
     async fn dequeue_stalled_recovers_running_jobs_past_the_window() {
         let clock = Arc::new(FixedClock::at_unix_millis(0));
-        sqlx::any::install_default_drivers();
-        let pool = sqlx::any::AnyPoolOptions::new()
-            .max_connections(1)
-            .connect("sqlite::memory:")
-            .await
-            .unwrap();
-        let queue = SqlJobQueue::new(pool, clock.clone());
-        queue.ensure_schema().await.unwrap();
+        let queue = queue_with_clock(clock.clone()).await;
 
         let job = queue.enqueue("k".into(), serde_json::json!(null)).await.unwrap();
         queue.dequeue_due(None).await.unwrap(); // -> Running at run_at = 0
@@ -545,8 +586,9 @@ mod tests {
         assert_eq!(due[0].id(), job.id());
     }
 
-    // Live PostgreSQL test for the `FOR UPDATE SKIP LOCKED` claim path. Ignored by
-    // default; the CI `integration` job runs it against a Postgres at `DB_URL`:
+    // Live PostgreSQL test for the `FOR UPDATE SKIP LOCKED` claim path (and the
+    // `?` → `$n` placeholder translation). Ignored by default; the CI
+    // `integration` job runs it against a Postgres at `DB_URL`:
     //   cargo test -p klauthed-platform --features jobs-sql --tests -- --ignored
     #[tokio::test]
     #[ignore = "requires a live PostgreSQL at DB_URL"]
@@ -556,10 +598,13 @@ mod tests {
         sqlx::any::install_default_drivers();
         let pool = sqlx::AnyPool::connect(&url).await.expect("connect postgres");
 
-        // Isolate from other runs: a unique table per test invocation.
-        let table = format!("jobs_test_{}", JobId::new().to_string().replace('-', ""));
         let clock = Arc::new(FixedClock::at_unix_millis(0));
-        let queue = SqlJobQueue { pool, clock, default_max_attempts: 3, table: table.clone() };
+        let queue = SqlJobQueue::new(pool, clock).with_max_attempts(3);
+        // Clean slate so re-runs are deterministic.
+        sqlx::query(sqlx::AssertSqlSafe("DROP TABLE IF EXISTS jobs"))
+            .execute(queue.pool())
+            .await
+            .expect("drop");
         queue.ensure_schema().await.expect("ensure schema");
 
         let job = queue.enqueue("k".into(), serde_json::json!({ "n": 1 })).await.unwrap();
@@ -570,8 +615,12 @@ mod tests {
         // A second concurrent-style claim sees nothing (the row is now Running).
         assert!(queue.dequeue_due_skip_locked(Some(10)).await.unwrap().is_empty());
 
+        // mark_failed re-queues (attempt 1 < max 3) with a 1s backoff: not yet due.
+        queue.mark_failed(job.id(), "boom".into()).await.unwrap();
+        assert!(queue.dequeue_due(None).await.unwrap().is_empty(), "re-queued with backoff");
+
         queue.mark_succeeded(job.id()).await.unwrap();
-        sqlx::query(sqlx::AssertSqlSafe(format!("DROP TABLE {table}")))
+        sqlx::query(sqlx::AssertSqlSafe("DROP TABLE jobs"))
             .execute(queue.pool())
             .await
             .expect("drop test table");
