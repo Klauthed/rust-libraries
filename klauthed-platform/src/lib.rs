@@ -8,7 +8,7 @@
 //! Cross-cutting platform concerns for klauthed services.
 //!
 //! This crate provides the data structures, traits, and in-memory implementations
-//! for three foundational platform capabilities, each in its own module:
+//! for the platform capabilities, each in its own module:
 //!
 //! * [`tenancy`] — the [`Tenant`] model, [`TenantStatus`], a [`TenantResolver`]
 //!   trait (with an in-memory impl), and a helper to read the tenant from a
@@ -18,19 +18,21 @@
 //!   overrides and multivariate values.
 //! * [`audit`] — the [`AuditEvent`] record (with an ergonomic builder), the
 //!   [`AuditSink`] trait, and an [`InMemoryAuditSink`] that retains events.
-//! * [`jobs`] — a background-job *store* abstraction: [`JobStatus`], the
-//!   [`EnqueuedJob`] record, the async [`JobQueue`] trait, and a clock-driven
-//!   [`InMemoryJobQueue`] (queueing only — no worker runtime).
+//! * [`jobs`] — background jobs: [`JobStatus`], the [`EnqueuedJob`] record, the
+//!   async [`JobQueue`] trait, a clock-driven [`InMemoryJobQueue`], and a
+//!   [`JobWorker`] that drains a queue (plus a durable SQL-backed queue behind the
+//!   `jobs-sql` feature).
 //! * [`webhooks`] — [`WebhookEndpoint`]/[`WebhookEvent`] types, HMAC-SHA256
 //!   [`sign_payload`]/[`verify_signature`] helpers, the async [`WebhookSender`]
 //!   trait, and a [`RecordingWebhookSender`] (signs + records, no network).
+//! * [`metering`] — per-tenant usage accounting ([`Meter`] + [`InMemoryMeter`]).
+//! * [`notifications`] — user-facing messaging ([`Notifier`] + [`Notification`]).
 //!
 //! All errors are reported via [`PlatformError`], which implements
 //! [`DomainError`](klauthed_error::DomainError) (codes `platform.*`).
 //!
-//! Heavier platform concerns — metering, notifications, and messaging, plus a
-//! real HTTP webhook transport and a job worker runtime — are intentionally out
-//! of scope for this cut and will land in follow-up modules.
+//! A real HTTP webhook transport is available behind the `webhook-http` feature;
+//! the in-process scheduler behind `scheduler`. Messaging remains out of scope.
 //!
 //! ```
 //! use klauthed_core::context::RequestContext;
@@ -74,6 +76,8 @@ pub use audit::{
 };
 pub use error::PlatformError;
 pub use featureflag::{FeatureFlag, FeatureFlags, InMemoryFeatureFlags};
+#[cfg(feature = "jobs-sql")]
+pub use jobs::SqlJobQueue;
 pub use jobs::{
     DEFAULT_MAX_ATTEMPTS, EnqueuedJob, InMemoryJobQueue, Job, JobHandler, JobId, JobQueue,
     JobStatus, JobWorker,

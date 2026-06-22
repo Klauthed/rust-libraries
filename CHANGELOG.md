@@ -8,6 +8,24 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Added
+
+- **Durable `SqlJobQueue`** (`klauthed-platform`, feature `jobs-sql`): a
+  relational `JobQueue` over sqlx's `AnyPool` (portable across SQLite / Postgres /
+  MySQL), with the same claim / retry-backoff / stalled-recovery semantics as
+  `InMemoryJobQueue` and a portable `ensure_schema`. On PostgreSQL,
+  `dequeue_due_skip_locked` claims with `FOR UPDATE SKIP LOCKED` so concurrent
+  workers get disjoint batches (exercised by the CI integration job at `DB_URL`).
+
+### Changed
+
+- **BREAKING** (`klauthed-platform`): the `JobQueue` trait's `enqueue`,
+  `schedule`, `dequeue_due`, and `dequeue_stalled` now return
+  `Result<_, PlatformError>` (they were infallible), so durable backends can
+  surface storage errors — aligning `JobQueue` with the already-fallible `Outbox`
+  trait. Direct callers must handle the `Result` (`?`/`unwrap`); `JobWorker` and
+  the in-memory queue are updated.
+
 ## [0.8.0] - 2026-06-22
 
 ### Added

@@ -76,8 +76,8 @@ pub trait JobQueue: Send + Sync {
 }
 
 /// Exponential backoff for the `n`-th attempt (1-based): `base * 2^(n-1)`,
-/// capped, in seconds. Used by [`InMemoryJobQueue::mark_failed`].
-fn backoff_for_attempt(attempts: u32) -> Duration {
+/// capped, in seconds. Shared by the in-memory and SQL queues' `mark_failed`.
+pub(super) fn backoff_for_attempt(attempts: u32) -> Duration {
     // base = 1s, doubling, capped at ~1 hour to keep run_at sane.
     let exp = attempts.saturating_sub(1).min(12);
     let secs = 1i64.checked_shl(exp).unwrap_or(i64::MAX).min(3600);

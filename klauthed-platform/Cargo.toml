@@ -39,12 +39,20 @@ reqwest = { version = "0.12", optional = true, default-features = false, feature
 tokio = { workspace = true, optional = true }
 time = { workspace = true, optional = true }
 
+# Durable SqlJobQueue (relational JobQueue over sqlx's AnyPool). The workspace
+# sqlx carries the `postgres` driver; the SQLite driver comes from dev-deps for
+# tests. Gated behind `jobs-sql`.
+sqlx = { workspace = true, optional = true }
+
 [features]
 audit-outbox  = ["dep:klauthed-data"]
 webhook-http  = ["dep:reqwest"]
 # In-process interval + cron scheduler for recurring background tasks.
 # `klauthed-core/tz` powers timezone-aware cron schedules.
 scheduler     = ["dep:tokio", "dep:time", "klauthed-core/tz"]
+# Durable, relational JobQueue (`SqlJobQueue`) over sqlx. The Postgres
+# `FOR UPDATE SKIP LOCKED` claim path is exercised by the CI integration job.
+jobs-sql      = ["dep:sqlx"]
 
 [dev-dependencies]
 # `test-util` enables `#[tokio::test(start_paused = true)]` for the scheduler tests.

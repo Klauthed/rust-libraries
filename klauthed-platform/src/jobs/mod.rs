@@ -38,10 +38,14 @@
 
 pub mod model;
 pub mod queue;
+#[cfg(feature = "jobs-sql")]
+pub mod sql;
 pub mod worker;
 
 pub use model::{DEFAULT_MAX_ATTEMPTS, EnqueuedJob, Job, JobId, JobStatus};
 pub use queue::{InMemoryJobQueue, JobQueue};
+#[cfg(feature = "jobs-sql")]
+pub use sql::SqlJobQueue;
 pub use worker::{JobHandler, JobWorker};
 
 #[cfg(test)]
