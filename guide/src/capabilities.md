@@ -28,8 +28,10 @@ A toolkit over vetted crypto crates — no hand-rolled primitives:
 
 Feature-gated connectors and reliability patterns: SQL (`sqlx`), Mongo, Redis,
 NATS/RabbitMQ/Kafka, object storage; plus a **migration runner**, transactional
-**outbox**, **idempotency**, distributed **locks**, **rate limiting**, **sagas**,
-and cursor **pagination**.
+**outbox** with a polling **relay**, an in-process **event bus**, **transactional
+executors** (`SqlxTransact`, `MongoTransact`), **sagas** (compensating steps),
+**idempotency**, distributed **locks**, **rate limiting**, and cursor
+**pagination**.
 
 ## klauthed-web
 
@@ -37,7 +39,9 @@ The actix-web layer: context / security-headers / CSRF / CORS / rate-limit /
 `JwtAuth` middleware, validating extractors, a uniform `AppError`, health probes,
 the OAuth2/OIDC server endpoints, **OpenAPI generation** + **Swagger UI**, a
 **`POST /refresh`** config endpoint, a Prometheus **`GET /metrics`** scrape
-endpoint (feature `metrics`), and **passkey HTTP endpoints** (feature `webauthn`).
+endpoint (feature `metrics`), **passkey HTTP endpoints** (feature `webauthn`),
+and **resilience patterns** (`RetryPolicy` with exponential backoff + a
+`CircuitBreaker`) for outbound calls.
 
 ## klauthed-discovery
 
@@ -55,7 +59,9 @@ middleware for end-to-end distributed traces.
 
 Cross-cutting platform services — each a trait with an in-memory implementation:
 multi-tenancy (`TenantResolver`), audit logging (`AuditSink`), HMAC-signed
-outbound `WebhookSender`, a background `JobQueue`, and feature flags.
+outbound `WebhookSender`, feature flags, a background `JobQueue` **with a
+`JobWorker`** that drains it, per-tenant usage **metering** (`Meter`), and
+user **notifications** (`Notifier` — email / SMS / push).
 
 The **`scheduler`** feature adds an in-process `Scheduler` for recurring work,
 with fixed intervals or cron schedules (UTC or a named IANA timezone, DST-aware):
@@ -74,6 +80,10 @@ let handle = Scheduler::new()
 ```
 
 A panic in one run is isolated, so a bad run never silently kills the schedule.
+Pairing a `JobWorker` with `Scheduler::every` to drain a `JobQueue` on an interval
+is the canonical background-jobs setup — the
+[reference service](https://github.com/Klauthed/rust-libraries/blob/master/reference-service/src/main.rs)
+wires queue → worker → scheduler → notifications end to end.
 
 ## The rest
 

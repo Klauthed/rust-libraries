@@ -162,7 +162,8 @@ only what you use.
   (`kafka`).
 - **Object storage** (`storage`) — S3 / GCS (`storage-gcs`) / Azure
   (`storage-azure`) / local, via `object_store`.
-- **Transactional outbox** (`outbox`) — SQL + Mongo backends.
+- **Transactional outbox** (`outbox`) — SQL + Mongo backends, with a polling
+  **relay** that drains pending messages to a publisher.
 - **Idempotency** (`idempotency`) — store-backed request de-duplication.
 - **Distributed locks** (`locks`) — Redis + Mongo backends.
 - **Rate limiting** (`rate_limit`) — in-memory + Redis (cross-replica, Lua).
@@ -246,10 +247,18 @@ Higher-level platform services.
 - **Audit** (`audit`) — audit-log sink (feature `audit-outbox` routes through the
   data outbox).
 - **Webhooks** (`webhooks`) — outbound webhook delivery (feature `webhook-http`).
-- **Jobs** (`jobs`) — background job queue.
+- **Jobs** (`jobs`) — a background `JobQueue` plus a `JobWorker` that drains it
+  (claim due jobs → run a `JobHandler` → mark each succeeded/failed).
+- **Scheduler** (feature `scheduler`) — in-process recurring work on fixed
+  intervals or cron schedules (UTC or a named IANA timezone, DST-aware); a panic
+  in one run is isolated. Pairs with `JobWorker` for periodic queue draining.
+- **Metering** (`metering`) — per-tenant usage accounting (`Meter`) for quotas
+  and usage-based billing.
+- **Notifications** (`notifications`) — user-facing messages (`Notifier`: email /
+  SMS / push), distinct from webhooks.
 - **Feature flags** (`featureflag`) — runtime flag evaluation.
 
-*Features:* `audit-outbox`, `webhook-http`.
+*Features:* `audit-outbox`, `webhook-http`, `scheduler`.
 
 ---
 
@@ -292,9 +301,14 @@ The actix-web HTTP layer shared by services.
 - **OAuth2/OIDC endpoints** (`oauth`) — authorize/token/userinfo, discovery, JWKS.
 - **Server** (`server`) — bind an `HttpServer` from `ServerConfig` with the
   common middleware/health pre-wired.
+- **Resilience** (`resilience`) — `RetryPolicy` (capped exponential backoff over
+  an async operation) and a `CircuitBreaker` (Closed → Open → HalfOpen with an
+  injected `Clock`) for hardening outbound calls.
+- **Metrics endpoint** (feature `metrics`) — `serve_metrics` mounts a Prometheus
+  `GET /metrics` scrape endpoint backed by `klauthed-observability`.
 
 *Features:* `context-scope`, `data-sql`, `data-redis`, `config-server`, `otel`,
-`openapi`, `swagger-ui`, `config-refresh`, `webauthn`.
+`openapi`, `swagger-ui`, `config-refresh`, `webauthn`, `metrics`.
 *See the runnable `auth_service` example: `cargo run -p klauthed-web --example auth_service`.*
 
 ---

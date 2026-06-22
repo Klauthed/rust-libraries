@@ -4301,6 +4301,7 @@ name = "reference-service"
 version = "0.8.0"
 dependencies = [
  "actix-web",
+ "async-trait",
  "klauthed-core",
  "klauthed-observability",
  "klauthed-platform",
