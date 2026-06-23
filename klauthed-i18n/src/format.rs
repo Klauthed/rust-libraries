@@ -118,3 +118,45 @@ mod tests {
         assert_eq!(args.get("b"), Some("2"));
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::{Args, interpolate};
+    use proptest::prelude::*;
+
+    proptest! {
+        // Templates with no braces are returned verbatim, whatever the args.
+        #[test]
+        fn brace_free_templates_pass_through(text in "[^{}]*") {
+            let args = Args::new().set("x", "v");
+            prop_assert_eq!(interpolate(&text, &args), text);
+        }
+
+        // A single known placeholder is replaced with its value, in place.
+        #[test]
+        fn known_placeholder_is_substituted(
+            prefix in "[^{}]*",
+            name in "[a-zA-Z_][a-zA-Z0-9_]*",
+            value in "[^{}]*",
+            suffix in "[^{}]*",
+        ) {
+            let template = format!("{prefix}{{{name}}}{suffix}");
+            let args = Args::new().set(name, &value);
+            prop_assert_eq!(interpolate(&template, &args), format!("{prefix}{value}{suffix}"));
+        }
+
+        // An unknown placeholder (no matching arg) is left intact, so missing data
+        // is visible rather than silently blank.
+        #[test]
+        fn unknown_placeholder_is_left_intact(name in "[a-zA-Z_][a-zA-Z0-9_]*") {
+            let template = format!("{{{name}}}");
+            prop_assert_eq!(interpolate(&template, &Args::new()), template);
+        }
+
+        // Interpolation never panics on arbitrary input.
+        #[test]
+        fn interpolation_never_panics(template in ".*") {
+            let _ = interpolate(&template, &Args::new().set("a", "1"));
+        }
+    }
+}

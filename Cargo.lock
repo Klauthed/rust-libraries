@@ -2796,6 +2796,7 @@ version = "0.10.0"
 dependencies = [
  "klauthed-error",
  "klauthed-macros",
+ "proptest",
  "toml",
 ]
 

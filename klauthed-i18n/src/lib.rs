@@ -283,3 +283,44 @@ mod tests {
         assert_eq!(i18n.translate(&Locale::new("en"), "tenant.not_found"), "Tenant not found.");
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::{I18n, Locale};
+    use proptest::prelude::*;
+
+    proptest! {
+        // The fallback chain resolves to the highest-priority rung that holds the
+        // key: exact locale → primary language → default locale → the key itself.
+        #[test]
+        fn fallback_resolves_highest_priority_present_rung(
+            in_exact in any::<bool>(),
+            in_primary in any::<bool>(),
+            in_default in any::<bool>(),
+        ) {
+            let mut builder = I18n::builder().default_locale("en");
+            if in_exact {
+                builder = builder.add_catalog("fr-CA", "k = \"exact\"").unwrap();
+            }
+            if in_primary {
+                builder = builder.add_catalog("fr", "k = \"primary\"").unwrap();
+            }
+            if in_default {
+                builder = builder.add_catalog("en", "k = \"default\"").unwrap();
+            }
+            let i18n = builder.build();
+
+            let expected = if in_exact {
+                "exact"
+            } else if in_primary {
+                "primary"
+            } else if in_default {
+                "default"
+            } else {
+                "k"
+            };
+            let got = i18n.translate(&Locale::new("fr-CA"), "k");
+            prop_assert_eq!(got, expected);
+        }
+    }
+}

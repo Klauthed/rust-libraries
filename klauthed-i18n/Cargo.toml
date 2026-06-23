@@ -16,6 +16,10 @@ klauthed-error.workspace = true
 klauthed-macros.workspace = true
 toml.workspace = true
 
+[dev-dependencies]
+# Property tests for the fallback chain and `{placeholder}` interpolation.
+proptest = { workspace = true }
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
