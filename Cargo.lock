@@ -2841,6 +2841,7 @@ dependencies = [
  "klauthed-data",
  "klauthed-error",
  "klauthed-macros",
+ "proptest",
  "redis",
  "reqwest 0.12.28",
  "ring",
