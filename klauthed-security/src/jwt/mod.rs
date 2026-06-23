@@ -36,6 +36,9 @@ pub mod claims;
 pub mod signer;
 pub mod verifier;
 
+#[cfg(test)]
+mod proptests;
+
 pub use claims::{Claims, ClaimsBuilder};
 pub use signer::JwtSigner;
 pub use verifier::JwtVerifier;

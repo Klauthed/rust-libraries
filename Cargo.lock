@@ -2878,6 +2878,7 @@ dependencies = [
  "klauthed-error",
  "klauthed-macros",
  "pasetors",
+ "proptest",
  "reqwest 0.12.28",
  "ring",
  "secrecy",
