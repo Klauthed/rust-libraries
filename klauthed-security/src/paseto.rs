@@ -416,3 +416,61 @@ mod tests {
         assert!(matches!(err, SecurityError::MalformedToken(_)), "{err:?}");
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::{PasetoV4Local, PasetoV4Signer};
+    use crate::jwt::Claims;
+    use klauthed_core::time::{Duration, SystemClock};
+    use proptest::prelude::*;
+
+    fn build_claims(sub: &str, iss: &str, aud: &str, role: &str) -> Claims {
+        Claims::builder(sub, &SystemClock, Duration::hours(1))
+            .issuer(iss)
+            .audience(aud)
+            .claim("role", role)
+            .build()
+    }
+
+    proptest! {
+        // v4.public: signing then verifying preserves every claim exactly, across
+        // varied subject/issuer/audience/custom values (and the numeric→RFC3339→
+        // numeric time-claim conversion PASETO requires).
+        #[test]
+        fn v4_public_round_trips_claims(
+            sub in "[a-zA-Z0-9._-]{1,40}",
+            iss in "[a-zA-Z0-9._-]{1,40}",
+            aud in "[a-zA-Z0-9._-]{1,40}",
+            role in "[a-zA-Z0-9._ -]{0,40}",
+        ) {
+            let claims = build_claims(&sub, &iss, &aud, &role);
+            let (signer, verifier) = PasetoV4Signer::generate().unwrap();
+            let token = signer.encode(&claims).unwrap();
+            let decoded = verifier
+                .expecting_issuer(iss.as_str())
+                .expecting_audience(aud.as_str())
+                .decode(&token)
+                .unwrap();
+            prop_assert_eq!(decoded, claims);
+        }
+
+        // v4.local: the same, through XChaCha20-Poly1305 encryption.
+        #[test]
+        fn v4_local_round_trips_claims(
+            sub in "[a-zA-Z0-9._-]{1,40}",
+            iss in "[a-zA-Z0-9._-]{1,40}",
+            aud in "[a-zA-Z0-9._-]{1,40}",
+            role in "[a-zA-Z0-9._ -]{0,40}",
+        ) {
+            let claims = build_claims(&sub, &iss, &aud, &role);
+            let cipher = PasetoV4Local::generate().unwrap();
+            let token = cipher.encode(&claims).unwrap();
+            let decoded = cipher
+                .expecting_issuer(iss.as_str())
+                .expecting_audience(aud.as_str())
+                .decode(&token)
+                .unwrap();
+            prop_assert_eq!(decoded, claims);
+        }
+    }
+}
