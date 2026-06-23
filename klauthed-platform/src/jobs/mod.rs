@@ -54,3 +54,7 @@ pub use worker::{JobHandler, JobWorker};
 
 #[cfg(test)]
 mod tests;
+
+/// Cross-backend parity tests (in-memory vs SQL), requiring the `jobs-sql` feature.
+#[cfg(all(test, feature = "jobs-sql"))]
+mod parity_tests;
