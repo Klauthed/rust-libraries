@@ -42,6 +42,18 @@ use sqlx::Row;
 use crate::error::DataError;
 use crate::outbox::{Outbox, OutboxEntry, OutboxId};
 
+/// Bind-placeholder style for the connected backend.
+///
+/// sqlx's `Any` driver passes SQL to the backend without rewriting placeholders,
+/// so `?`-style queries must be translated to `$n` for PostgreSQL.
+#[derive(Clone, Copy)]
+enum Dialect {
+    /// `?` placeholders (SQLite, MySQL).
+    Question,
+    /// `$1`, `$2`, … placeholders (PostgreSQL).
+    Dollar,
+}
+
 /// A durable [`Outbox`] backed by a relational table on an [`AnyPool`].
 ///
 /// Clone-cheap: holds only the pool handle (itself an `Arc` internally).
@@ -49,6 +61,7 @@ use crate::outbox::{Outbox, OutboxEntry, OutboxId};
 pub struct SqlOutbox {
     pool: AnyPool,
     table: String,
+    dialect: Dialect,
 }
 
 impl SqlOutbox {
@@ -72,14 +85,44 @@ CREATE TABLE IF NOT EXISTS outbox (
 )";
 
     /// Wrap an existing pool, using the [`DEFAULT_TABLE`](Self::DEFAULT_TABLE)
-    /// table name.
+    /// table name. The bind-placeholder dialect is detected from the pool's
+    /// connection URL (PostgreSQL → `$n`, otherwise `?`).
     pub fn new(pool: AnyPool) -> Self {
-        Self { pool, table: Self::DEFAULT_TABLE.to_owned() }
+        let dialect = if pool.connect_options().database_url.scheme().starts_with("postgres") {
+            Dialect::Dollar
+        } else {
+            Dialect::Question
+        };
+        Self { pool, table: Self::DEFAULT_TABLE.to_owned(), dialect }
     }
 
     /// Borrow the underlying pool.
     pub fn pool(&self) -> &AnyPool {
         &self.pool
+    }
+
+    /// Translate the `?`-placeholder `sql` to the connected backend's dialect.
+    ///
+    /// These queries contain no literal `?` (only bind placeholders), so a
+    /// sequential `?` → `$n` substitution is safe for PostgreSQL.
+    fn rewrite(&self, sql: String) -> String {
+        match self.dialect {
+            Dialect::Question => sql,
+            Dialect::Dollar => {
+                let mut out = String::with_capacity(sql.len() + 8);
+                let mut n = 0u32;
+                for ch in sql.chars() {
+                    if ch == '?' {
+                        n += 1;
+                        out.push('$');
+                        out.push_str(&n.to_string());
+                    } else {
+                        out.push(ch);
+                    }
+                }
+                out
+            }
+        }
     }
 
     /// Create the outbox table if it does not exist.
@@ -175,12 +218,12 @@ impl Outbox for SqlOutbox {
             return Ok(());
         }
 
-        let sql = format!(
+        let sql = self.rewrite(format!(
             "INSERT INTO {} \
              (id, aggregate_type, aggregate_id, event_type, sequence, payload, occurred_at, published, published_at) \
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             self.table
-        );
+        ));
 
         // One transaction so a partial batch never lands.
         let mut tx = self.pool.begin().await?;
@@ -221,10 +264,10 @@ impl Outbox for SqlOutbox {
             return Ok(());
         }
         let now = Timestamp::now().to_rfc3339();
-        let sql = format!(
+        let sql = self.rewrite(format!(
             "UPDATE {} SET published = 1, published_at = ? WHERE id = ? AND published = 0",
             self.table
-        );
+        ));
         let mut tx = self.pool.begin().await?;
         for id in ids {
             sqlx::query(sqlx::AssertSqlSafe(&*sql))
@@ -353,5 +396,44 @@ mod tests {
         outbox.enqueue(vec![]).await.unwrap();
         outbox.mark_published(&[]).await.unwrap();
         assert!(outbox.fetch_unpublished(10).await.unwrap().is_empty());
+    }
+
+    // Live PostgreSQL test for the `?` → `$n` placeholder translation and the
+    // postgres `FOR UPDATE SKIP LOCKED` claim. Ignored by default; the CI
+    // `integration` job runs it against a Postgres at `DB_URL`:
+    //   cargo test -p klauthed-data --features postgres --tests -- --ignored
+    #[cfg(feature = "postgres")]
+    #[tokio::test]
+    #[ignore = "requires a live PostgreSQL at DB_URL"]
+    async fn postgres_enqueue_fetch_mark_round_trip() {
+        let url = std::env::var("DB_URL")
+            .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/klauthed_test".into());
+        sqlx::any::install_default_drivers();
+        let pool = sqlx::AnyPool::connect(&url).await.expect("connect postgres");
+        let outbox = SqlOutbox::new(pool);
+        // Clean slate so re-runs are deterministic.
+        sqlx::query(sqlx::AssertSqlSafe("DROP TABLE IF EXISTS outbox"))
+            .execute(outbox.pool())
+            .await
+            .expect("drop");
+        outbox.ensure_schema().await.expect("ensure schema");
+
+        let (e1, e2) = (entry(1), entry(2));
+        let (id1, id2) = (e1.id, e2.id);
+        outbox.enqueue(vec![e1, e2]).await.unwrap(); // exercises ? -> $n on INSERT
+
+        assert_eq!(outbox.fetch_unpublished(10).await.unwrap().len(), 2);
+        // Postgres-only SKIP LOCKED claim path.
+        assert_eq!(outbox.fetch_unpublished_skip_locked(10).await.unwrap().len(), 2);
+
+        outbox.mark_published(&[id1]).await.unwrap(); // exercises ? -> $n on UPDATE
+        let remaining = outbox.fetch_unpublished(10).await.unwrap();
+        assert_eq!(remaining.len(), 1);
+        assert_eq!(remaining[0].id, id2);
+
+        sqlx::query(sqlx::AssertSqlSafe("DROP TABLE outbox"))
+            .execute(outbox.pool())
+            .await
+            .expect("drop test table");
     }
 }

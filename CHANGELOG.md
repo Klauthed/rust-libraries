@@ -26,6 +26,15 @@ All crates share a single version and are released together.
   trait. Direct callers must handle the `Result` (`?`/`unwrap`); `JobWorker` and
   the in-memory queue are updated.
 
+### Fixed
+
+- **`SqlOutbox` on PostgreSQL** (`klauthed-data`): the `AnyPool`-backed
+  `enqueue` / `mark_published` used `?` bind placeholders, which PostgreSQL
+  rejects — sqlx's `Any` driver passes SQL through without rewriting placeholders.
+  They now translate `?` → `$n` when the pool is Postgres (same fix as
+  `SqlJobQueue`), with a live-Postgres integration test covering the round-trip
+  and the `FOR UPDATE SKIP LOCKED` claim.
+
 ## [0.8.0] - 2026-06-22
 
 ### Added
