@@ -161,3 +161,76 @@ impl<'de> Deserialize<'de> for Timestamp {
             .map_err(serde::de::Error::custom)
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::Timestamp;
+    use proptest::prelude::*;
+    use time::Duration;
+
+    // Millis comfortably inside the representable range (~years 1716..2223), so
+    // conversions never saturate and round-trips are exact.
+    const LO: i64 = -8_000_000_000_000;
+    const HI: i64 = 8_000_000_000_000;
+
+    proptest! {
+        #[test]
+        fn millis_round_trip(m in LO..HI) {
+            prop_assert_eq!(Timestamp::from_unix_millis_opt(m).unwrap().unix_millis(), m);
+        }
+
+        #[test]
+        fn seconds_round_trip(s in (LO / 1000)..(HI / 1000)) {
+            prop_assert_eq!(Timestamp::from_unix_seconds_opt(s).unwrap().unix_seconds(), s);
+        }
+
+        #[test]
+        fn ordering_matches_millis(a in LO..HI, b in LO..HI) {
+            let (ta, tb) = (Timestamp::from_unix_millis(a), Timestamp::from_unix_millis(b));
+            prop_assert_eq!(ta <= tb, a <= b);
+            prop_assert_eq!(ta.cmp(&tb), a.cmp(&b));
+        }
+
+        #[test]
+        fn duration_since_is_the_millis_difference(a in LO..HI, b in LO..HI) {
+            let (ta, tb) = (Timestamp::from_unix_millis(a), Timestamp::from_unix_millis(b));
+            prop_assert_eq!(
+                tb.duration_since(ta).whole_milliseconds(),
+                i128::from(b) - i128::from(a)
+            );
+        }
+
+        #[test]
+        fn checked_add_then_duration_since_returns_the_delta(
+            m in LO..HI,
+            delta_ms in -1_000_000_000i64..1_000_000_000,
+        ) {
+            let t = Timestamp::from_unix_millis(m);
+            let shifted = t.checked_add(Duration::milliseconds(delta_ms)).unwrap();
+            prop_assert_eq!(shifted.duration_since(t).whole_milliseconds(), i128::from(delta_ms));
+        }
+
+        // `to_rfc3339` is millisecond-precision; built from millis it round-trips.
+        #[test]
+        fn rfc3339_human_form_round_trips(m in LO..HI) {
+            let t = Timestamp::from_unix_millis(m);
+            prop_assert_eq!(Timestamp::parse_rfc3339(&t.to_rfc3339()), Some(t));
+        }
+
+        // serde is full-precision and lossless.
+        #[test]
+        fn serde_round_trips(m in LO..HI) {
+            let t = Timestamp::from_unix_millis(m);
+            let json = serde_json::to_string(&t).unwrap();
+            prop_assert_eq!(serde_json::from_str::<Timestamp>(&json).unwrap(), t);
+        }
+
+        // Out-of-range conversions saturate while preserving order (documented).
+        #[test]
+        fn saturation_preserves_order(m in LO..HI) {
+            let t = Timestamp::from_unix_millis(m);
+            prop_assert!(Timestamp::from_unix_millis(i64::MAX) >= t);
+            prop_assert!(Timestamp::from_unix_millis(i64::MIN) <= t);
+        }
+    }
+}
