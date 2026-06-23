@@ -248,7 +248,10 @@ Higher-level platform services.
   data outbox).
 - **Webhooks** (`webhooks`) — outbound webhook delivery (feature `webhook-http`).
 - **Jobs** (`jobs`) — a background `JobQueue` plus a `JobWorker` that drains it
-  (claim due jobs → run a `JobHandler` → mark each succeeded/failed).
+  (claim due jobs → run a `JobHandler` → mark each succeeded/failed). Durable
+  backends: `SqlJobQueue` (feature `jobs-sql`; SQLite/Postgres/MySQL, with a
+  Postgres `FOR UPDATE SKIP LOCKED` claim) and `RedisJobQueue` (feature
+  `jobs-redis`; atomic Lua claim) — both interchangeable with the in-memory queue.
 - **Scheduler** (feature `scheduler`) — in-process recurring work on fixed
   intervals or cron schedules (UTC or a named IANA timezone, DST-aware); a panic
   in one run is isolated. Pairs with `JobWorker` for periodic queue draining.

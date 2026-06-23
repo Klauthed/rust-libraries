@@ -94,7 +94,10 @@ let _handle = Scheduler::new()
     .start();
 ```
 
-Swap `InMemoryJobQueue` for a durable backend and the rest is unchanged. For
+Swap `InMemoryJobQueue` for a durable backend — `SqlJobQueue` (feature `jobs-sql`;
+SQLite / Postgres / MySQL, with a Postgres `FOR UPDATE SKIP LOCKED` claim for
+concurrent workers) or `RedisJobQueue` (feature `jobs-redis`; atomic Lua claim) —
+and the rest is unchanged. For
 durable *event* publishing, the data **outbox** writes messages in the same
 transaction as your state change and a polling **relay** drains them to a broker —
 no lost or double-sent events.

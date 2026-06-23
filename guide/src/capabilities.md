@@ -60,7 +60,8 @@ middleware for end-to-end distributed traces.
 Cross-cutting platform services — each a trait with an in-memory implementation:
 multi-tenancy (`TenantResolver`), audit logging (`AuditSink`), HMAC-signed
 outbound `WebhookSender`, feature flags, a background `JobQueue` **with a
-`JobWorker`** that drains it, per-tenant usage **metering** (`Meter`), and
+`JobWorker`** that drains it (durable `SqlJobQueue` / `RedisJobQueue` backends
+behind features), per-tenant usage **metering** (`Meter`), and
 user **notifications** (`Notifier` — email / SMS / push).
 
 The **`scheduler`** feature adds an in-process `Scheduler` for recurring work,
