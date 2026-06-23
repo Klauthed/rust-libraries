@@ -8,6 +8,8 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-06-24
+
 ### Added
 
 - **`klauthed_testing::prelude`** — a prelude of the common test helpers
@@ -23,6 +25,10 @@ All crates share a single version and are released together.
 - Documented the implementation / test-double / config-provider naming
   conventions (`InMemory*`, `Recording*`, `<Source>Provider`) in CONTRIBUTING's
   API conventions, as part of the 0.10.0 pre-1.0 API review.
+- Broadened property-test coverage as part of the pre-1.0 settling cycle: the
+  credential primitives (JWT, PASETO v4.public/local, AES-256-GCM AEAD, Argon2id
+  passwords), `Timestamp`, cron, i18n fallback + interpolation, and cross-backend
+  job-queue parity. No public API changes.
 
 ## [0.9.0] - 2026-06-23
 
