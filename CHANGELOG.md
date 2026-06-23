@@ -8,6 +8,8 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-23
+
 ### Added
 
 - **Durable `RedisJobQueue`** (`klauthed-platform`, feature `jobs-redis`): a
@@ -40,6 +42,11 @@ All crates share a single version and are released together.
   They now translate `?` → `$n` when the pool is Postgres (same fix as
   `SqlJobQueue`), with a live-Postgres integration test covering the round-trip
   and the `FOR UPDATE SKIP LOCKED` claim.
+
+### Security
+
+- Bumped the transitive `quinn-proto` dependency 0.11.14 → 0.11.15 to address
+  RUSTSEC-2026-0185 (High).
 
 ## [0.8.0] - 2026-06-22
 
