@@ -10,6 +10,12 @@ All crates share a single version and are released together.
 
 ### Added
 
+- **Durable `RedisJobQueue`** (`klauthed-platform`, feature `jobs-redis`): a
+  Redis-backed `JobQueue` — jobs as hashes, a `due` sorted set scored by `run_at`,
+  and a `run` sorted set for stall detection. Claiming, failing (with backoff),
+  and stalled-recovery run as atomic Lua scripts so concurrent workers never
+  double-claim. Same semantics as `InMemoryJobQueue`; exercised by the CI
+  integration job against a live Redis at `REDIS_URL`.
 - **Durable `SqlJobQueue`** (`klauthed-platform`, feature `jobs-sql`): a
   relational `JobQueue` over sqlx's `AnyPool` (portable across SQLite / Postgres /
   MySQL), with the same claim / retry-backoff / stalled-recovery semantics as

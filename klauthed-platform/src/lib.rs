@@ -20,8 +20,8 @@
 //!   [`AuditSink`] trait, and an [`InMemoryAuditSink`] that retains events.
 //! * [`jobs`] — background jobs: [`JobStatus`], the [`EnqueuedJob`] record, the
 //!   async [`JobQueue`] trait, a clock-driven [`InMemoryJobQueue`], and a
-//!   [`JobWorker`] that drains a queue (plus a durable SQL-backed queue behind the
-//!   `jobs-sql` feature).
+//!   [`JobWorker`] that drains a queue (plus durable SQL and Redis backends behind
+//!   the `jobs-sql` / `jobs-redis` features).
 //! * [`webhooks`] — [`WebhookEndpoint`]/[`WebhookEvent`] types, HMAC-SHA256
 //!   [`sign_payload`]/[`verify_signature`] helpers, the async [`WebhookSender`]
 //!   trait, and a [`RecordingWebhookSender`] (signs + records, no network).
@@ -76,6 +76,8 @@ pub use audit::{
 };
 pub use error::PlatformError;
 pub use featureflag::{FeatureFlag, FeatureFlags, InMemoryFeatureFlags};
+#[cfg(feature = "jobs-redis")]
+pub use jobs::RedisJobQueue;
 #[cfg(feature = "jobs-sql")]
 pub use jobs::SqlJobQueue;
 pub use jobs::{

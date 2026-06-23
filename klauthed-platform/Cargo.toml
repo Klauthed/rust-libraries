@@ -44,6 +44,9 @@ time = { workspace = true, optional = true }
 # tests. Gated behind `jobs-sql`.
 sqlx = { workspace = true, optional = true }
 
+# Durable RedisJobQueue (Redis-backed JobQueue). Gated behind `jobs-redis`.
+redis = { workspace = true, optional = true }
+
 [features]
 audit-outbox  = ["dep:klauthed-data"]
 webhook-http  = ["dep:reqwest"]
@@ -53,6 +56,9 @@ scheduler     = ["dep:tokio", "dep:time", "klauthed-core/tz"]
 # Durable, relational JobQueue (`SqlJobQueue`) over sqlx. The Postgres
 # `FOR UPDATE SKIP LOCKED` claim path is exercised by the CI integration job.
 jobs-sql      = ["dep:sqlx"]
+# Durable, Redis-backed JobQueue (`RedisJobQueue`) with atomic Lua claim. The
+# runtime path is exercised by the CI integration job against a live Redis.
+jobs-redis    = ["dep:redis"]
 
 [dev-dependencies]
 # `test-util` enables `#[tokio::test(start_paused = true)]` for the scheduler tests.
