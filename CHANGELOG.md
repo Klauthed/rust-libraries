@@ -8,6 +8,22 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Added
+
+- **`klauthed_testing::prelude`** — a prelude of the common test helpers
+  (assertions, `FixedClock` + `fixed_clock`/`epoch_clock`, `test_context`,
+  `nil_id`/`seeded_id`, `InMemoryRepository`), so every library crate now offers a
+  prelude.
+- **`AppContext::builder(config)`** (`klauthed-core`) — a `Type::builder()` entry
+  point delegating to `AppBuilder::new`, for consistency with `Config::builder`
+  and the suite's builder convention.
+
+### Changed
+
+- Documented the implementation / test-double / config-provider naming
+  conventions (`InMemory*`, `Recording*`, `<Source>Provider`) in CONTRIBUTING's
+  API conventions, as part of the 0.10.0 pre-1.0 API review.
+
 ## [0.9.0] - 2026-06-23
 
 ### Added

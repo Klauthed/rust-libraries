@@ -59,3 +59,17 @@ pub use context::{TestContextBuilder, test_context};
 pub use error::TestingError;
 pub use ids::{nil_id, seeded_id};
 pub use repository::InMemoryRepository;
+
+/// Common imports for tests: `use klauthed_testing::prelude::*;`.
+///
+/// The test-specific helpers — assertions, a controllable [`FixedClock`] (and the
+/// `fixed_clock`/`epoch_clock` constructors), `test_context`, deterministic id
+/// helpers, and an [`InMemoryRepository`]. `Clock`/`Timestamp` are intentionally
+/// omitted so this won't glob-collide with `klauthed_core::prelude`.
+pub mod prelude {
+    pub use crate::{
+        DomainErrorExt, FixedClock, InMemoryRepository, TestContextBuilder, assert_category,
+        assert_code, assert_http_status, assert_retryable, epoch_clock, fixed_clock, nil_id,
+        seeded_id, test_context,
+    };
+}

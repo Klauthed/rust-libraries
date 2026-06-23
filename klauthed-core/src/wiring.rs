@@ -76,6 +76,14 @@ impl AppContext {
         Self::default()
     }
 
+    /// Start building a wired context from `config`. Convenience entry point for
+    /// [`AppBuilder::new`], mirroring [`Config::builder`](crate::config::Config::builder)
+    /// and other `Type::builder()` constructors in the suite.
+    #[must_use]
+    pub fn builder(config: Config) -> AppBuilder {
+        AppBuilder::new(config)
+    }
+
     /// Register `component`, replacing any existing one of the same type.
     pub fn register<T: Any + Send + Sync>(&mut self, component: T) -> &mut Self {
         self.register_arc(Arc::new(component))

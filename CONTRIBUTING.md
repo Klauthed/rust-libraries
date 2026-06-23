@@ -140,8 +140,17 @@ Naming patterns the crates follow, so new code stays consistent:
 - **Connectors** (`klauthed-data`) — `<module>::connect(&config)` when a module
   has a single backend (`db::connect`, `storage::connect`); `connect_<backend>`
   when it has several (`messaging::connect_nats`, `cache::connect_redis`).
-- **Preludes** — every crate exposes `prelude` with its common types, and
-  re-exports its workhorse types at the crate root.
+- **Implementations & test doubles** — the in-memory implementation of a trait is
+  `InMemory<Trait>` (`InMemoryJobQueue`, `InMemoryAuditSink`, `InMemoryMeter`).
+  Test doubles for *outbound* senders that record attempts instead of delivering
+  are `Recording*` (`RecordingNotifier`, `RecordingWebhookSender`). The
+  `klauthed-core` config **provider** family is named by source —
+  `EnvProvider`, `FileProvider`, `VaultProvider`, `MemoryProvider` — keeping that
+  group internally consistent (so the in-memory provider is `MemoryProvider`, not
+  `InMemoryProvider`).
+- **Preludes** — every library crate (except the `klauthed-macros` proc-macro
+  crate) exposes a `prelude` with its common types, and re-exports its workhorse
+  types at the crate root.
 
 ## Stability policy
 
