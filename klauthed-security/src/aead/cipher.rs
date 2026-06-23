@@ -103,3 +103,66 @@ pub fn decrypt_from_base64(
     let raw = BASE64.decode(ciphertext_b64).map_err(|_| SecurityError::Decryption)?;
     decrypt(key, &raw, aad)
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::{EncryptionKey, decrypt, decrypt_from_base64, encrypt, encrypt_to_base64};
+    use proptest::prelude::*;
+
+    fn bytes() -> impl Strategy<Value = Vec<u8>> {
+        prop::collection::vec(any::<u8>(), 0..256)
+    }
+
+    proptest! {
+        // Encrypt then decrypt under the same key + AAD returns the plaintext.
+        #[test]
+        fn encrypt_decrypt_round_trips(
+            key_bytes in any::<[u8; 32]>(),
+            plaintext in bytes(),
+            aad in bytes(),
+        ) {
+            let key = EncryptionKey::from_bytes(key_bytes);
+            let ciphertext = encrypt(&key, &plaintext, &aad).unwrap();
+            prop_assert_eq!(decrypt(&key, &ciphertext, &aad).unwrap(), plaintext);
+        }
+
+        // The base64 helpers round-trip too.
+        #[test]
+        fn base64_round_trips(
+            key_bytes in any::<[u8; 32]>(),
+            plaintext in bytes(),
+            aad in bytes(),
+        ) {
+            let key = EncryptionKey::from_bytes(key_bytes);
+            let ciphertext = encrypt_to_base64(&key, &plaintext, &aad).unwrap();
+            prop_assert_eq!(decrypt_from_base64(&key, &ciphertext, &aad).unwrap(), plaintext);
+        }
+
+        // A different key fails the GCM authentication tag.
+        #[test]
+        fn a_different_key_fails_authentication(
+            key_a in any::<[u8; 32]>(),
+            key_b in any::<[u8; 32]>(),
+            plaintext in bytes(),
+            aad in bytes(),
+        ) {
+            prop_assume!(key_a != key_b);
+            let ciphertext = encrypt(&EncryptionKey::from_bytes(key_a), &plaintext, &aad).unwrap();
+            prop_assert!(decrypt(&EncryptionKey::from_bytes(key_b), &ciphertext, &aad).is_err());
+        }
+
+        // A different AAD fails authentication (the AAD is bound to the ciphertext).
+        #[test]
+        fn a_different_aad_fails_authentication(
+            key_bytes in any::<[u8; 32]>(),
+            plaintext in bytes(),
+            aad_a in bytes(),
+            aad_b in bytes(),
+        ) {
+            prop_assume!(aad_a != aad_b);
+            let key = EncryptionKey::from_bytes(key_bytes);
+            let ciphertext = encrypt(&key, &plaintext, &aad_a).unwrap();
+            prop_assert!(decrypt(&key, &ciphertext, &aad_b).is_err());
+        }
+    }
+}
