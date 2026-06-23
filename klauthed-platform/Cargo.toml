@@ -65,6 +65,8 @@ jobs-redis    = ["dep:redis"]
 tokio = { workspace = true, features = ["test-util"] }
 # Required only by the `audit-outbox` SQLite integration tests; harmless otherwise.
 sqlx = { workspace = true, features = ["sqlite"] }
+# Property tests for the cron parser / next-occurrence logic (scheduler feature).
+proptest = { workspace = true }
 
 [package.metadata.docs.rs]
 all-features = true

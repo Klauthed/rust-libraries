@@ -332,3 +332,63 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::Cron;
+    use proptest::prelude::*;
+    use time::{Duration, OffsetDateTime, UtcOffset};
+
+    // Unix timestamps spanning ~1970..2096, well within next_after's 5-year horizon.
+    const MAX_TS: i64 = 4_000_000_000;
+
+    proptest! {
+        // A daily `m h * * *` schedule: the next occurrence is strictly after the
+        // input and lands exactly on minute `m` / hour `h` at second 0 (in UTC).
+        #[test]
+        fn daily_schedule_lands_on_minute_and_hour(
+            minute in 0u8..60,
+            hour in 0u8..24,
+            ts in 0i64..MAX_TS,
+        ) {
+            let cron = Cron::parse(&format!("{minute} {hour} * * *")).unwrap();
+            let after = OffsetDateTime::from_unix_timestamp(ts).unwrap();
+            let next = cron.next_after(after).expect("a daily schedule always recurs");
+            prop_assert!(next > after);
+            let next = next.to_offset(UtcOffset::UTC);
+            prop_assert_eq!(next.second(), 0);
+            prop_assert_eq!(next.minute(), minute);
+            prop_assert_eq!(next.hour(), hour);
+        }
+
+        // `* * * * *` always advances to exactly the next whole minute.
+        #[test]
+        fn every_minute_advances_to_next_whole_minute(ts in 0i64..MAX_TS) {
+            let cron = Cron::parse("* * * * *").unwrap();
+            let after = OffsetDateTime::from_unix_timestamp(ts).unwrap();
+            let next = cron.next_after(after).unwrap();
+            let truncated = after.replace_second(0).unwrap().replace_nanosecond(0).unwrap();
+            prop_assert_eq!(next, truncated + Duration::minutes(1));
+        }
+
+        // next_after is monotonic: applying it to its own result yields a later time.
+        #[test]
+        fn next_after_is_monotonic(
+            minute in 0u8..60,
+            hour in 0u8..24,
+            ts in 0i64..MAX_TS,
+        ) {
+            let cron = Cron::parse(&format!("{minute} {hour} * * *")).unwrap();
+            let after = OffsetDateTime::from_unix_timestamp(ts).unwrap();
+            let first = cron.next_after(after).unwrap();
+            let second = cron.next_after(first).unwrap();
+            prop_assert!(second > first);
+        }
+
+        // Parsing arbitrary input never panics — it returns Ok or Err.
+        #[test]
+        fn parse_never_panics(expr in ".*") {
+            let _ = Cron::parse(&expr);
+        }
+    }
+}
