@@ -46,16 +46,21 @@ tracks intent, not a commitment — scope shifts as we learn.
   transactional executors (`SqlxTransact` / `MongoTransact`), an in-process event
   bus, saga orchestration, and an outbox relay. The reference service now dogfoods
   the queue → worker → scheduler → notifications pipeline. See [CHANGELOG](CHANGELOG.md).
+- **0.9.0** — durable `JobQueue` backends: `SqlJobQueue` (SQLite/Postgres/MySQL,
+  with a Postgres `FOR UPDATE SKIP LOCKED` claim) and `RedisJobQueue` (atomic Lua
+  claim), behind a now-fallible `JobQueue` trait. Plus a `SqlOutbox` Postgres
+  placeholder fix, cross-backend parity + cron property tests, and a `quinn-proto`
+  security bump. See [CHANGELOG](CHANGELOG.md).
 
-## 0.9.0 (in progress)
+## 0.10.0 (in progress)
 
-Theme: **durable backends & toward a stable 1.0.**
+Theme: **API freeze for 1.0.**
 
-- Durable `JobQueue` backends (Postgres / Redis) behind the existing trait,
-  exercised by the live-infra integration job.
-- API consistency and re-export-completeness review per crate.
-- Broaden test / fuzz / property coverage on the remaining surface.
-- Candidate features as they arise.
+- A per-crate public-API review — re-export / prelude completeness and naming
+  consistency — absorbing any remaining breaking changes in one deliberate pass.
+- A settling period with **no** breaking changes once the review lands (the
+  readiness signal for tagging 1.0).
+- Continue broadening fuzz / property coverage.
 
 ## Toward 1.0
 
