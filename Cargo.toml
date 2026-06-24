@@ -126,7 +126,7 @@ indexmap     = { version = "2", features = ["serde"] }
 bytes        = "1"
 base64       = "0.22"
 hex          = "0.4"
-rand         = "0.9"
+rand         = "0.10"
 once_cell    = "1"
 arc-swap     = "1"
 dashmap      = "6"
