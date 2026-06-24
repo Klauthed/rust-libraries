@@ -1,6 +1,6 @@
 //! Parsing and validation of the `#[domain(...)]` attribute.
 
-use syn::{Attribute, LitStr};
+use syn::{Attribute, LitStr, Path};
 
 /// Parsed `#[domain(...)]` options (used at both container and variant level).
 #[derive(Default)]
@@ -9,6 +9,10 @@ pub(crate) struct DomainAttr {
     pub(crate) code: Option<String>,
     pub(crate) prefix: Option<String>,
     pub(crate) transparent: bool,
+    /// Path to the `klauthed_error` crate/module, for crates that reach it through
+    /// a re-export (e.g. `crate = "klauthed::error"` when depending only on the
+    /// `klauthed` umbrella). Container-level; defaults to `::klauthed_error`.
+    pub(crate) krate: Option<Path>,
 }
 
 pub(crate) fn parse_domain_attr(attrs: &[Attribute]) -> syn::Result<DomainAttr> {
@@ -22,6 +26,12 @@ pub(crate) fn parse_domain_attr(attrs: &[Attribute]) -> syn::Result<DomainAttr> 
                 out.transparent = true;
                 return Ok(());
             }
+            if meta.path.is_ident("crate") {
+                // `crate = "klauthed::error"` — value is a string holding a path.
+                let value: LitStr = meta.value()?.parse()?;
+                out.krate = Some(value.parse()?);
+                return Ok(());
+            }
             let is_code = meta.path.is_ident("code");
             let is_prefix = meta.path.is_ident("prefix");
             let target = if meta.path.is_ident("category") {
@@ -32,7 +42,7 @@ pub(crate) fn parse_domain_attr(attrs: &[Attribute]) -> syn::Result<DomainAttr> 
                 &mut out.prefix
             } else {
                 return Err(meta.error(
-                    "unknown `domain` key (expected category, code, prefix, or transparent)",
+                    "unknown `domain` key (expected category, code, prefix, transparent, or crate)",
                 ));
             };
             let value: LitStr = meta.value()?.parse()?;

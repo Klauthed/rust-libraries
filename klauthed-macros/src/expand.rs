@@ -21,15 +21,25 @@ pub(crate) fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
         }
     };
 
+    // The error crate is reachable as `__klauthed_error` inside the generated
+    // block. Defaults to the `klauthed_error` crate; `#[domain(crate = "…")]`
+    // overrides it (e.g. `"klauthed::error"` for crates that depend only on the
+    // `klauthed` umbrella). The `use` + `const _` wrapper keeps the alias hygienic.
+    let krate: syn::Path =
+        container.krate.clone().unwrap_or_else(|| syn::parse_quote!(::klauthed_error));
+
     Ok(quote! {
-        impl #impl_generics ::klauthed_error::DomainError for #name #ty_generics #where_clause {
-            fn category(&self) -> ::klauthed_error::ErrorCategory {
-                #category_body
+        const _: () = {
+            use #krate as __klauthed_error;
+            impl #impl_generics __klauthed_error::DomainError for #name #ty_generics #where_clause {
+                fn category(&self) -> __klauthed_error::ErrorCategory {
+                    #category_body
+                }
+                fn code(&self) -> __klauthed_error::ErrorCode {
+                    #code_body
+                }
             }
-            fn code(&self) -> ::klauthed_error::ErrorCode {
-                #code_body
-            }
-        }
+        };
     })
 }
 
@@ -51,10 +61,10 @@ fn enum_bodies<'a>(
         if attr.transparent {
             let (pattern, binding) = transparent_pattern(&variant.fields, vident.span())?;
             category_arms.push(quote! {
-                #(#cfgs)* Self::#vident #pattern => ::klauthed_error::DomainError::category(#binding),
+                #(#cfgs)* Self::#vident #pattern => __klauthed_error::DomainError::category(#binding),
             });
             code_arms.push(quote! {
-                #(#cfgs)* Self::#vident #pattern => ::klauthed_error::DomainError::code(#binding),
+                #(#cfgs)* Self::#vident #pattern => __klauthed_error::DomainError::code(#binding),
             });
         } else {
             let category = category_path(&attr, container, vident.span())?;
@@ -62,7 +72,7 @@ fn enum_bodies<'a>(
             let pattern = ignore_pattern(&variant.fields);
             category_arms.push(quote! { #(#cfgs)* Self::#vident #pattern => #category, });
             code_arms.push(
-                quote! { #(#cfgs)* Self::#vident #pattern => ::klauthed_error::ErrorCode::new(#code), },
+                quote! { #(#cfgs)* Self::#vident #pattern => __klauthed_error::ErrorCode::new(#code), },
             );
         }
     }
@@ -79,15 +89,15 @@ fn struct_bodies(
 ) -> syn::Result<(TokenStream2, TokenStream2)> {
     if container.transparent {
         let access = transparent_field_access(fields, name.span())?;
-        let category_body = quote! { ::klauthed_error::DomainError::category(&#access) };
-        let code_body = quote! { ::klauthed_error::DomainError::code(&#access) };
+        let category_body = quote! { __klauthed_error::DomainError::category(&#access) };
+        let code_body = quote! { __klauthed_error::DomainError::code(&#access) };
         return Ok((category_body, code_body));
     }
 
     let category = category_path(container, container, name.span())?;
     let code = build_code(container.prefix.as_deref(), container.code.as_deref(), name);
     let category_body = quote! { #category };
-    let code_body = quote! { ::klauthed_error::ErrorCode::new(#code) };
+    let code_body = quote! { __klauthed_error::ErrorCode::new(#code) };
     Ok((category_body, code_body))
 }
 
@@ -122,7 +132,7 @@ fn category_path(
         }
     };
     let ident = Ident::new(variant, span);
-    Ok(quote! { ::klauthed_error::ErrorCategory::#ident })
+    Ok(quote! { __klauthed_error::ErrorCategory::#ident })
 }
 
 /// Build the final code string: `{prefix}.{code|snake(ident)}`, or just the

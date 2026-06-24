@@ -41,3 +41,37 @@ pub mod prelude {
     pub use crate::validation::Validate;
     pub use crate::wiring::{AppBuilder, AppContext, Starter};
 }
+
+#[cfg(test)]
+mod derive_crate_override {
+    //! A crate depending only on the `klauthed` umbrella reaches the error trait
+    //! through a re-export; `#[domain(crate = "…")]` points the derive at it. Here a
+    //! local module stands in for the umbrella's `klauthed::error`.
+
+    mod umbrella {
+        pub use klauthed_error as error;
+    }
+
+    use klauthed_error::{DomainError as _, ErrorCategory};
+    use klauthed_macros::DomainError;
+
+    #[derive(Debug, DomainError)]
+    #[domain(crate = "umbrella::error", prefix = "test", category = "not_found")]
+    struct OverriddenError;
+
+    impl std::fmt::Display for OverriddenError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_str("overridden")
+        }
+    }
+    impl std::error::Error for OverriddenError {}
+
+    #[test]
+    fn crate_override_resolves_the_trait_via_a_reexport() {
+        let err = OverriddenError;
+        // Compiling at all proves `crate = "umbrella::error"` resolved the trait;
+        // the values confirm the generated bodies are correct.
+        assert_eq!(err.category(), ErrorCategory::NotFound);
+        assert_eq!(err.code().as_str(), "test.overridden_error");
+    }
+}

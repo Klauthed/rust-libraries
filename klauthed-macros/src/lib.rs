@@ -58,6 +58,11 @@ mod parse;
 ///   `MissingRequired` → `config.missing_required`.
 /// * `transparent` — delegate `category()` and `code()` to the variant's single
 ///   field (which must itself be a `DomainError`), for wrapped/`#[from]` errors.
+/// * `crate = "path"` — container-level; the path to the `klauthed_error`
+///   crate/module the generated impl references. Defaults to `::klauthed_error`.
+///   Set it when reaching the trait through a re-export, e.g.
+///   `#[domain(crate = "klauthed::error")]` for a crate that depends only on the
+///   `klauthed` umbrella (and so has no direct `klauthed-error` dependency).
 ///
 /// The type must also implement `std::error::Error` (e.g. via `thiserror`),
 /// since `DomainError` requires it.

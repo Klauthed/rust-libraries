@@ -8,6 +8,14 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Added
+
+- **`#[domain(crate = "…")]`** on the `DomainError` derive (`klauthed-macros`) —
+  point the derive at the error crate through a re-export (e.g.
+  `crate = "klauthed::error"`), so a crate depending only on the `klauthed`
+  umbrella can `#[derive(DomainError)]` without a direct `klauthed-error`
+  dependency. Defaults to `::klauthed_error`, so existing derives are unchanged.
+
 ## [1.0.0-rc.2] - 2026-06-24
 
 Second 1.0 release candidate. Folds in the first round of real-world RC feedback —
