@@ -8,6 +8,14 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Added
+
+- **`klauthed_web::ApiResponse<T>` + `ApiResult<T>`** — a uniform success
+  envelope rendered as `{ "data": <T> }`, the symmetric counterpart to
+  `AppError`'s `{ "error": { … } }`. `ApiResponse::ok`/`created`/`with_status`
+  implement actix `Responder`; handlers return `ApiResult<T>` so success and
+  failure share one wire contract across services. Additive.
+
 ## [1.0.0-rc.1] - 2026-06-24
 
 First release candidate for **1.0.0**. The public API is frozen for 1.0; this RC is

@@ -29,6 +29,8 @@
 //! * [`extract`] — [`Json`] and [`Validated`] body extractors that surface
 //!   deserialization and [`Validate`](klauthed_core::validation::Validate)
 //!   failures as [`AppError`]s.
+//! * [`response`] — [`ApiResponse`] and [`ApiResult`], a uniform `{ "data": … }`
+//!   success envelope that pairs with [`AppError`]'s `{ "error": … }`.
 //!
 //! # Wiring it up
 //!
@@ -51,8 +53,8 @@
 //!
 //! # Out of scope (future passes)
 //!
-//! TLS termination, distributed rate limiting, and OpenAPI generation are
-//! intentionally not handled here yet.
+//! TLS termination and distributed rate limiting are intentionally not handled
+//! here yet. (OpenAPI generation is available behind the `openapi` feature.)
 
 pub mod app;
 pub mod auth;
@@ -76,6 +78,7 @@ pub mod ratelimit;
 #[cfg(feature = "config-refresh")]
 pub mod refresh;
 pub mod resilience;
+pub mod response;
 pub mod server;
 pub mod starter;
 #[cfg(feature = "otel")]
@@ -101,6 +104,7 @@ pub use health::{HealthCheck, HealthRegistry, HealthStatus};
 pub use passkey::{CeremonyStore, InMemoryCeremonyStore, PasskeyApi};
 pub use ratelimit::{KeyBy, RateLimit};
 pub use resilience::{CircuitBreaker, CircuitError, RetryPolicy};
+pub use response::{ApiResponse, ApiResult};
 pub use server::{serve, serve_with_components, serve_with_defaults};
 pub use starter::WebStarter;
 #[cfg(feature = "otel")]
@@ -109,8 +113,9 @@ pub use trace::RequestTracing;
 /// Common imports for building a klauthed web service: `use klauthed_web::prelude::*;`.
 pub mod prelude {
     pub use crate::{
-        AppError, AppResult, AuthenticatedUser, Components, Context, HealthCheck, HealthRegistry,
-        HealthStatus, Json, JwtAuth, OptionalAuthentication, RateLimit, RequestContextMiddleware,
-        SecurityHeaders, Validated, serve, serve_with_components, serve_with_defaults,
+        ApiResponse, ApiResult, AppError, AppResult, AuthenticatedUser, Components, Context,
+        HealthCheck, HealthRegistry, HealthStatus, Json, JwtAuth, OptionalAuthentication,
+        RateLimit, RequestContextMiddleware, SecurityHeaders, Validated, serve,
+        serve_with_components, serve_with_defaults,
     };
 }
