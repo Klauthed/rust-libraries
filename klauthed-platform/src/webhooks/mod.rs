@@ -9,9 +9,9 @@
 //!
 //! The default path is **types + signing + a trait sender** — no network. The
 //! provided [`RecordingWebhookSender`] computes and attaches the signature and
-//! captures every delivery for assertions. A real, `reqwest`-backed HTTP sender is
-//! intentionally out of scope here (future work, ideally behind an optional
-//! feature) so this crate stays dependency-light and offline-testable.
+//! captures every delivery for assertions. A real, `reqwest`-backed
+//! `HttpWebhookSender` is available behind the `webhook-http` feature; the default
+//! path stays dependency-light and offline-testable.
 //!
 //! ```
 //! use klauthed_platform::webhooks::{sign_payload, verify_signature};
@@ -27,9 +27,8 @@
 //! assert!(verify_signature(secret, &header, b"{}").is_err());
 //! ```
 //!
-//! Future work (out of scope here): a `reqwest`-based [`WebhookSender`] behind a
-//! `http` feature, automatic retries with backoff (reuse [`crate::jobs`]),
-//! per-endpoint delivery metering, and notifications on repeated failure.
+//! Future work: automatic retries with backoff (compose with [`crate::jobs`]) and
+//! per-endpoint delivery metering.
 
 pub mod model;
 pub mod sender;

@@ -50,7 +50,7 @@ Or add the umbrella crate to an existing project and turn on the pieces you need
 
 ```toml
 [dependencies]
-klauthed = { version = "0.6", features = ["web", "data", "security", "observability", "postgres"] }
+klauthed = { version = "0.10", features = ["web", "data", "security", "observability", "postgres"] }
 ```
 
 Each enabled library is re-exported as a module (`klauthed::web`, `klauthed::data`, …),

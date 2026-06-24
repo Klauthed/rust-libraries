@@ -8,6 +8,13 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Changed
+
+- Docs (pre-1.0 readiness): refreshed the install snippets to the current version,
+  and corrected stale "future work / out of scope" notes — the durable `JobQueue`
+  backends (`SqlJobQueue`, `RedisJobQueue`) and the `HttpWebhookSender`
+  (`webhook-http`) have shipped and are now documented as available.
+
 ## [0.10.0] - 2026-06-24
 
 ### Added

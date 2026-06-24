@@ -7,7 +7,7 @@ module (`klauthed::core`, `klauthed::web`, …), with the most common items in
 
 ```toml
 # A typical actix-web service:
-klauthed = { version = "0.1", features = ["web", "data", "observability", "security", "postgres"] }
+klauthed = { version = "0.10", features = ["web", "data", "observability", "security", "postgres"] }
 ```
 
 ## Feature map

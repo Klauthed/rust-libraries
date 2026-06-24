@@ -33,8 +33,9 @@
 //! assert!(!JobStatus::Running.is_terminal());
 //! ```
 //!
-//! Future work (out of scope here): a Postgres/Redis-backed [`JobQueue`],
-//! dead-letter handling, and metering of job throughput.
+//! Durable backends ship behind features: a relational [`SqlJobQueue`]
+//! (`jobs-sql`) and a [`RedisJobQueue`] (`jobs-redis`). Future work: dead-letter
+//! handling and metering of job throughput.
 
 pub mod model;
 pub mod queue;

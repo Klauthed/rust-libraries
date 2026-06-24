@@ -29,7 +29,7 @@ Depend on the umbrella crate and enable the pieces you need as cargo features:
 
 ```toml
 [dependencies]
-klauthed = { version = "0.6", features = ["web", "data", "security", "observability"] }
+klauthed = { version = "0.10", features = ["web", "data", "security", "observability"] }
 ```
 
 Each top-level feature re-exports the matching crate as a module
