@@ -8,6 +8,12 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [1.0.0-rc.2] - 2026-06-24
+
+Second 1.0 release candidate. Folds in the first round of real-world RC feedback —
+a uniform success envelope — ahead of the 1.0.0 freeze. Still a **pre-release**;
+stable 0.10.0 remains the default.
+
 ### Added
 
 - **`klauthed_web::ApiResponse<T>` + `ApiResult<T>`** — a uniform success
