@@ -59,18 +59,21 @@ tracks intent, not a commitment — scope shifts as we learn.
   Argon2), `Timestamp`, cron, i18n, and cross-backend job-queue parity.
   See [CHANGELOG](CHANGELOG.md).
 
-## 0.11.0 (in progress) — 1.0 candidate
+## 1.0.0 (in progress) — release candidate published
 
-Theme: **the last cycle before 1.0.** The API freeze held through 0.10.0 with no
-breaking changes, so — absent any breaking change surfacing here — the next
-release is tagged **1.0.0**.
+**`1.0.0-rc.1` is published** (a pre-release on crates.io; stable `0.10.0` remains
+the default) for final real-world validation before the 1.0.0 SemVer promise. The
+API has been frozen since the 0.10.0 settling cycle with no breaking changes.
 
-- Hold the public API stable; only additive changes.
-- A final docs/readiness pass (READMEs, guide, examples) before the 1.0 tag.
-- Opportunistic coverage on any remaining thin spots.
+- Validation window: build against `1.0.0-rc.1`; surface any API friction now,
+  while the major version isn't yet committed.
+- If nothing breaking surfaces → tag **1.0.0** (flip CONTRIBUTING's stability
+  language to the firm 1.0 SemVer promise). If something does → fold it in and cut
+  `rc.2`.
+- Only additive changes on the public API meanwhile.
 
 ## Toward 1.0
 
 The committed SemVer + deprecation policy (CONTRIBUTING.md), the MSRV policy, and
 broad test / fuzz coverage are all in place; the API review found no breaking
-changes. 1.0.0 follows once this candidate cycle ships clean.
+changes. `1.0.0-rc.1` is out; **1.0.0 final follows once the RC validates clean.**
