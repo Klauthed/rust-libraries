@@ -8,6 +8,13 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [1.0.0-rc.1] - 2026-06-24
+
+First release candidate for **1.0.0**. The public API is frozen for 1.0; this RC is
+published as a **pre-release** for final real-world validation before the 1.0.0
+stability promise is made. No functional changes since 0.10.0 — only the docs
+refresh below.
+
 ### Changed
 
 - Docs (pre-1.0 readiness): refreshed the install snippets to the current version,
