@@ -58,24 +58,21 @@ tracks intent, not a commitment — scope shifts as we learn.
   broad property-test sweep over the credential primitives (JWT, PASETO, AEAD,
   Argon2), `Timestamp`, cron, i18n, and cross-backend job-queue parity.
   See [CHANGELOG](CHANGELOG.md).
+- **1.0.0** — first stable release. Four release candidates of real-world
+  hardening — validated by a full enterprise reference service built on the
+  *published* crates — folded in `klauthed_web::ApiResponse`/`ApiResult` (rc.2)
+  and umbrella-friendly `#[derive(DomainError)]` / `#[derive(FromConfig)]` via
+  `crate = "…"` (rc.3 / rc.4). The public API is now under the firm SemVer +
+  deprecation policy ([CONTRIBUTING.md](CONTRIBUTING.md#stability-policy)).
+  See [CHANGELOG](CHANGELOG.md).
 
-## 1.0.0 (in progress) — release candidate published
+## 1.1.0 (next)
 
-**`1.0.0-rc.2` is the current candidate** (a pre-release on crates.io; stable
-`0.10.0` remains the default) for real-world validation before the 1.0.0 SemVer
-promise. The API has been frozen since the 0.10.0 settling cycle — no breaking
-changes, only additions.
+1.0 is out; the public API is **stable under SemVer** — breaking changes now
+require a major bump, so future work lands as additive minors:
 
-- Validation window: build against `1.0.0-rc.2`; surface API friction now, while
-  the major version isn't yet committed. (`rc.2` already folded in the first such
-  feedback — `klauthed_web::ApiResponse`/`ApiResult`, a uniform success envelope.)
-- If nothing breaking surfaces → tag **1.0.0** (flip CONTRIBUTING's stability
-  language to the firm 1.0 SemVer promise). If something does → fold it in and cut
-  the next `rc`.
-- Only additive changes on the public API meanwhile.
-
-## Toward 1.0
-
-The committed SemVer + deprecation policy (CONTRIBUTING.md), the MSRV policy, and
-broad test / fuzz coverage are all in place; the API review found no breaking
-changes. `1.0.0-rc.2` is out; **1.0.0 final follows once the RC validates clean.**
+- Optional Redis/SQL-backed implementations of the auth stores (refresh tokens,
+  passkeys, OAuth code/client) to complement the in-memory defaults.
+- More reference examples + broader per-operation OpenAPI coverage.
+- Continued ecosystem additions (backends, discovery, observability) as they
+  earn their place — kept backward-compatible.
