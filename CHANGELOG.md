@@ -8,6 +8,13 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [1.0.0-rc.4] - 2026-06-25
+
+Fourth 1.0 release candidate. Completes the umbrella-friendliness of the derives:
+the `FromConfig` derive now matches `DomainError`, so an umbrella-only crate can
+derive both without direct sub-crate dependencies. Still a **pre-release**; stable
+0.10.0 remains the default.
+
 ### Added
 
 - **`#[config(crate = "…")]`** on the `FromConfig` derive (`klauthed-macros`) —
