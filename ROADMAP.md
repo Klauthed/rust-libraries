@@ -52,17 +52,25 @@ tracks intent, not a commitment — scope shifts as we learn.
   placeholder fix, cross-backend parity + cron property tests, and a `quinn-proto`
   security bump. See [CHANGELOG](CHANGELOG.md).
 
-## 0.10.0 (in progress)
+- **0.10.0** — the pre-1.0 settling cycle. A per-crate API review (found the public
+  surface already coherent — no breaking changes; added the `klauthed-testing`
+  prelude, `AppContext::builder`, and documented the naming conventions) plus a
+  broad property-test sweep over the credential primitives (JWT, PASETO, AEAD,
+  Argon2), `Timestamp`, cron, i18n, and cross-backend job-queue parity.
+  See [CHANGELOG](CHANGELOG.md).
 
-Theme: **API freeze for 1.0.**
+## 0.11.0 (in progress) — 1.0 candidate
 
-- A per-crate public-API review — re-export / prelude completeness and naming
-  consistency — absorbing any remaining breaking changes in one deliberate pass.
-- A settling period with **no** breaking changes once the review lands (the
-  readiness signal for tagging 1.0).
-- Continue broadening fuzz / property coverage.
+Theme: **the last cycle before 1.0.** The API freeze held through 0.10.0 with no
+breaking changes, so — absent any breaking change surfacing here — the next
+release is tagged **1.0.0**.
+
+- Hold the public API stable; only additive changes.
+- A final docs/readiness pass (READMEs, guide, examples) before the 1.0 tag.
+- Opportunistic coverage on any remaining thin spots.
 
 ## Toward 1.0
 
-A final broad API review per crate, the committed SemVer + deprecation policy now
-in place (CONTRIBUTING.md), the MSRV policy, and broad test / fuzz coverage.
+The committed SemVer + deprecation policy (CONTRIBUTING.md), the MSRV policy, and
+broad test / fuzz coverage are all in place; the API review found no breaking
+changes. 1.0.0 follows once this candidate cycle ships clean.
