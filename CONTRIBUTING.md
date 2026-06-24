@@ -61,10 +61,10 @@ error type). New public items should carry doc comments and tests.
 ## Versioning & releases
 
 All `klauthed-*` crates **share a single version** and are released together,
-following SemVer. While the suite is **pre-1.0**, a minor bump (`0.x`) may carry
-breaking changes and a patch bump (`0.x.y`) is backward-compatible. The **MSRV**
-(`rust-version` in the root `Cargo.toml`) is part of the contract — raising it is
-a minor-version change.
+following SemVer. The suite is **1.0+**: breaking changes require a **major**
+bump, new backward-compatible items a **minor** bump, and fixes a **patch** bump.
+The **MSRV** (`rust-version` in the root `Cargo.toml`) is part of the contract —
+raising it is a minor-version change.
 
 Publishing is owned by CI; locally you only bump and tag.
 
@@ -154,8 +154,7 @@ Naming patterns the crates follow, so new code stays consistent:
 
 ## Stability policy
 
-What the suite commits to. These tighten at 1.0; the pre-1.0 caveats note where
-they are looser for now.
+What the suite commits to, now that it is **1.0+** — these are firm contracts.
 
 ### Public API & SemVer
 
@@ -163,11 +162,9 @@ A crate's **public API** is everything reachable from its crate root (including
 its `prelude`) together with its set of cargo features. Changes are versioned per
 [SemVer](https://semver.org):
 
-- **Breaking** (major; pre-1.0 a minor `0.x` bump) — removing or renaming a public
-  item, changing a signature or trait bound, removing a feature, or raising the
-  MSRV.
-- **Additive** (minor; pre-1.0 a patch where it cleanly can be) — new items, new
-  features, new builder options.
+- **Breaking** (major) — removing or renaming a public item, changing a signature
+  or trait bound, removing a feature, or raising the MSRV.
+- **Additive** (minor) — new items, new features, new builder options.
 - **Patch** — bug fixes and docs with no API change.
 
 Not covered: `#[doc(hidden)]` items, private fields, exact error *messages* (the
@@ -179,8 +176,7 @@ documented as experimental.
 Before a public item is removed it is first **deprecated** with
 `#[deprecated(since = "…", note = "use … instead")]`, kept for **at least one
 minor release**, and listed under *Deprecated* in the [CHANGELOG](CHANGELOG.md);
-removal follows in a later breaking release. Pre-1.0 this is best-effort; from 1.0
-it is a firm contract.
+removal follows in a later breaking (major) release.
 
 ### MSRV
 

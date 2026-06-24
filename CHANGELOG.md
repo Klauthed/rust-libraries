@@ -8,6 +8,14 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-06-25
+
+First stable release. The public API is now under SemVer (see
+[CONTRIBUTING](CONTRIBUTING.md#stability-policy)) — breaking changes require a
+major bump. No API changes since `1.0.0-rc.4`; this promotes the validated release
+candidate (four RCs of real-world hardening: `ApiResponse`, the `DomainError` and
+`FromConfig` umbrella-friendly derives) to general availability.
+
 ## [1.0.0-rc.4] - 2026-06-25
 
 Fourth 1.0 release candidate. Completes the umbrella-friendliness of the derives:

@@ -8,7 +8,7 @@ A Cargo workspace of `klauthed-*` crates that give Rust services **Spring-Boot-l
 ergonomics** — typed configuration, a uniform error model, pre-built data/security/web
 plumbing, and observability — so each service writes domain logic instead of boilerplate.
 
-> **Status:** pre-1.0 and under active development. APIs may change between releases.
+> **Status:** 1.0 — stable public API under [SemVer](https://semver.org).
 > Built for [actix-web](https://actix.rs/) services.
 
 📖 **[CAPABILITIES.md](CAPABILITIES.md)** — a single, guided tour of every crate's
@@ -50,7 +50,7 @@ Or add the umbrella crate to an existing project and turn on the pieces you need
 
 ```toml
 [dependencies]
-klauthed = { version = "0.10", features = ["web", "data", "security", "observability", "postgres"] }
+klauthed = { version = "1.0", features = ["web", "data", "security", "observability", "postgres"] }
 ```
 
 Each enabled library is re-exported as a module (`klauthed::web`, `klauthed::data`, …),
