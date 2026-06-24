@@ -8,6 +8,13 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+## [1.0.0-rc.3] - 2026-06-24
+
+Third 1.0 release candidate. Folds in RC feedback from building a template
+service: umbrella-only crates can now derive `DomainError` without a direct
+`klauthed-error` dependency. Still a **pre-release**; stable 0.10.0 remains the
+default.
+
 ### Added
 
 - **`#[domain(crate = "…")]`** on the `DomainError` derive (`klauthed-macros`) —
