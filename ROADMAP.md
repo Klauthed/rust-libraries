@@ -61,19 +61,21 @@ tracks intent, not a commitment — scope shifts as we learn.
 
 ## 1.0.0 (in progress) — release candidate published
 
-**`1.0.0-rc.1` is published** (a pre-release on crates.io; stable `0.10.0` remains
-the default) for final real-world validation before the 1.0.0 SemVer promise. The
-API has been frozen since the 0.10.0 settling cycle with no breaking changes.
+**`1.0.0-rc.2` is the current candidate** (a pre-release on crates.io; stable
+`0.10.0` remains the default) for real-world validation before the 1.0.0 SemVer
+promise. The API has been frozen since the 0.10.0 settling cycle — no breaking
+changes, only additions.
 
-- Validation window: build against `1.0.0-rc.1`; surface any API friction now,
-  while the major version isn't yet committed.
+- Validation window: build against `1.0.0-rc.2`; surface API friction now, while
+  the major version isn't yet committed. (`rc.2` already folded in the first such
+  feedback — `klauthed_web::ApiResponse`/`ApiResult`, a uniform success envelope.)
 - If nothing breaking surfaces → tag **1.0.0** (flip CONTRIBUTING's stability
   language to the firm 1.0 SemVer promise). If something does → fold it in and cut
-  `rc.2`.
+  the next `rc`.
 - Only additive changes on the public API meanwhile.
 
 ## Toward 1.0
 
 The committed SemVer + deprecation policy (CONTRIBUTING.md), the MSRV policy, and
 broad test / fuzz coverage are all in place; the API review found no breaking
-changes. `1.0.0-rc.1` is out; **1.0.0 final follows once the RC validates clean.**
+changes. `1.0.0-rc.2` is out; **1.0.0 final follows once the RC validates clean.**
