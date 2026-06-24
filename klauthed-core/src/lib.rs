@@ -75,3 +75,38 @@ mod derive_crate_override {
         assert_eq!(err.code().as_str(), "test.overridden_error");
     }
 }
+
+#[cfg(test)]
+mod from_config_crate_override {
+    //! A crate depending only on the `klauthed` umbrella reaches core through a
+    //! re-export; `#[config(crate = "…")]` points the derive at it. Here a local
+    //! module re-exports this crate to stand in for the umbrella's `klauthed::core`.
+
+    mod umbrella {
+        pub use crate as core;
+    }
+
+    use crate::config::provider::MemoryProvider;
+    use crate::config::{ConfigBuilder, FromConfig, Profile};
+    use serde::Deserialize;
+    use serde_json::json;
+
+    #[derive(Debug, Deserialize, FromConfig)]
+    #[config(key = "db", crate = "umbrella::core")]
+    struct DbSettings {
+        host: String,
+        port: u16,
+    }
+
+    #[tokio::test]
+    async fn crate_override_resolves_from_config_via_a_reexport() {
+        let config = ConfigBuilder::new(Profile::Test)
+            .with_provider(MemoryProvider::new().set("db", json!({ "host": "db", "port": 5432 })))
+            .build()
+            .await
+            .expect("build config");
+        let db = DbSettings::from_config(&config).expect("bind via re-export");
+        assert_eq!(db.host, "db");
+        assert_eq!(db.port, 5432);
+    }
+}

@@ -8,6 +8,15 @@ All crates share a single version and are released together.
 
 ## [Unreleased]
 
+### Added
+
+- **`#[config(crate = "…")]`** on the `FromConfig` derive (`klauthed-macros`) —
+  the same umbrella-friendliness the `DomainError` derive gained in rc.3: point
+  the derive at `klauthed_core` through a re-export (e.g. `crate = "klauthed::core"`),
+  so a crate depending only on the `klauthed` umbrella can `#[derive(FromConfig)]`
+  without a direct `klauthed-core` dependency. Defaults to `::klauthed_core`, so
+  existing derives are unchanged.
+
 ## [1.0.0-rc.3] - 2026-06-24
 
 Third 1.0 release candidate. Folds in RC feedback from building a template

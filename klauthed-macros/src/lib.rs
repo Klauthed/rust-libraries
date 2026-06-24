@@ -88,6 +88,11 @@ pub fn derive_domain_error(input: TokenStream) -> TokenStream {
 /// #[config(key = "cache", default)]  // a missing section binds to `Default`
 /// struct CacheSettings { /* … */ }
 /// ```
+///
+/// `#[config(crate = "path")]` points the generated impl at the `klauthed_core`
+/// crate/module through a re-export — e.g. `crate = "klauthed::core"` for a crate
+/// that depends only on the `klauthed` umbrella (and so has no direct
+/// `klauthed-core` dependency). Defaults to `::klauthed_core`.
 #[proc_macro_derive(FromConfig, attributes(config))]
 pub fn derive_from_config(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
